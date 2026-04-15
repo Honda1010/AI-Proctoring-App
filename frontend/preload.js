@@ -1,0 +1,130 @@
+'use strict';
+
+/**
+ * preload.js — Electron preload script for Lumina AI.
+ *
+ * Exposes a minimal, safe IPC surface to renderer pages via contextBridge.
+ * No raw Node.js or Electron APIs are exposed directly to the renderer.
+ * All communication goes through the typed 'bridge' API below.
+ *
+ * Security requirements (constitution.md — Security by Default):
+ *   - contextIsolation: true  (set in BrowserWindow webPreferences)
+ *   - nodeIntegration: false  (set in BrowserWindow webPreferences)
+ *   - Only explicitly whitelisted IPC channels are forwarded
+ */
+
+const { contextBridge, ipcRenderer } = require('electron');
+
+/**
+ * Whitelisted IPC channels the renderer is allowed to listen on.
+ * Adding a channel here is the only way a renderer page can receive events.
+ */
+const ALLOWED_RECEIVE_CHANNELS = [
+  'bridge:status',   // BridgeStatus state updates from main process
+];
+
+/**
+ * Whitelisted IPC channels the renderer is allowed to invoke (request/reply).
+ */
+const ALLOWED_INVOKE_CHANNELS = [
+  'bridge:get-status',          // Returns current BridgeStatus state string
+  'bridge:login',               // Proxy login credentials to Python bridge
+  'bridge:get-saved-session',   // Restore previously saved session
+  'bridge:clear-session',       // Delete all session data
+  'bridge:open-external',       // Open https:// URL in system browser
+  'bridge:start-exam',          // Validate exam code and start attempt
+  'bridge:get-exam-session',    // Retrieve stored ExamSession (used by Exam page)
+];
+
+contextBridge.exposeInMainWorld('bridge', {
+  /**
+   * Subscribe to bridge status events from the main process.
+   *
+   * The callback receives an event payload:
+   *   { type: 'ready' | 'failed' | 'crashed' | 'config-error', code?: string, message?: string }
+   *
+   * Returns a cleanup function — call it to unsubscribe.
+   *
+   * @param {(payload: object) => void} callback
+   * @returns {() => void} unsubscribe function
+   */
+  onBridgeStatus(callback) {
+    const handler = (_event, payload) => callback(payload);
+    ipcRenderer.on('bridge:status', handler);
+    // Return cleanup so callers can avoid memory leaks on page navigation
+    return () => ipcRenderer.removeListener('bridge:status', handler);
+  },
+
+  /**
+   * Query the current bridge state synchronously via IPC invoke.
+   * Returns one of: 'idle' | 'starting' | 'ready' | 'failed' | 'crashed' | 'stopping'
+   *
+   * @returns {Promise<string>}
+   */
+  getBridgeStatus() {
+    return ipcRenderer.invoke('bridge:get-status');
+  },
+
+  /**
+   * Submit login credentials to the main process for forwarding to the bridge.
+   *
+   * @param {{ email: string, password: string, remember: boolean }} creds
+   * @returns {Promise<{ok: true, data: object} | {ok: false, error: object}>}
+   */
+  login(creds) {
+    return ipcRenderer.invoke('bridge:login', creds);
+  },
+
+  /**
+   * Retrieve a previously saved session from the OS keychain.
+   *
+   * @returns {Promise<{ok: true, session: object} | {ok: false}>}
+   */
+  getSavedSession() {
+    return ipcRenderer.invoke('bridge:get-saved-session');
+  },
+
+  /**
+   * Delete all keytar session entries and in-memory session data.
+   *
+   * @returns {Promise<{ok: true}>}
+   */
+  clearSession() {
+    return ipcRenderer.invoke('bridge:clear-session');
+  },
+
+  /**
+   * Open an https:// URL in the system default browser.
+   * Non-https URLs are silently ignored by the main process.
+   *
+   * @param {string} url
+   * @returns {Promise<void>}
+   */
+  openExternal(url) {
+    return ipcRenderer.invoke('bridge:open-external', url);
+  },
+
+  /**
+   * Submit an exam code to the main process for forwarding to the bridge.
+   * The JWT is attached by main.js — the renderer never holds tokens.
+   *
+   * @param {string} quizCode  Exam code entered by the student (whitespace trimmed)
+   * @returns {Promise<
+   *   {ok: true, data: object} |
+   *   {ok: false, redirect: 'login'} |
+   *   {ok: false, error: object}
+   * >}
+   */
+  startExam(quizCode) {
+    return ipcRenderer.invoke('bridge:start-exam', { quizCode });
+  },
+
+  /**
+   * Retrieve the stored ExamSession from main.js (used by the Exam page).
+   *
+   * @returns {Promise<{ok: true, session: object} | {ok: false}>}
+   */
+  getExamSession() {
+    return ipcRenderer.invoke('bridge:get-exam-session');
+  },
+});

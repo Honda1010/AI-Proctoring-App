@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self'; script-src 'self'; font-src 'self' data:;" />
+  <title>Login — Lumina AI</title>
+  <link rel="stylesheet" href="../../assets/components.css" />
+  <link rel="stylesheet" href="./login.css" />
+</head>
+<body class="login-page">
+
+  <!-- =====================================================================
+       Navigation Bar
+       ===================================================================== -->
+  <nav class="login-nav" role="navigation" aria-label="Application navigation">
+    <span class="login-nav__wordmark">Lumina</span>
+    <div class="login-nav__actions">
+      <span class="login-nav__label" aria-hidden="true">Login</span>
+      <button class="icon-btn" type="button" aria-label="Help">?</button>
+      <button class="icon-btn" id="nav-info-btn" type="button" aria-label="Information">ⓘ</button>
+    </div>
+  </nav>
+
+  <!-- =====================================================================
+       Main Content — Login Card
+       ===================================================================== -->
+  <main class="login-main" role="main">
+
+    <div class="login-card" role="region" aria-label="Student login">
+
+      <!-- Shield icon -->
+      <div class="login-card__icon" aria-hidden="true">
+        <!-- Material Shield with checkmark -->
+        <svg xmlns="http://www.w3.org/2000/svg"
+             width="26" height="26" viewBox="0 0 24 24"
+             fill="currentColor" aria-hidden="true" focusable="false">
+          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12
+                   5.16-1.26 9-6.45 9-12V5l-9-4z
+                   m-1 14l-3-3 1.41-1.41L11 12.17l5.59-5.58L18 8l-7 7z"/>
+        </svg>
+      </div>
+
+      <!-- Headline -->
+      <h1 class="login-card__headline">Welcome Back</h1>
+      <p class="login-card__subtitle">The Digital Sanctuary of Integrity</p>
+
+      <!-- Login Form -->
+      <form class="login-form" id="login-form" novalidate autocomplete="off">
+
+        <!-- Email Address -->
+        <div class="form-field">
+          <label class="form-label" for="email-input">Email Address</label>
+          <input
+            class="input-field"
+            type="email"
+            id="email-input"
+            name="email"
+            placeholder="name@institution.edu"
+            autocomplete="username"
+            spellcheck="false"
+            required
+          />
+        </div>
+
+        <!-- Password + Forgot Password link -->
+        <div class="form-field">
+          <div class="form-label-row">
+            <label class="form-label" for="password-input">Password</label>
+            <a class="forgot-link" id="forgot-link" href="#" role="button"
+               aria-label="Forgot password — opens external link">Forgot password?</a>
+          </div>
+          <input
+            class="input-field"
+            type="password"
+            id="password-input"
+            name="password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            required
+          />
+        </div>
+
+        <!-- Inline error message (empty by default, populated by login.js) -->
+        <p class="form-error" id="login-error" role="alert" aria-live="polite"></p>
+
+        <!-- Remember this device -->
+        <label class="remember-label">
+          <input type="checkbox" id="remember-checkbox" />
+          Remember this device
+        </label>
+
+        <!-- Submit button -->
+        <button class="btn btn-primary login-btn" id="login-btn" type="submit">
+          <span id="login-btn-text">LOGIN →</span>
+          <span class="spinner" id="login-spinner" hidden aria-hidden="true"></span>
+        </button>
+
+      </form>
+
+      <!-- Card footer: divider + access policy note -->
+      <div class="login-card__divider" aria-hidden="true"></div>
+      <p class="login-card__access-note">
+        Authorized Personnel Only.
+        <a id="access-policy-link" href="#">System Access Policy</a>
+      </p>
+
+    </div><!-- /login-card -->
+
+    <!-- Step progress pills (step 1 of 3) -->
+    <div class="progress-pills"
+         role="progressbar"
+         aria-label="Step 1 of 3"
+         aria-valuenow="1"
+         aria-valuemin="1"
+         aria-valuemax="3">
+      <div class="progress-pill active"></div>
+      <div class="progress-pill"></div>
+      <div class="progress-pill"></div>
+    </div>
+
+  </main>
+
+  <!-- =====================================================================
+       FAB — Information / Help
+       ===================================================================== -->
+  <button class="fab" id="fab-info" type="button" aria-label="Information">ⓘ</button>
+
+  <!-- =====================================================================
+       Footer
+       ===================================================================== -->
+  <footer class="login-footer" role="contentinfo">
+    <span>© 2024 Lumina AI Proctoring System. The Digital Sanctuary.</span>
+    <nav class="login-footer__links" aria-label="Legal and support links">
+      <a id="privacy-link"       href="#">Privacy Policy</a>
+      <a id="terms-link"         href="#">Terms of Service</a>
+      <a id="system-check-link"  href="#">System Check</a>
+    </nav>
+  </footer>
+
+  <script type="module" src="./login.js"></script>
+</body>
+</html>

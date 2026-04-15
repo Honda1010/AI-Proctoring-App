@@ -1,0 +1,37 @@
+{
+  "attemptId": 42,
+  "title": "Midterm Exam — Introduction to AI",
+  "duration": "01:30:00",
+  "questions": [
+    {
+      "id": 101,
+      "questionText": "What is supervised learning?",
+      "choices": [
+        { "id": 201, "choiceText": "Learning with labelled data" },
+        { "id": 202, "choiceText": "Learning without labelled data" },
+        { "id": 203, "choiceText": "Reinforcement from an environment" },
+        { "id": 204, "choiceText": "None of the above" }
+      ]
+    },
+    {
+      "id": 102,
+      "questionText": "Which of the following is a Python machine learning library?",
+      "choices": [
+        { "id": 205, "choiceText": "React" },
+        { "id": 206, "choiceText": "scikit-learn" },
+        { "id": 207, "choiceText": "Bootstrap" },
+        { "id": 208, "choiceText": "jQuery" }
+      ]
+    },
+    {
+      "id": 103,
+      "questionText": "What does 'overfitting' mean in machine learning?",
+      "choices": [
+        { "id": 209, "choiceText": "Model performs well on training data but poorly on unseen data" },
+        { "id": 210, "choiceText": "Model performs poorly on both training and test data" },
+        { "id": 211, "choiceText": "Model is too simple to capture patterns" },
+        { "id": 212, "choiceText": "Model requires too much memory" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Login | Lumina AI Proctoring System</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-error-container": "#93000a",
+                    "surface-container-highest": "#e1e3e4",
+                    "primary-fixed-dim": "#73d1ff",
+                    "outline": "#6e797f",
+                    "surface-container-high": "#e7e8e9",
+                    "outline-variant": "#bdc8cf",
+                    "primary": "#006687",
+                    "surface-tint": "#006687",
+                    "on-primary-fixed": "#001e2b",
+                    "secondary-container": "#a7c8ff",
+                    "on-tertiary-fixed-variant": "#6a3b00",
+                    "primary-container": "#41b3e3",
+                    "on-tertiary-container": "#5c3300",
+                    "on-surface": "#191c1d",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-dim": "#d9dadb",
+                    "on-tertiary-fixed": "#2d1600",
+                    "on-primary-container": "#004259",
+                    "on-secondary-fixed-variant": "#254776",
+                    "secondary-fixed-dim": "#a7c8ff",
+                    "on-secondary-container": "#325383",
+                    "tertiary-fixed-dim": "#ffb873",
+                    "tertiary-container": "#e8953c",
+                    "error": "#ba1a1a",
+                    "on-background": "#191c1d",
+                    "error-container": "#ffdad6",
+                    "tertiary-fixed": "#ffdcbf",
+                    "surface": "#f8f9fa",
+                    "primary-fixed": "#c1e8ff",
+                    "secondary": "#3e5f90",
+                    "surface-container": "#edeeef",
+                    "background": "#f8f9fa",
+                    "surface-container-low": "#f3f4f5",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "inverse-surface": "#2e3132",
+                    "tertiary": "#8c5000",
+                    "on-primary": "#ffffff",
+                    "inverse-on-surface": "#f0f1f2",
+                    "secondary-fixed": "#d5e3ff",
+                    "on-error": "#ffffff",
+                    "surface-variant": "#e1e3e4",
+                    "surface-bright": "#f8f9fa",
+                    "on-surface-variant": "#3e484e",
+                    "on-primary-fixed-variant": "#004d67",
+                    "on-secondary-fixed": "#001b3c",
+                    "inverse-primary": "#73d1ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.5rem",
+                    "lg": "0.5rem",
+                    "xl": "1.5rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #006687 0%, #41b3e3 100%);
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(189, 200, 207, 0.15);
+        }
+    </style>
+<style>
+  .widget-expanded {
+    max-height: 400px;
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .widget-collapsed {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+  }
+  .glass-widget {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(65, 179, 227, 0.2);
+    box-shadow: 0 8px 32px 0 rgba(0, 102, 135, 0.08);
+  }
+</style></head>
+<body class="bg-surface font-body text-on-surface flex flex-col min-h-screen">
+<nav class="bg-transparent docked full-width top-0 z-50">
+<div class="flex justify-between items-center px-8 py-6 w-full max-w-7xl mx-auto">
+<div class="text-2xl font-bold tracking-tight text-sky-800 dark:text-sky-300 font-headline">Lumina</div>
+<div class="flex items-center gap-6">
+<div class="hidden md:flex gap-8 items-center">
+<span class="font-manrope text-sm tracking-wide text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors px-3 py-1.5 rounded cursor-pointer">Login</span>
+</div>
+<div class="flex gap-4">
+<button class="material-symbols-outlined text-sky-700 dark:text-sky-400 hover:bg-slate-100/50 p-2 rounded-full transition-all scale-95 duration-200" data-icon="help">help</button>
+<button class="material-symbols-outlined text-sky-700 dark:text-sky-400 hover:bg-slate-100/50 p-2 rounded-full transition-all scale-95 duration-200" data-icon="info">info</button>
+</div>
+</div>
+</div>
+</nav>
+<main class="flex-grow flex items-center justify-center px-4 py-20 relative overflow-hidden">
+<div class="absolute inset-0 z-0 opacity-40">
+<div class="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] bg-primary-fixed blur-[120px] rounded-full"></div>
+<div class="absolute -bottom-[20%] -right-[10%] w-[50%] h-[50%] bg-secondary-container blur-[100px] rounded-full"></div>
+</div>
+<div class="w-full max-w-md z-10">
+<div class="bg-surface-container-lowest rounded-xl p-8 md:p-12 shadow-[0px_12px_32px_rgba(0,45,91,0.06)] relative border border-outline-variant/10">
+<div class="text-center mb-10">
+<div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary-container/10 mb-6">
+<span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 1;">security</span>
+</div>
+<h1 class="font-headline text-3xl font-extrabold tracking-tight text-on-surface mb-2">Welcome Back</h1>
+<p class="text-on-surface-variant body-lg">The Digital Sanctuary of Integrity</p>
+</div>
+<form class="space-y-6">
+<div class="space-y-2">
+<label class="block label-md font-semibold text-on-surface-variant uppercase tracking-wider px-1">Email Address</label>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-lg px-4 py-3.5 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-fixed/30 transition-all text-on-surface placeholder:text-slate-400" placeholder="name@institution.edu" type="email"/>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center px-1">
+<label class="label-md font-semibold text-on-surface-variant uppercase tracking-wider">Password</label>
+<a class="text-xs text-primary font-medium hover:underline" href="#">Forgot password?</a>
+</div>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-lg px-4 py-3.5 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-fixed/30 transition-all text-on-surface placeholder:text-slate-400" placeholder="••••••••" type="password"/>
+</div>
+</div>
+<div class="flex items-center gap-2 px-1">
+<input class="w-4 h-4 rounded border-outline-variant/50 text-primary focus:ring-primary-container" id="remember" type="checkbox"/>
+<label class="text-sm text-on-surface-variant" for="remember">Remember this device</label>
+</div>
+<button class="w-full bg-gradient-primary text-on-primary font-bold py-4 rounded-lg shadow-lg hover:shadow-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2" type="submit">
+<span>LOGIN</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</form>
+<div class="mt-8 pt-8 border-t border-outline-variant/10 text-center">
+<p class="text-sm text-on-surface-variant">
+                        Authorized Personnel Only. 
+                        <a class="text-primary font-semibold hover:underline" href="#">System Access Policy</a>
+</p>
+</div>
+</div>
+<div class="mt-8 grid grid-cols-3 gap-4 px-2">
+<div class="h-1 bg-primary/20 rounded-full"></div>
+<div class="h-1 bg-outline-variant/20 rounded-full"></div>
+<div class="h-1 bg-outline-variant/20 rounded-full"></div>
+</div>
+</div>
+</main>
+<footer class="bg-slate-50/50 dark:bg-slate-900/50 docked full-width bottom-0 z-50">
+<div class="flex flex-col md:flex-row justify-between items-center px-8 py-4 w-full">
+<div class="font-inter text-xs tracking-wider uppercase text-slate-400 dark:text-slate-500 mb-4 md:mb-0">
+                © 2024 Lumina AI Proctoring System. The Digital Sanctuary.
+            </div>
+<div class="flex gap-8">
+<a class="font-inter text-xs tracking-wider uppercase text-slate-400 dark:text-slate-500 hover:text-sky-800 dark:hover:text-sky-200 transition-colors opacity-80 hover:opacity-100" href="#">Privacy Policy</a>
+<a class="font-inter text-xs tracking-wider uppercase text-slate-400 dark:text-slate-500 hover:text-sky-800 dark:hover:text-sky-200 transition-colors opacity-80 hover:opacity-100" href="#">Terms of Service</a>
+<a class="font-inter text-xs tracking-wider uppercase text-slate-400 dark:text-slate-500 hover:text-sky-800 dark:hover:text-sky-200 transition-colors opacity-80 hover:opacity-100" href="#">System Check</a>
+</div>
+</div>
+</footer>
+<div class="fixed bottom-24 right-8 z-[100] flex flex-col items-end">
+<div class="widget-collapsed transition-all duration-500 ease-in-out mb-4 w-72 glass-widget rounded-xl overflow-hidden" id="proctoring-widget">
+<div class="p-5">
+<div class="flex items-center gap-2 mb-3 text-primary">
+<span class="material-symbols-outlined text-xl">bolt</span>
+<h3 class="font-headline font-bold text-sm tracking-tight uppercase">Our AI Proctoring Power</h3>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed mb-4">
+        Experience the Digital Sanctuary of Integrity with our cutting-edge monitoring suite.
+      </p>
+<ul class="space-y-3">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-lg">analytics</span>
+<div>
+<p class="text-[11px] font-bold text-on-surface uppercase tracking-wide">Real-time Analysis</p>
+<p class="text-[10px] text-on-surface-variant">Instant behavioral pattern detection.</p>
+</div>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-lg">verified_user</span>
+<div>
+<p class="text-[11px] font-bold text-on-surface uppercase tracking-wide">Integrity Verification</p>
+<p class="text-[10px] text-on-surface-variant">Multi-factor identity confirmation.</p>
+</div>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-lg">videocam</span>
+<div>
+<p class="text-[11px] font-bold text-on-surface uppercase tracking-wide">Secure Monitoring</p>
+<p class="text-[10px] text-on-surface-variant">Encrypted 360° environment oversight.</p>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<button class="w-14 h-14 bg-primary text-on-primary rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform active:scale-95 group" id="widget-toggle">
+<span class="material-symbols-outlined text-2xl" id="toggle-icon">info</span>
+</button>
+</div><script>
+  const toggleBtn = document.getElementById('widget-toggle');
+  const widget = document.getElementById('proctoring-widget');
+  const icon = document.getElementById('toggle-icon');
+  
+  toggleBtn.addEventListener('click', () => {
+    const isExpanded = widget.classList.contains('widget-expanded');
+    if (isExpanded) {
+      widget.classList.remove('widget-expanded');
+      widget.classList.add('widget-collapsed');
+      icon.textContent = 'info';
+    } else {
+      widget.classList.remove('widget-collapsed');
+      widget.classList.add('widget-expanded');
+      icon.textContent = 'close';
+    }
+  });
+</script></body></html>

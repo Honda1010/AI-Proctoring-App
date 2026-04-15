@@ -1,0 +1,95 @@
+@import "@fontsource/manrope/400.css";
+@import "@fontsource/manrope/600.css";
+@import "@fontsource/manrope/700.css";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+
+/* ==========================================================================
+   Lumina AI — Design Token System "Ethereal Authority"
+   All values extracted from data-model.md Entity 4: DesignToken
+   27 tokens total: 15 color, 8 typography, 4 spacing/radius,
+                    4 elevation/shadow, 1 gradient
+   ========================================================================== */
+
+:root {
+
+  /* -----------------------------------------------------------------------
+     4.1 Color Tokens (15)
+     ----------------------------------------------------------------------- */
+
+  --color-primary:                    #006687;
+  --color-primary-container:          #41B3E3;
+  --color-on-primary:                 #FFFFFF;
+  --color-secondary-container:        #A7C8FF;
+  --color-on-secondary-container:     #325383;
+  --color-tertiary:                   #8C5000;
+  --color-surface:                    #F8F9FA;
+  --color-surface-container-low:      #F3F4F5;
+  --color-surface-container-lowest:   #FFFFFF;
+  --color-surface-bright:             #F8F9FA;
+  --color-on-surface:                 #191C1D;
+  --color-on-surface-variant:         #3E484E;
+  --color-outline-variant:            #BFC8CE;
+  --color-primary-fixed:              #C2E8FF;
+  --color-on-secondary-fixed-variant: #002D5B;
+  --color-error:                      #BA1A1A;
+
+  /* -----------------------------------------------------------------------
+     4.2 Typography Tokens (8)
+     ----------------------------------------------------------------------- */
+
+  --font-display:           'Manrope', sans-serif;
+  --font-body:              'Inter', sans-serif;
+  --font-size-display-lg:   3.5rem;
+  --font-size-headline-md:  1.75rem;
+  --font-size-body-lg:      1rem;
+  --font-size-label-md:     0.75rem;
+  --letter-spacing-display: -0.02em;
+  --letter-spacing-label:   0.05em;
+
+  /* -----------------------------------------------------------------------
+     4.3 Spacing & Radius Tokens (4)
+     ----------------------------------------------------------------------- */
+
+  --radius-card:    1.5rem;
+  --radius-button:  0.5rem;
+  --radius-chip:    9999px;
+  --spacing-md:     0.75rem;
+  /* Semantic aliases (referenced by login page and future pages) */
+  --radius-xl:      1.5rem;   /* = --radius-card */
+  --radius-default: 0.5rem;   /* = --radius-button */
+
+  /* -----------------------------------------------------------------------
+     4.4 Elevation & Shadow Tokens (4)
+     ----------------------------------------------------------------------- */
+
+  --shadow-ambient:       0px 12px 32px rgba(0, 45, 91, 0.06);
+  --blur-glass:           24px;
+  --opacity-glass:        0.70;
+  --opacity-ghost-border: 0.20;
+
+  /* -----------------------------------------------------------------------
+     4.5 Gradient Token (1)
+     ----------------------------------------------------------------------- */
+
+  --gradient-primary: linear-gradient(135deg, #006687, #41B3E3);
+
+}
+
+/* Base reset — ensures tokens apply consistently across all pages */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  background-color: var(--color-surface);
+  color: var(--color-on-surface);
+  font-family: var(--font-body);
+  font-size: var(--font-size-body-lg);
+  -webkit-font-smoothing: antialiased;
+}

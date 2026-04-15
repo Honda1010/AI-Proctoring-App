@@ -1,0 +1,630 @@
+'use strict';
+
+const { app, BrowserWindow, ipcMain, net, shell } = require('electron');
+const path = require('path');
+const fs = require('fs');
+const { spawn } = require('child_process');
+const keytar = require('keytar');
+
+// ---------------------------------------------------------------------------
+// Module-level state (exported for internal use by later task expansions)
+// ---------------------------------------------------------------------------
+
+/** @type {BrowserWindow | null} */
+let mainWindow = null;
+
+/** @type {import('child_process').ChildProcess | null} */
+let pythonProcess = null;
+
+/**
+ * Current lifecycle state of the Python bridge.
+ * 'stopping' is set before intentional shutdown so the crash handler
+ * can distinguish a deliberate quit from an unexpected exit.
+ *
+ * @type {'idle' | 'starting' | 'ready' | 'failed' | 'crashed' | 'stopping'}
+ */
+let bridgeState = 'idle';
+
+/**
+ * Port the Python bridge is listening on.
+ * Set during startup after config is read; used by IPC handlers.
+ * @type {number}
+ */
+let bridgePort = 5050;
+
+/**
+ * In-memory session for users who did NOT check "Remember this device".
+ * Cleared when the app quits. Never written to the OS keychain.
+ * @type {object | null}
+ */
+let sessionMemory = null;
+
+/**
+ * Exam session data returned by the LMS on a successful exam start.
+ * Stored here so the Exam page can retrieve it via bridge:get-exam-session.
+ * In-memory only — not persisted across app restarts.
+ * @type {object | null}
+ */
+let examSession = null;
+
+/** keytar service identifier shared across all session keys. */
+const KEYTAR_SERVICE = 'lumina-ai-proctoring';
+
+// ---------------------------------------------------------------------------
+// Config resolution (research.md decision 4)
+// Packaged:     <resources>/config.json   (electron-builder extraResources)
+// Development:  <project root>/config.json
+// ---------------------------------------------------------------------------
+
+/**
+ * Resolve the absolute path to config.json based on packaging state.
+ * @returns {string}
+ */
+function resolveConfigPath() {
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, 'config.json');
+  }
+  // In development, main.js lives at frontend/main.js — config.json is one
+  // level up at the project root.
+  return path.join(__dirname, '..', 'config.json');
+}
+
+/**
+ * Read and parse config.json.
+ * Returns the parsed object, or throws with a typed error shape that mirrors
+ * the Python ConfigError so Electron can surface it uniformly.
+ *
+ * @returns {{ baseUrl: string, pythonPort: number }}
+ */
+function readConfig() {
+  const configPath = resolveConfigPath();
+
+  if (!fs.existsSync(configPath)) {
+    const err = new Error(`config.json not found at path: ${configPath}`);
+    err.code = 'FILE_NOT_FOUND';
+    throw err;
+  }
+
+  let raw;
+  try {
+    raw = fs.readFileSync(configPath, 'utf-8');
+  } catch (ioErr) {
+    const err = new Error(`Could not read config.json: ${ioErr.message}`);
+    err.code = 'FILE_NOT_FOUND';
+    throw err;
+  }
+
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch (parseErr) {
+    const err = new Error(`config.json contains invalid JSON: ${parseErr.message}`);
+    err.code = 'INVALID_JSON';
+    throw err;
+  }
+
+  const { baseUrl, pythonPort = 5050 } = data;
+
+  if (!baseUrl || typeof baseUrl !== 'string' || !baseUrl.trim()) {
+    const err = new Error("config.json must contain a non-empty 'baseUrl' string.");
+    err.code = 'MISSING_BASE_URL';
+    throw err;
+  }
+
+  if (!baseUrl.trim().startsWith('https://')) {
+    const err = new Error('baseUrl must use HTTPS (https://). HTTP URLs are not permitted.');
+    err.code = 'INSECURE_PROTOCOL';
+    throw err;
+  }
+
+  if (typeof pythonPort !== 'number' || !Number.isInteger(pythonPort) || pythonPort < 1024 || pythonPort > 65535) {
+    const err = new Error(`pythonPort must be an integer between 1024 and 65535, got ${pythonPort}.`);
+    err.code = 'INVALID_PORT';
+    throw err;
+  }
+
+  return { baseUrl: baseUrl.trim().replace(/\/$/, ''), pythonPort };
+}
+
+// ---------------------------------------------------------------------------
+// Session helpers (keytar + in-memory)
+// ---------------------------------------------------------------------------
+
+/**
+ * Delete all 6 keytar entries for this application.
+ * Idempotent — safe to call even if no entries exist.
+ * Errors are swallowed and logged to stderr (never thrown).
+ */
+async function clearAllKeytarEntries() {
+  const keys = [
+    'access-token',
+    'refresh-token',
+    'token-expiry',
+    'refresh-expiry',
+    'user-profile',
+    'remember-flag',
+  ];
+  for (const key of keys) {
+    try {
+      await keytar.deletePassword(KEYTAR_SERVICE, key);
+    } catch (err) {
+      process.stderr.write(`[session] clearAllKeytarEntries: key=${key} error=${err.message}\n`);
+    }
+  }
+}
+
+/**
+ * Persist a successful login session.
+ *
+ * If remember=true, write all 6 entries to the OS keychain.
+ * If remember=false, store the session object in module-level memory only
+ * (cleared automatically when the app quits).
+ *
+ * Security: the raw password is NOT passed to this function and never stored.
+ *
+ * @param {object} data    LoginResponse object from the LMS (relayed by bridge).
+ * @param {boolean} remember  Whether the user checked "Remember this device".
+ */
+async function storeSession(data, remember) {
+  const tokenExpiry = new Date(Date.now() + data.expinresIn * 1000).toISOString();
+  const userProfile = JSON.stringify({
+    id: data.id,
+    email: data.email,
+    firstName: data.firstName,
+    lastName: data.lastName,
+    profilePictureUrl: data.profilePictureUrl ?? null,
+  });
+
+  const session = {
+    accessToken: data.token,
+    refreshToken: data.refreshToken,
+    tokenExpiry,
+    refreshExpiry: data.refreshTokenExpiration,
+    userProfile: JSON.parse(userProfile),
+  };
+
+  if (!remember) {
+    sessionMemory = session;
+    return;
+  }
+
+  // Persist to OS keychain
+  const entries = {
+    'access-token':   data.token,
+    'refresh-token':  data.refreshToken,
+    'token-expiry':   tokenExpiry,
+    'refresh-expiry': data.refreshTokenExpiration,
+    'user-profile':   userProfile,
+    'remember-flag':  '1',
+  };
+
+  for (const [key, value] of Object.entries(entries)) {
+    try {
+      await keytar.setPassword(KEYTAR_SERVICE, key, value);
+    } catch (err) {
+      process.stderr.write(`[session] storeSession: key=${key} error=${err.message}\n`);
+    }
+  }
+}
+
+/**
+ * Attempt to restore a previously saved session from the OS keychain.
+ *
+ * Checks (in order):
+ *   1. remember-flag === '1'
+ *   2. refresh-expiry is a future date
+ *   3. All remaining 4 keys are present and user-profile is valid JSON
+ *
+ * On any failure: clears all keytar entries and returns null.
+ *
+ * @returns {Promise<object|null>} Session object or null if no valid session.
+ */
+async function getSavedSession() {
+  try {
+    const flag = await keytar.getPassword(KEYTAR_SERVICE, 'remember-flag');
+    if (flag !== '1') return null;
+
+    const refreshExpiry = await keytar.getPassword(KEYTAR_SERVICE, 'refresh-expiry');
+    if (!refreshExpiry || new Date(refreshExpiry) <= new Date()) {
+      await clearAllKeytarEntries();
+      return null;
+    }
+
+    const accessToken   = await keytar.getPassword(KEYTAR_SERVICE, 'access-token');
+    const refreshToken  = await keytar.getPassword(KEYTAR_SERVICE, 'refresh-token');
+    const tokenExpiry   = await keytar.getPassword(KEYTAR_SERVICE, 'token-expiry');
+    const profileRaw    = await keytar.getPassword(KEYTAR_SERVICE, 'user-profile');
+
+    if (!accessToken || !refreshToken || !tokenExpiry || !profileRaw) {
+      await clearAllKeytarEntries();
+      return null;
+    }
+
+    let userProfile;
+    try {
+      userProfile = JSON.parse(profileRaw);
+    } catch (_parseErr) {
+      await clearAllKeytarEntries();
+      return null;
+    }
+
+    return { accessToken, refreshToken, tokenExpiry, refreshExpiry, userProfile };
+  } catch (err) {
+    process.stderr.write(`[session] getSavedSession error: ${err.message}\n`);
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Single-instance lock (research.md decision 5)
+// Prevents two Electron windows + two Python bridges competing for port 5050.
+// MUST be called before app.whenReady().
+// ---------------------------------------------------------------------------
+
+const gotLock = app.requestSingleInstanceLock();
+
+if (!gotLock) {
+  // Another instance is already running — focus its window and quit.
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Exports (used by T011/T012 expansions and tests)
+// ---------------------------------------------------------------------------
+
+module.exports = {
+  getMainWindow: () => mainWindow,
+  getPythonProcess: () => pythonProcess,
+  getBridgeState: () => bridgeState,
+  resolveConfigPath,
+  readConfig,
+  // Setters used internally by startup sequence tasks
+  _setMainWindow: (w) => { mainWindow = w; },
+  _setPythonProcess: (p) => { pythonProcess = p; },
+  _setBridgeState: (s) => { bridgeState = s; },
+};
+
+// ---------------------------------------------------------------------------
+// IPC handlers
+// ---------------------------------------------------------------------------
+
+ipcMain.handle('bridge:get-status', () => bridgeState);
+
+// ---------------------------------------------------------------------------
+// Session IPC handlers (T008 bridge:login, T014 get-saved-session + clear-session)
+// ---------------------------------------------------------------------------
+
+/**
+ * bridge:login — Proxy login credentials to the Python bridge.
+ *
+ * Expected args: { email: string, password: string, remember: boolean }
+ * Returns: { ok: true, data: LoginResponse } | { ok: false, error: BridgeLoginError }
+ *
+ * Security: password is never logged.
+ */
+ipcMain.handle('bridge:login', async (_event, { email, password, remember }) => {
+  try {
+    const response = await net.fetch(`http://127.0.0.1:${bridgePort}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const body = await response.json();
+
+    if (response.ok) {
+      await storeSession(body, Boolean(remember));
+      return { ok: true, data: body };
+    }
+
+    return { ok: false, error: body };
+  } catch (_err) {
+    return {
+      ok: false,
+      error: {
+        code: 'BRIDGE_ERROR',
+        message: 'Unable to reach the server. Please check your connection and try again.',
+      },
+    };
+  }
+});
+
+/**
+ * bridge:get-saved-session — Return a previously stored session or indicate none.
+ *
+ * Returns: { ok: true, session: StoredSession } | { ok: false }
+ */
+ipcMain.handle('bridge:get-saved-session', async () => {
+  const session = await getSavedSession();
+  return session ? { ok: true, session } : { ok: false };
+});
+
+/**
+ * bridge:clear-session — Delete all keytar entries and in-memory session.
+ *
+ * Idempotent. Returns: { ok: true }
+ */
+ipcMain.handle('bridge:clear-session', async () => {
+  await clearAllKeytarEntries();
+  sessionMemory = null;
+  return { ok: true };
+});
+
+/**
+ * bridge:open-external — Open a URL in the system default browser.
+ *
+ * Only https:// URLs are allowed; all others are silently ignored
+ * to prevent open-redirect abuse.
+ */
+ipcMain.handle('bridge:open-external', async (_event, url) => {
+  if (typeof url === 'string' && url.startsWith('https://')) {
+    await shell.openExternal(url);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Exam IPC handlers (spec 003)
+// ---------------------------------------------------------------------------
+
+/**
+ * bridge:start-exam — Validate an exam code and start an attempt.
+ *
+ * Expected args: { quizCode: string }
+ * Returns:
+ *   { ok: true, data: ExamSession }         — success
+ *   { ok: false, redirect: 'login' }        — expired token; session cleared in main.js
+ *   { ok: false, error: BridgeExamError }   — typed error
+ *
+ * Security: token is read from session store only; never from renderer args;
+ *           never logged; never echoed in error responses.
+ */
+ipcMain.handle('bridge:start-exam', async (_event, { quizCode }) => {
+  try {
+    const accessToken =
+      sessionMemory?.accessToken ||
+      (await keytar.getPassword(KEYTAR_SERVICE, 'access-token'));
+
+    const response = await net.fetch(`http://127.0.0.1:${bridgePort}/exam-access`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ quizCode, token: accessToken }),
+    });
+
+    const body = await response.json();
+
+    if (response.ok) {
+      examSession = body;
+      return { ok: true, data: examSession };
+    }
+
+    // Expired/invalid token — clear session and signal the renderer to redirect
+    if (body?.code === 'UNAUTHORIZED') {
+      await clearAllKeytarEntries();
+      sessionMemory = null;
+      return { ok: false, redirect: 'login' };
+    }
+
+    return { ok: false, error: body };
+  } catch (_err) {
+    return {
+      ok: false,
+      error: {
+        code: 'BRIDGE_ERROR',
+        message: 'Unable to reach the server. Please check your connection and try again.',
+      },
+    };
+  }
+});
+
+/**
+ * bridge:get-exam-session — Return the stored ExamSession to the Exam page.
+ *
+ * Returns: { ok: true, session: ExamSession } | { ok: false }
+ */
+ipcMain.handle('bridge:get-exam-session', async () => {
+  if (examSession) {
+    return { ok: true, session: examSession };
+  }
+  return { ok: false };
+});
+
+// ---------------------------------------------------------------------------
+// Bridge startup (T011)
+// ---------------------------------------------------------------------------
+
+/**
+ * Poll GET /ping until the bridge responds with HTTP 200.
+ *
+ * Per research.md decision 1 and contracts/ping.md:
+ *   - 20 retries × 500 ms interval = 10 s total timeout
+ *   - Returns true on first 200 OK, false after all retries exhausted
+ *
+ * Uses Electron's built-in net module (works inside the main process
+ * and respects Electron's network stack).
+ *
+ * @param {string} url  Full URL to poll, e.g. "http://127.0.0.1:5050/ping"
+ * @param {number} retries
+ * @param {number} intervalMs
+ * @returns {Promise<boolean>}
+ */
+function pollBridgeReady(url, retries = 20, intervalMs = 500) {
+  return new Promise((resolve) => {
+    let attempt = 0;
+
+    function tryOnce() {
+      attempt += 1;
+      const request = net.request({ method: 'GET', url });
+
+      request.on('response', (response) => {
+        if (response.statusCode === 200) {
+          resolve(true);
+        } else if (attempt < retries) {
+          setTimeout(tryOnce, intervalMs);
+        } else {
+          resolve(false);
+        }
+        // Drain the response body to avoid hanging connections
+        response.on('data', () => {});
+      });
+
+      request.on('error', () => {
+        if (attempt < retries) {
+          setTimeout(tryOnce, intervalMs);
+        } else {
+          resolve(false);
+        }
+      });
+
+      request.end();
+    }
+
+    tryOnce();
+  });
+}
+
+/**
+ * Spawn the Python bridge process.
+ *
+ * Per research.md decision 1: uses child_process.spawn (not exec) so stdout
+ * and stderr streams are available for logging and error parsing.
+ *
+ * @param {number} port
+ * @param {string} configPath
+ */
+function startBridge(port, configPath) {
+  bridgeState = 'starting';
+
+  const serverScript = path.join(__dirname, '..', 'python_bridge', 'server.py');
+
+  pythonProcess = spawn('python', [
+    serverScript,
+    '--port', String(port),
+    '--config', configPath,
+  ], {
+    env: process.env,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+
+  // Collect last few lines of stderr for diagnostic display on crash
+  const stderrLines = [];
+  pythonProcess.stderr.on('data', (chunk) => {
+    const lines = chunk.toString().split('\n').filter(Boolean);
+    stderrLines.push(...lines);
+    if (stderrLines.length > 10) stderrLines.splice(0, stderrLines.length - 10);
+  });
+
+  // Crash / unexpected exit handler
+  pythonProcess.on('close', (code) => {
+    if (bridgeState === 'stopping') return; // intentional shutdown — ignore
+
+    bridgeState = 'crashed';
+    const lastLines = stderrLines.slice(-3).join(' | ');
+
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('bridge:status', {
+        type: 'crashed',
+        code: 'BRIDGE_CRASHED',
+        message: `Python bridge exited unexpectedly (code ${code}). ${lastLines}`,
+      });
+    }
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Full startup sequence (T012)
+// ---------------------------------------------------------------------------
+
+app.whenReady().then(async () => {
+  // Create the main window — load loading page immediately so the user
+  // sees feedback while the bridge starts.
+  mainWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    show: false, // show after loading page is ready to avoid white flash
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false, // required for preload contextBridge
+    },
+  });
+
+  mainWindow.once('ready-to-show', () => mainWindow.show());
+
+  await mainWindow.loadFile(path.join(__dirname, 'pages', 'loading', 'loading.html'));
+
+  // --- Validate config before spawning bridge ---
+  let config;
+  try {
+    config = readConfig();
+  } catch (configErr) {
+    bridgeState = 'failed';
+    mainWindow.webContents.send('bridge:status', {
+      type: 'config-error',
+      code: configErr.code || 'CONFIG_ERROR',
+      message: configErr.message,
+    });
+    return;
+  }
+
+  const { pythonPort } = config;
+  const configPath = resolveConfigPath();
+  const pingUrl = `http://127.0.0.1:${pythonPort}/ping`;
+
+  // Store port at module scope so IPC handlers can reference it
+  bridgePort = pythonPort;
+
+  // --- Spawn bridge ---
+  startBridge(pythonPort, configPath);
+
+  // --- Poll until ready or timeout ---
+  const isReady = await pollBridgeReady(pingUrl);
+
+  if (isReady) {
+    bridgeState = 'ready';
+    mainWindow.webContents.send('bridge:status', { type: 'ready' });
+
+    // --- Session restore (T015): check for a valid saved session ---
+    // Run BEFORE loading any page so the user never sees a flash of login UI
+    // if they are already authenticated.
+    const savedSession = await getSavedSession();
+    if (savedSession !== null) {
+      await mainWindow.loadFile(path.join(__dirname, 'pages', 'exam-code', 'index.html'));
+      return;
+    }
+
+    // No valid session — show the login page
+    await mainWindow.loadFile(path.join(__dirname, 'pages', 'login', 'index.html'));
+  } else {
+    bridgeState = 'failed';
+    mainWindow.webContents.send('bridge:status', {
+      type: 'failed',
+      code: 'BRIDGE_FAILED',
+      message: `Bridge did not respond on ${pingUrl} within 10 seconds.`,
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Window lifecycle
+// ---------------------------------------------------------------------------
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    bridgeState = 'stopping';
+    if (pythonProcess) pythonProcess.kill();
+    app.quit();
+  }
+});
+
+app.on('before-quit', () => {
+  bridgeState = 'stopping';
+  if (pythonProcess) pythonProcess.kill();
+});

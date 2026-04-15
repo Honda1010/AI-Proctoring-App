@@ -1,0 +1,181 @@
+/* ==========================================================================
+   Lumina AI — Reusable Component Styles
+   All values are CSS custom property references — no hardcoded hex values.
+   Requires design-tokens.css to be loaded first.
+   ========================================================================== */
+
+@import "./design-tokens.css";
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+/* Shared button base */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: var(--radius-button);
+  font-family: var(--font-body);
+  font-size: var(--font-size-label-md);
+  font-weight: 600;
+  letter-spacing: var(--letter-spacing-label);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 0.15s ease, filter 0.15s ease, background-color 0.15s ease;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+/* Primary — gradient fill */
+.btn-primary {
+  background: var(--gradient-primary);
+  color: var(--color-on-primary);
+}
+
+.btn-primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.btn-primary:active:not(:disabled) {
+  filter: brightness(0.94);
+}
+
+/* Secondary — solid fill */
+.btn-secondary {
+  background-color: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  filter: brightness(0.96);
+}
+
+.btn-secondary:active:not(:disabled) {
+  filter: brightness(0.90);
+}
+
+/* Tertiary — ghost / transparent */
+.btn-tertiary {
+  background-color: transparent;
+  color: var(--color-primary);
+}
+
+.btn-tertiary:hover:not(:disabled) {
+  background-color: var(--color-surface-container-low);
+}
+
+.btn-tertiary:active:not(:disabled) {
+  background-color: var(--color-outline-variant);
+}
+
+/* ==========================================================================
+   Input Field
+   ========================================================================== */
+
+.input-field {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background-color: var(--color-surface-container-lowest);
+  border: 1px solid rgba(191, 200, 206, var(--opacity-ghost-border));
+  border-color: color-mix(in srgb, var(--color-outline-variant) calc(var(--opacity-ghost-border) * 100%), transparent);
+  border-radius: var(--radius-button);
+  font-family: var(--font-body);
+  font-size: var(--font-size-body-lg);
+  color: var(--color-on-surface);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input-field::placeholder {
+  color: var(--color-on-surface-variant);
+  opacity: 1;
+}
+
+.input-field:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(194, 232, 255, 0.30);
+}
+
+.input-field:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Glass Modal / Card
+   ========================================================================== */
+
+.glass-modal {
+  background-color: color-mix(in srgb, var(--color-surface-container-lowest) calc(var(--opacity-glass) * 100%), transparent);
+  backdrop-filter: blur(var(--blur-glass));
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+  border: 1px solid rgba(191, 200, 206, 0.15);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-ambient);
+}
+
+/* Solid card variant (no glass effect, for non-overlay contexts) */
+.card {
+  background-color: var(--color-surface-container-lowest);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-ambient);
+}
+
+/* ==========================================================================
+   Status Chip
+   ========================================================================== */
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-chip);
+  font-family: var(--font-body);
+  font-size: var(--font-size-label-md);
+  font-weight: 600;
+  letter-spacing: var(--letter-spacing-label);
+  text-transform: uppercase;
+}
+
+.status-chip--error {
+  background-color: color-mix(in srgb, var(--color-tertiary) 12%, transparent);
+  color: var(--color-tertiary);
+}
+
+.status-chip--ok {
+  background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+}
+
+/* ==========================================================================
+   Loading Spinner (used by loading.html)
+   ========================================================================== */
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: 3px solid rgba(0, 102, 135, 0.15);
+  border-top-color: var(--color-primary);
+  animation: spin 0.8s linear infinite;
+}
+
+.spinner--lg {
+  width: 3.5rem;
+  height: 3.5rem;
+}

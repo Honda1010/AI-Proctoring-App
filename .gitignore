@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Python
+python_bridge/__pycache__/
+python_bridge/*.pyc
+python_bridge/*.pyo
+
+# Runtime config (never commit real credentials or URLs)
+config.json
+
+# Build output
+dist/
+
+# Spec-kit internal memory (local reasoning files, not source)
+.specify/memory/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
