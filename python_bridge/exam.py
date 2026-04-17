@@ -129,3 +129,199 @@ def exam_access():
 
     error_body, error_status = map_lms_exam_error(response.status_code)
     return jsonify(error_body), error_status
+
+
+# ---------------------------------------------------------------------------
+# Submit-exam helpers
+# ---------------------------------------------------------------------------
+
+def map_lms_submit_error(status_code: int):
+    """
+    Map an LMS HTTP status code to a typed, sanitised BridgeSubmitError tuple.
+
+    Raw LMS error text is never forwarded.
+
+    Args:
+        status_code: HTTP status code from the LMS response.
+
+    Returns:
+        Tuple of (response_dict, http_status_code) for use with jsonify().
+    """
+    if status_code == 401:
+        return (
+            {
+                "code": "UNAUTHORIZED",
+                "message": "Your session has expired. Please log in again.",
+            },
+            401,
+        )
+    if status_code == 409:
+        return (
+            {
+                "code": "ALREADY_SUBMITTED",
+                "message": "This exam has already been submitted.",
+            },
+            409,
+        )
+    return (
+        {
+            "code": "BRIDGE_ERROR",
+            "message": "Unable to reach the server. Please check your connection and try again.",
+        },
+        503,
+    )
+
+
+@exam_bp.route("/submit-exam", methods=["POST"])
+def submit_exam():
+    """
+    Submit answers for a completed exam attempt.
+
+    Reads attemptId, answers, and token from the request body.
+    The token is used exclusively as the Authorization header for the outbound
+    LMS POST call — it is never logged, stored, or returned in any response.
+
+    Body: { "attemptId": int, "answers": list[{"questionId": int, "choiceId": int}], "token": str }
+    Success: { "score": number, "total": number, "passed": bool, "questions": [...] } (200 OK)
+    Failure: BridgeSubmitError {"code": str, "message": str} (4xx / 5xx)
+    """
+    data = request.get_json(silent=True) or {}
+    attempt_id = data.get("attemptId")
+    answers = data.get("answers")
+    token = data.get("token") or ""
+
+    if attempt_id is None or not isinstance(answers, list) or not token:
+        return (
+            jsonify(
+                {
+                    "code": "BRIDGE_ERROR",
+                    "message": "Unable to reach the server. Please check your connection and try again.",
+                }
+            ),
+            400,
+        )
+
+    base_url = current_app.config["BASE_URL"]
+    lms_url= f"{base_url}/api/QuizAttempts/submit/{attempt_id}"
+
+    try:
+        response = requests.post(
+            lms_url,
+            json={"answers": answers},
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=15,
+            verify=False,
+        )
+    except requests.exceptions.RequestException:
+        return (
+            jsonify(
+                {
+                    "code": "BRIDGE_ERROR",
+                    "message": "Unable to reach the server. Please check your connection and try again.",
+                }
+            ),
+            503,
+        )
+
+    if response.status_code == 200:
+        return jsonify(response.json()), 200
+
+    error_body, error_status = map_lms_submit_error(response.status_code)
+    return jsonify(error_body), error_status
+
+
+# ---------------------------------------------------------------------------
+# Result helpers
+# ---------------------------------------------------------------------------
+
+def map_lms_result_error(status_code: int):
+    """
+    Map an LMS HTTP status code to a typed, sanitised BridgeResultError tuple.
+
+    Raw LMS error text is never forwarded.
+
+    Args:
+        status_code: HTTP status code from the LMS response.
+
+    Returns:
+        Tuple of (response_dict, http_status_code) for use with jsonify().
+    """
+    if status_code == 401:
+        return (
+            {
+                "code": "UNAUTHORIZED",
+                "message": "Your session has expired. Please log in again.",
+            },
+            401,
+        )
+    if status_code == 404:
+        return (
+            {
+                "code": "RESULT_NOT_FOUND",
+                "message": "Result not found. Please contact your instructor.",
+            },
+            404,
+        )
+    return (
+        {
+            "code": "BRIDGE_ERROR",
+            "message": "Unable to reach the server. Please check your connection and try again.",
+        },
+        503,
+    )
+
+
+@exam_bp.route("/result", methods=["POST"])
+def get_result():
+    """
+    Retrieve the result for a completed exam attempt.
+
+    Reads attemptId and token from the request body. The token is used
+    exclusively as the Authorization header for the outbound LMS GET call —
+    it is never logged, stored by this blueprint, or returned in any response.
+
+    Body:    { "attemptId": int, "token": str }
+    Success: SubmitResult fields from the LMS (200 OK).
+    Failure: BridgeResultError {"code": str, "message": str} (4xx / 5xx).
+    """
+    data = request.get_json(silent=True) or {}
+    attempt_id = data.get("attemptId")
+    token = data.get("token") or ""
+
+    if attempt_id is None or not token:
+        return (
+            jsonify(
+                {
+                    "code": "BRIDGE_ERROR",
+                    "message": "Unable to reach the server. Please check your connection and try again.",
+                }
+            ),
+            400,
+        )
+
+    base_url = current_app.config["BASE_URL"]
+    lms_url = f"{base_url}/api/QuizAttempts/result/{attempt_id}"
+
+    try:
+        response = requests.get(
+            lms_url,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=15,
+            verify=False,
+        )
+    except requests.exceptions.RequestException:
+        return (
+            jsonify(
+                {
+                    "code": "BRIDGE_ERROR",
+                    "message": "Unable to reach the server. Please check your connection and try again.",
+                }
+            ),
+            503,
+        )
+
+    if response.status_code == 200:
+        return jsonify(response.json()), 200
+
+    error_body, error_status = map_lms_result_error(response.status_code)
+    return jsonify(error_body), error_status

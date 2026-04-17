@@ -1,9 +1,9 @@
-@import "@fontsource/manrope/400.css";
-@import "@fontsource/manrope/600.css";
-@import "@fontsource/manrope/700.css";
-@import "@fontsource/inter/400.css";
-@import "@fontsource/inter/500.css";
-@import "@fontsource/inter/600.css";
+@import "../../node_modules/@fontsource/manrope/400.css";
+@import "../../node_modules/@fontsource/manrope/600.css";
+@import "../../node_modules/@fontsource/manrope/700.css";
+@import "../../node_modules/@fontsource/inter/400.css";
+@import "../../node_modules/@fontsource/inter/500.css";
+@import "../../node_modules/@fontsource/inter/600.css";
 
 /* ==========================================================================
    Lumina AI — Design Token System "Ethereal Authority"

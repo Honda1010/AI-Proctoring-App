@@ -1,0 +1,69 @@
+{
+  "quizCode": "CS101-MID",
+  "quizTitle": "Midterm Exam — Introduction to Computer Science",
+  "score": 7,
+  "totalQuestions": 10,
+  "percentage": 70.0,
+  "questions": [
+    {
+      "questionText": "What does CPU stand for?",
+      "studentChoice": "Central Processing Unit",
+      "correctChoice": "Central Processing Unit",
+      "isCorrect": true
+    },
+    {
+      "questionText": "Which data structure uses LIFO ordering?",
+      "studentChoice": "Queue",
+      "correctChoice": "Stack",
+      "isCorrect": false
+    },
+    {
+      "questionText": "What is the time complexity of binary search?",
+      "studentChoice": "O(log n)",
+      "correctChoice": "O(log n)",
+      "isCorrect": true
+    },
+    {
+      "questionText": "Which protocol is used for email sending?",
+      "studentChoice": "FTP",
+      "correctChoice": "SMTP",
+      "isCorrect": false
+    },
+    {
+      "questionText": "What does RAM stand for?",
+      "studentChoice": "Random Access Memory",
+      "correctChoice": "Random Access Memory",
+      "isCorrect": true
+    },
+    {
+      "questionText": "Which language is primarily used for web styling?",
+      "studentChoice": "CSS",
+      "correctChoice": "CSS",
+      "isCorrect": true
+    },
+    {
+      "questionText": "What is 2 to the power of 8?",
+      "studentChoice": "256",
+      "correctChoice": "256",
+      "isCorrect": true
+    },
+    {
+      "questionText": "Which sorting algorithm has worst-case O(n²)?",
+      "studentChoice": "Merge Sort",
+      "correctChoice": "Bubble Sort",
+      "isCorrect": false
+    },
+    {
+      "questionText": "What does HTML stand for?",
+      "studentChoice": "HyperText Markup Language",
+      "correctChoice": "HyperText Markup Language",
+      "isCorrect": true
+    },
+    {
+      "questionText": "Which of these is NOT a JavaScript data type?",
+      "studentChoice": "Float",
+      "correctChoice": "Float",
+      "isCorrect": true
+    }
+  ]
+}

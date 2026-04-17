@@ -34,6 +34,10 @@ const ALLOWED_INVOKE_CHANNELS = [
   'bridge:open-external',       // Open https:// URL in system browser
   'bridge:start-exam',          // Validate exam code and start attempt
   'bridge:get-exam-session',    // Retrieve stored ExamSession (used by Exam page)
+  'bridge:submit-exam',         // Submit exam answers and get result
+  'bridge:get-submit-result',   // Retrieve stored SubmitResult (used by Result page)
+  'bridge:get-result',          // Recover result from LMS when submitResult is absent
+  'bridge:clear-submit-result', // Clear submitResult + examSession; navigate to Exam Access
 ];
 
 contextBridge.exposeInMainWorld('bridge', {
@@ -126,5 +130,54 @@ contextBridge.exposeInMainWorld('bridge', {
    */
   getExamSession() {
     return ipcRenderer.invoke('bridge:get-exam-session');
+  },
+
+  /**
+   * Submit exam answers to the main process for forwarding to the bridge.
+   * The JWT is attached by main.js — the renderer never holds tokens.
+   *
+   * @param {Array<{questionId: number, choiceId: number}>} answers
+   * @returns {Promise<
+   *   {ok: true, data: object} |
+   *   {ok: false, redirect: 'login'} |
+   *   {ok: false, error: object}
+   * >}
+   */
+  submitExam(answers) {
+    return ipcRenderer.invoke('bridge:submit-exam', { answers });
+  },
+
+  /**
+   * Retrieve the stored SubmitResult from main.js (used by the Result page).
+   *
+   * @returns {Promise<{ok: true, data: object} | {ok: false}>}
+   */
+  getSubmitResult() {
+    return ipcRenderer.invoke('bridge:get-submit-result');
+  },
+
+  /**
+   * Recover the exam result from the LMS when submitResult is absent in memory.
+   * main.js reads examSession.attemptId and the stored JWT; renderer never holds tokens.
+   *
+   * @returns {Promise<
+   *   {ok: true, data: object} |
+   *   {ok: false, redirect: 'login'} |
+   *   {ok: false, error: object}
+   * >}
+   */
+  getResult() {
+    return ipcRenderer.invoke('bridge:get-result');
+  },
+
+  /**
+   * Clear the in-memory submitResult and examSession in main.js, then
+   * navigate the Electron window to the Exam Access page.
+   * The authenticated session (keytar / sessionMemory) is NOT cleared.
+   *
+   * @returns {Promise<{ok: true}>}
+   */
+  clearSubmitResult() {
+    return ipcRenderer.invoke('bridge:clear-submit-result');
   },
 });

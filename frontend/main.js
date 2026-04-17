@@ -47,6 +47,14 @@ let sessionMemory = null;
  */
 let examSession = null;
 
+/**
+ * Submit result returned by the LMS after the exam is submitted.
+ * Stored here so the Result page can retrieve it via bridge:get-submit-result.
+ * In-memory only — not persisted across app restarts.
+ * @type {object | null}
+ */
+let submitResult = null;
+
 /** keytar service identifier shared across all session keys. */
 const KEYTAR_SERVICE = 'lumina-ai-proctoring';
 
@@ -433,6 +441,139 @@ ipcMain.handle('bridge:get-exam-session', async () => {
     return { ok: true, session: examSession };
   }
   return { ok: false };
+});
+
+/**
+ * bridge:submit-exam — Forward exam answers to the Python bridge.
+ *
+ * Reads the stored JWT token from keytar to attach as Authorization header.
+ * Returns { ok: true, data } on success or { ok: false, redirect: 'login' } /
+ * { ok: false, error } on failure.
+ *
+ * Returns: { ok: true, data: object } | { ok: false, redirect: 'login' } | { ok: false, error: object }
+ */
+ipcMain.handle('bridge:submit-exam', async (_event, { answers }) => {
+  try {
+    const accessToken =
+      sessionMemory?.accessToken ||
+      (await keytar.getPassword(KEYTAR_SERVICE, 'access-token'));
+
+    const attemptId = examSession?.attemptId;
+
+    const response = await net.fetch(`http://127.0.0.1:${bridgePort}/submit-exam`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ attemptId, answers, token: accessToken }),
+    });
+
+    const body = await response.json();
+
+    if (response.ok) {
+      submitResult = body;
+      return { ok: true, data: submitResult };
+    }
+
+    if (body?.code === 'UNAUTHORIZED') {
+      await clearAllKeytarEntries();
+      sessionMemory = null;
+      mainWindow?.loadFile(path.join(__dirname, 'pages/login/index.html'));
+      return; // renderer IPC call never resolves — main.js navigates away
+    }
+
+    return { ok: false, error: body };
+  } catch {
+    return {
+      ok: false,
+      error: {
+        code: 'BRIDGE_ERROR',
+        message: 'Unable to reach the server. Please check your connection and try again.',
+      },
+    };
+  }
+});
+
+/**
+ * bridge:get-submit-result — Return the stored SubmitResult to the Result page.
+ *
+ * Returns: { ok: true, data: object } | { ok: false }
+ */
+ipcMain.handle('bridge:get-submit-result', async () => {
+  if (submitResult) {
+    return { ok: true, data: submitResult };
+  }
+  return { ok: false };
+});
+
+/**
+ * bridge:get-result — Recover the result from the LMS when submitResult is absent.
+ *
+ * Reads examSession.attemptId and the stored JWT from keytar / sessionMemory,
+ * then POSTs to the Python bridge /result route which calls
+ * GET /api/QuizAttempts/result/{attemptId} on the LMS.
+ *
+ * On success caches the result as submitResult so subsequent calls to
+ * bridge:get-submit-result return it directly.
+ *
+ * Returns: { ok: true, data: object } | { ok: false, redirect: 'login' } | { ok: false, error: object }
+ */
+ipcMain.handle('bridge:get-result', async () => {
+  try {
+    const attemptId = examSession?.attemptId;
+    if (attemptId == null) {
+      return { ok: false, redirect: 'login' };
+    }
+
+    const accessToken =
+      sessionMemory?.accessToken ||
+      (await keytar.getPassword(KEYTAR_SERVICE, 'access-token'));
+
+    const response = await net.fetch(`http://127.0.0.1:${bridgePort}/result`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ attemptId, token: accessToken }),
+    });
+
+    const body = await response.json();
+
+    if (response.ok) {
+      submitResult = body;
+      return { ok: true, data: submitResult };
+    }
+
+    if (body?.code === 'UNAUTHORIZED') {
+      await clearAllKeytarEntries();
+      sessionMemory = null;
+      mainWindow?.loadFile(path.join(__dirname, 'pages/login/index.html'));
+      return; // renderer IPC call never resolves — main.js navigates away
+    }
+
+    return { ok: false, error: body };
+  } catch {
+    return {
+      ok: false,
+      error: {
+        code: 'BRIDGE_ERROR',
+        message: 'Unable to reach the server. Please check your connection and try again.',
+      },
+    };
+  }
+});
+
+/**
+ * bridge:clear-submit-result — Clear in-memory result + session, navigate to Exam Access page.
+ *
+ * Called when the student clicks "Back to Home" on the Result page.
+ * Clears both submitResult and examSession so subsequent navigations to
+ * the Result page redirect to Login (SC-004).
+ * Authentication session (keytar / sessionMemory) is NOT cleared (FR-005).
+ *
+ * Returns: { ok: true }
+ */
+ipcMain.handle('bridge:clear-submit-result', async () => {
+  submitResult = null;
+  examSession = null;
+  mainWindow?.loadFile(path.join(__dirname, 'pages/exam-code/index.html'));
+  return { ok: true };
 });
 
 // ---------------------------------------------------------------------------

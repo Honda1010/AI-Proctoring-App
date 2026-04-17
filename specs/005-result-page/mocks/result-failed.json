@@ -1,0 +1,69 @@
+{
+  "quizCode": "FAIL-2026",
+  "quizTitle": "Failed Exam — Introduction to Computer Science",
+  "score": 3,
+  "totalQuestions": 10,
+  "percentage": 30.0,
+  "questions": [
+    {
+      "questionText": "What does CPU stand for?",
+      "studentChoice": "Core Processing Unit",
+      "correctChoice": "Central Processing Unit",
+      "isCorrect": false
+    },
+    {
+      "questionText": "Which data structure uses LIFO ordering?",
+      "studentChoice": "Stack",
+      "correctChoice": "Stack",
+      "isCorrect": true
+    },
+    {
+      "questionText": "What is the time complexity of binary search?",
+      "studentChoice": "O(n)",
+      "correctChoice": "O(log n)",
+      "isCorrect": false
+    },
+    {
+      "questionText": "Which protocol is used for email sending?",
+      "studentChoice": "SMTP",
+      "correctChoice": "SMTP",
+      "isCorrect": true
+    },
+    {
+      "questionText": "What does RAM stand for?",
+      "studentChoice": "Read And Memory",
+      "correctChoice": "Random Access Memory",
+      "isCorrect": false
+    },
+    {
+      "questionText": "Which language is primarily used for web styling?",
+      "studentChoice": "HTML",
+      "correctChoice": "CSS",
+      "isCorrect": false
+    },
+    {
+      "questionText": "What is 2 to the power of 8?",
+      "studentChoice": "128",
+      "correctChoice": "256",
+      "isCorrect": false
+    },
+    {
+      "questionText": "Which sorting algorithm has worst-case O(n²)?",
+      "studentChoice": "Bubble Sort",
+      "correctChoice": "Bubble Sort",
+      "isCorrect": true
+    },
+    {
+      "questionText": "What does HTML stand for?",
+      "studentChoice": "HyperText Markup Language",
+      "correctChoice": "HyperText Markup Language",
+      "isCorrect": true
+    },
+    {
+      "questionText": "Which of these is NOT a JavaScript data type?",
+      "studentChoice": "Character",
+      "correctChoice": "Float",
+      "isCorrect": false
+    }
+  ]
+}

@@ -10,11 +10,18 @@
 
 .exam-page {
   min-height: 100vh;
-  background: var(--gradient-primary);
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(
+    160deg,
+    var(--color-primary-fixed) 0%,
+    var(--color-surface-container-low) 55%,
+    var(--color-surface-container-lowest) 100%
+  );
 }
 
 .page-background {
-  min-height: 100vh;
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
