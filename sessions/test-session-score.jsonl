@@ -1,0 +1,18 @@
+{"service": "speech-detection", "sessionId": "test-session-score", "confidence": 0.8, "payload": {"is_speech_detected": true}}
+{"type": "alert", "code": "SPEECH_DETECTED", "severity": "medium", "message": "Speech presence detected in environment.", "timestamp": "2026-04-19T14:43:21.886881+00:00", "sessionId": "test-session-score", "evidence": {"service": "speech-detection", "confidence": 0.8}}
+{"type": "riskScore", "score": 3, "trend": "rising", "timestamp": "2026-04-19T14:43:21.887877+00:00"}
+{"service": "speech-detection", "sessionId": "test-session-score", "confidence": 0.8, "payload": {"is_speech_detected": true}}
+{"type": "alert", "code": "SPEECH_DETECTED", "severity": "medium", "message": "Speech presence detected in environment.", "timestamp": "2026-04-19T14:43:21.889867+00:00", "sessionId": "test-session-score", "evidence": {"service": "speech-detection", "confidence": 0.8}}
+{"type": "riskScore", "score": 6, "trend": "rising", "timestamp": "2026-04-19T14:43:21.889867+00:00"}
+{"service": "speech-detection", "sessionId": "test-session-score", "confidence": 0.8, "payload": {"is_speech_detected": true}}
+{"type": "alert", "code": "SPEECH_DETECTED", "severity": "medium", "message": "Speech presence detected in environment.", "timestamp": "2026-04-19T14:43:35.230679+00:00", "sessionId": "test-session-score", "evidence": {"service": "speech-detection", "confidence": 0.8}}
+{"type": "riskScore", "score": 3, "trend": "rising", "timestamp": "2026-04-19T14:43:35.230679+00:00"}
+{"service": "speech-detection", "sessionId": "test-session-score", "confidence": 0.8, "payload": {"is_speech_detected": true}}
+{"type": "alert", "code": "SPEECH_DETECTED", "severity": "medium", "message": "Speech presence detected in environment.", "timestamp": "2026-04-19T14:43:35.231582+00:00", "sessionId": "test-session-score", "evidence": {"service": "speech-detection", "confidence": 0.8}}
+{"type": "riskScore", "score": 6, "trend": "rising", "timestamp": "2026-04-19T14:43:35.231582+00:00"}
+{"service": "speech-detection", "sessionId": "test-session-score", "confidence": 0.8, "payload": {"is_speech_detected": true}}
+{"type": "alert", "code": "SPEECH_DETECTED", "severity": "medium", "message": "Speech presence detected in environment.", "timestamp": "2026-04-19T14:45:28.352667+00:00", "sessionId": "test-session-score", "evidence": {"service": "speech-detection", "confidence": 0.8}}
+{"type": "riskScore", "score": 3, "trend": "rising", "timestamp": "2026-04-19T14:45:28.352667+00:00"}
+{"service": "speech-detection", "sessionId": "test-session-score", "confidence": 0.8, "payload": {"is_speech_detected": true}}
+{"type": "alert", "code": "SPEECH_DETECTED", "severity": "medium", "message": "Speech presence detected in environment.", "timestamp": "2026-04-19T14:45:28.352667+00:00", "sessionId": "test-session-score", "evidence": {"service": "speech-detection", "confidence": 0.8}}
+{"type": "riskScore", "score": 6, "trend": "rising", "timestamp": "2026-04-19T14:45:28.353669+00:00"}

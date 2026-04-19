@@ -1,0 +1,2 @@
+{"service": "eye-gaze", "sessionId": "test-session-log", "payload": {"status": "away"}}
+{"type": "riskScore", "score": 2, "trend": "rising", "timestamp": "2026-04-19T14:45:28.361777+00:00"}

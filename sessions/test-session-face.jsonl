@@ -1,0 +1,15 @@
+{"service": "face-recognition", "sessionId": "test-session-face", "confidence": 1.0, "payload": {"is_matched": false}}
+{"type": "riskScore", "score": 5, "trend": "rising", "timestamp": "2026-04-19T14:43:21.669895+00:00"}
+{"service": "face-recognition", "sessionId": "test-session-face", "confidence": 1.0, "payload": {"is_matched": false}}
+{"type": "alert", "code": "NO_FACE_DETECTED", "severity": "high", "message": "Student face missing for > 0.1s", "timestamp": "2026-04-19T14:43:21.872730+00:00", "sessionId": "test-session-face", "evidence": {"service": "face-recognition", "confidence": 1.0}}
+{"type": "riskScore", "score": 10, "trend": "rising", "timestamp": "2026-04-19T14:43:21.876257+00:00"}
+{"service": "face-recognition", "sessionId": "test-session-face", "confidence": 1.0, "payload": {"is_matched": false}}
+{"type": "riskScore", "score": 5, "trend": "rising", "timestamp": "2026-04-19T14:43:35.021408+00:00"}
+{"service": "face-recognition", "sessionId": "test-session-face", "confidence": 1.0, "payload": {"is_matched": false}}
+{"type": "alert", "code": "NO_FACE_DETECTED", "severity": "high", "message": "Student face missing for > 0.1s", "timestamp": "2026-04-19T14:43:35.223604+00:00", "sessionId": "test-session-face", "evidence": {"service": "face-recognition", "confidence": 1.0}}
+{"type": "riskScore", "score": 10, "trend": "rising", "timestamp": "2026-04-19T14:43:35.223604+00:00"}
+{"service": "face-recognition", "sessionId": "test-session-face", "confidence": 1.0, "payload": {"is_matched": false}}
+{"type": "riskScore", "score": 5, "trend": "rising", "timestamp": "2026-04-19T14:45:28.146304+00:00"}
+{"service": "face-recognition", "sessionId": "test-session-face", "confidence": 1.0, "payload": {"is_matched": false}}
+{"type": "alert", "code": "NO_FACE_DETECTED", "severity": "high", "message": "Student face missing for > 0.1s", "timestamp": "2026-04-19T14:45:28.347666+00:00", "sessionId": "test-session-face", "evidence": {"service": "face-recognition", "confidence": 1.0}}
+{"type": "riskScore", "score": 10, "trend": "rising", "timestamp": "2026-04-19T14:45:28.347666+00:00"}

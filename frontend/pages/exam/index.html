@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="../../assets/design-tokens.css" />
   <link rel="stylesheet" href="../../assets/components.css" />
   <link rel="stylesheet" href="./exam.css" />
+  <script defer src="./DashboardController.js"></script>
   <script defer src="./exam.js"></script>
 </head>
 <body>
@@ -56,25 +57,39 @@
       </div>
 
       <div class="ai-status-rows" aria-label="AI monitoring status">
-        <div class="status-row">
-          <span class="status-label">Face Detection</span>
-          <span class="status-indicator active">Active</span>
-        </div>
-        <div class="status-row">
-          <span class="status-label">Eye Tracking</span>
-          <span class="status-indicator active">Active</span>
-        </div>
-        <div class="status-row">
-          <span class="status-label">Object Detection</span>
-          <span class="status-indicator active">Active</span>
-        </div>
-        <div class="status-row">
-          <span class="status-label">Face Anti-Spoofing</span>
-          <span class="status-indicator active">Active</span>
-        </div>
-        <div class="status-row">
-          <span class="status-label">Multiple Faces</span>
+        <div class="status-row" data-service="face-recognition">
+          <span class="status-label">Face Recognition</span>
           <span class="status-indicator inactive">Inactive</span>
+        </div>
+        <div class="status-row" data-service="eye-gaze">
+          <span class="status-label">Eye Tracking</span>
+          <span class="status-indicator inactive">Inactive</span>
+        </div>
+        <div class="status-row" data-service="object-detection">
+          <span class="status-label">Object Detection</span>
+          <span class="status-indicator inactive">Inactive</span>
+        </div>
+        <div class="status-row" data-service="speech-detection">
+          <span class="status-label">Speech Detection</span>
+          <span class="status-indicator inactive">Inactive</span>
+        </div>
+      </div>
+
+      <!-- Risk Gauge -->
+      <div class="risk-gauge-container">
+        <svg viewBox="0 0 100 55" class="risk-gauge">
+          <path class="gauge-track" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#e0e0e0" stroke-width="8" stroke-linecap="round" />
+          <path id="gaugeNeedle" class="gauge-fill" d="M 10 50 A 40 40 0 0 1 10 50" fill="none" stroke="var(--color-primary)" stroke-width="8" stroke-linecap="round" />
+        </svg>
+        <div class="risk-value" id="riskValue">0</div>
+        <div class="risk-label">Risk Score</div>
+      </div>
+
+      <!-- Alert Feed -->
+      <div class="alert-feed-container">
+        <h4 class="feed-title">Proctoring Alerts</h4>
+        <div class="alert-feed" id="alertFeed">
+          <div class="alert-placeholder">No alerts in this session</div>
         </div>
       </div>
     </aside>

@@ -187,4 +187,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     e.preventDefault();
     window.bridge.clearSubmitResult();
   });
+
+  // T014 (Phase 9): Wire up the proctoring report button.
+  document.getElementById('viewReportBtn').addEventListener('click', () => {
+    // Navigate to session report (ID is already stored in main.js, report.js will fetch it)
+    window.location.href = '../session-report/index.html';
+  });
 });

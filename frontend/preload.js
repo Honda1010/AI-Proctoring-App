@@ -21,6 +21,7 @@ const { contextBridge, ipcRenderer } = require('electron');
  */
 const ALLOWED_RECEIVE_CHANNELS = [
   'bridge:status',   // BridgeStatus state updates from main process
+  'bridge:ai-event', // AI proctoring events (detections, alerts, risk scores)
 ];
 
 /**
@@ -38,9 +39,36 @@ const ALLOWED_INVOKE_CHANNELS = [
   'bridge:get-submit-result',   // Retrieve stored SubmitResult (used by Result page)
   'bridge:get-result',          // Recover result from LMS when submitResult is absent
   'bridge:clear-submit-result', // Clear submitResult + examSession; navigate to Exam Access
+  'bridge:get-session-log',     // Retrieve session JSONL log lines
+  'bridge:export-pdf',          // Export current page to PDF
 ];
 
 contextBridge.exposeInMainWorld('bridge', {
+  /**
+   * Subscribe to AI proctoring events from the Python bridge.
+   * @param {(event: object) => void} callback
+   * @returns {() => void} unsubscribe function
+   */
+  onAiEvent(callback) {
+    const handler = (_event, payload) => callback(payload);
+    ipcRenderer.on('bridge:ai-event', handler);
+    return () => ipcRenderer.removeListener('bridge:ai-event', handler);
+  },
+
+  /**
+   * Retrieve the JSONL log for a specific session.
+   */
+  getSessionLog(sessionId) {
+    return ipcRenderer.invoke('bridge:get-session-log', { sessionId });
+  },
+
+  /**
+   * Export the current view to a PDF.
+   */
+  exportPdf(filename) {
+    return ipcRenderer.invoke('bridge:export-pdf', { filename });
+  },
+
   /**
    * Subscribe to bridge status events from the main process.
    *

@@ -1,0 +1,9 @@
+{"service": "object-detection", "sessionId": "test-session-obj", "confidence": 0.9, "payload": {"suspicious": true, "objects": ["cell phone"]}}
+{"type": "alert", "code": "UNAUTHORIZED_OBJECT", "severity": "high", "message": "Suspicious object detected: cell phone", "timestamp": "2026-04-19T14:43:21.664419+00:00", "sessionId": "test-session-obj", "evidence": {"service": "object-detection", "confidence": 0.9}}
+{"type": "riskScore", "score": 6, "trend": "rising", "timestamp": "2026-04-19T14:43:21.664419+00:00"}
+{"service": "object-detection", "sessionId": "test-session-obj", "confidence": 0.9, "payload": {"suspicious": true, "objects": ["cell phone"]}}
+{"type": "alert", "code": "UNAUTHORIZED_OBJECT", "severity": "high", "message": "Suspicious object detected: cell phone", "timestamp": "2026-04-19T14:43:35.016426+00:00", "sessionId": "test-session-obj", "evidence": {"service": "object-detection", "confidence": 0.9}}
+{"type": "riskScore", "score": 6, "trend": "rising", "timestamp": "2026-04-19T14:43:35.017408+00:00"}
+{"service": "object-detection", "sessionId": "test-session-obj", "confidence": 0.9, "payload": {"suspicious": true, "objects": ["cell phone"]}}
+{"type": "alert", "code": "UNAUTHORIZED_OBJECT", "severity": "high", "message": "Suspicious object detected: cell phone", "timestamp": "2026-04-19T14:45:28.141782+00:00", "sessionId": "test-session-obj", "evidence": {"service": "object-detection", "confidence": 0.9}}
+{"type": "riskScore", "score": 6, "trend": "rising", "timestamp": "2026-04-19T14:45:28.141782+00:00"}

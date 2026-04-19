@@ -78,6 +78,9 @@ After reviewing their result the student can exit back to the Exam Access (exam 
 - **FR-007**: The Result page MUST be fully readable with the breakdown list rendered when the `questions` array contains 50 or more entries without layout breaking.
 - **FR-008**: When the `questions` array is empty or absent, the breakdown section MUST be hidden and the score summary alone is shown.
 - **FR-009**: A `bridge:get-result` IPC channel MUST be added to main.js and exposed via preload.js to call `GET /api/QuizAttempts/result/{attemptId}` with the stored access token and return the result shape or a typed error.
+- **FR-010**: The Result page MUST disable text selection and the copy command (Ctrl+C / Context Menu) across the entire page to prevent harvesting of exam content.
+- **FR-011**: The Result page MUST allow printing via a "Print Result" button; however, the print output MUST be constrained to the score summary card only (exam title, code, score, percentage, pass/fail status). The per-question breakdown section MUST be hidden in the print view using `@media print`.
+- **FR-012**: Each row in the question breakdown MUST be keyboard-focusable (`tabindex="0"`) and use semantic ARIA roles (e.g., `role="listitem"`) and descriptive `aria-label` or `aria-labelledby` attributes to ensure screen reader users can understand the full context (question, student's selection, correct answer, and status) of each result.
 
 ### Key Entities
 
@@ -108,6 +111,14 @@ After reviewing their result the student can exit back to the Exam Access (exam 
 
 - Q: Should the redesigned page retain a "Passed" / "Failed" text label now that the score summary uses an SVG progress ring instead of the original pass/fail chip? → A: Yes — keep a compact "Passed" / "Failed" chip directly below the SVG ring inside the hero card. Percentage alone is not sufficient; the chip is required to satisfy FR-001 and FR-002.
 - Q: Does FR-003 "always visible" mean all questions must be simultaneously rendered, or only that the breakdown section is always present? → A: The section container is always present and cannot be collapsed — per-item filtering via All / Correct / Incorrect tabs is acceptable since all questions remain accessible via the "All" tab.
+
+### Session 2026-04-19
+
+- Q: Should the student be able to select or copy text from the Result page breakdown? → A: No — disable text selection and copying completely.
+- Q: Should the student be able to print or export (PDF/CSV) their exam results? → A: Yes — allow the student to print their result summary only (score and percentage); the per-question breakdown MUST be excluded from the print layout via CSS @media print.
+- Q: Should there be a dedicated "Retake" button on the Result page? → A: No — students must use the "Back to Home" button to return to the Exam Access page and re-enter the exam code if they wish to attempt the exam again.
+- Q: What should happen if the session token expires while the student is on the Result page? → A: Allow viewing current page until navigation — the student can finish reviewing their results even if the token expires; they are only redirected to Login if they attempt a new action (like "Back to Home" or a page refresh) that requires a valid session.
+- Q: Should the per-question breakdown rows be focusable for keyboard navigation and screen readers? → A: Yes — each breakdown row MUST be focusable (tabindex="0") and use appropriate ARIA roles and labels to communicate question text, student's answer, correct answer, and correctness status to assistive technologies.
 
 ## Assumptions
 
