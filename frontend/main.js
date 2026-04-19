@@ -9,7 +9,7 @@ const keytar = require('keytar');
 // ---------------------------------------------------------------------------
 // Module-level state (exported for internal use by later task expansions)
 // ---------------------------------------------------------------------------
-
+// changes
 /** @type {BrowserWindow | null} */
 let mainWindow = null;
 
