@@ -1,0 +1,6 @@
+{"service": "eye-gaze", "payload": {"status": "on-screen"}}
+{"type": "riskScore", "score": 45, "trend": "falling", "timestamp": "2026-04-19T14:43:21.897390+00:00"}
+{"service": "eye-gaze", "payload": {"status": "on-screen"}}
+{"type": "riskScore", "score": 45, "trend": "falling", "timestamp": "2026-04-19T14:43:35.235759+00:00"}
+{"service": "eye-gaze", "payload": {"status": "on-screen"}}
+{"type": "riskScore", "score": 45, "trend": "falling", "timestamp": "2026-04-19T14:45:28.357778+00:00"}

@@ -14,6 +14,7 @@ let timerTotalSeconds = 0;
 let isSubmitting = false;
 let autoSubmitted = false;
 let remainingSeconds = 0; // U1 fix: track via variable, not DOM parsing
+let dashboard = null;
 
 // ---------------------------------------------------------------------------
 // T012 — DOMContentLoaded: load session and initialise page
@@ -49,10 +50,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderQuestion(0);
   startTimer();
   initWebcam();
+  
+  // Initialize AI Dashboard
+  dashboard = new DashboardController();
+  dashboard.init();
 
   // T032 — release camera tracks on navigation
   window.addEventListener('beforeunload', () => {
     activeStream?.getTracks().forEach(t => t.stop());
+    dashboard?.destroy();
   });
 
   document.getElementById('skeletonOverlay').classList.add('hidden');

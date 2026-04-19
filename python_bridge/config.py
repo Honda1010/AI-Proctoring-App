@@ -12,7 +12,7 @@ string so Electron can parse them from the subprocess stderr stream.
 import json
 import sys
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, Dict, Any
 
 
 # ---------------------------------------------------------------------------
@@ -51,6 +51,9 @@ class ConfigError(Exception):
 class AppConfig:
     base_url: str
     python_port: int = field(default=5050)
+    modal: Dict[str, Any] = field(default_factory=dict)
+    services: Dict[str, Any] = field(default_factory=dict)
+    orchestration: Dict[str, Any] = field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------
@@ -140,4 +143,24 @@ def load_config(config_path: str) -> AppConfig:
         err.emit_stderr()
         raise err
 
-    return AppConfig(base_url=base_url, python_port=python_port)
+    # Capture optional fields
+    modal = data.get("modal", {})
+    services = data.get("services", {})
+    orchestration = data.get("orchestration", {})
+
+    # Optional: Basic validation for local service settings if they exist
+    for service_name in ["eye-gaze", "speech-detection"]:
+        if service_name in services:
+            s_cfg = services[service_name]
+            if not isinstance(s_cfg, dict):
+                err = ConfigError("INVALID_JSON", f"Service config for {service_name} must be an object.")
+                err.emit_stderr()
+                raise err
+
+    return AppConfig(
+        base_url=base_url,
+        python_port=python_port,
+        modal=modal,
+        services=services,
+        orchestration=orchestration
+    )

@@ -9,21 +9,124 @@ const keytar = require('keytar');
 // ---------------------------------------------------------------------------
 // Module-level state (exported for internal use by later task expansions)
 // ---------------------------------------------------------------------------
-
+// changes
 /** @type {BrowserWindow | null} */
 let mainWindow = null;
 
 /** @type {import('child_process').ChildProcess | null} */
 let pythonProcess = null;
 
-/**
- * Current lifecycle state of the Python bridge.
- * 'stopping' is set before intentional shutdown so the crash handler
- * can distinguish a deliberate quit from an unexpected exit.
- *
- * @type {'idle' | 'starting' | 'ready' | 'failed' | 'crashed' | 'stopping'}
- */
+/** @type {'idle' | 'starting' | 'ready' | 'failed' | 'crashed' | 'stopping'} */
 let bridgeState = 'idle';
+
+/** @type {import('child_process').ChildProcess | null} */
+let aiRouterProcess = null;
+
+/**
+ * Resolve the absolute path to config.json based on packaging state.
+ * @returns {string}
+ */
+function resolveConfigPath() {
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, 'config.json');
+  }
+  return path.join(__dirname, '..', 'config.json');
+}
+
+/**
+ * Spawn the AI Router process (router.py).
+ * Captures JSON-RPC notifications from stdout and forwards them to the renderer.
+ */
+function startAIRouter() {
+  const routerScript = path.join(__dirname, '..', 'python_bridge', 'router.py');
+  const configPath = resolveConfigPath();
+
+  aiRouterProcess = spawn('python', [routerScript], {
+    env: { ...process.env, LUMINA_CONFIG_PATH: configPath },
+    stdio: ['pipe', 'pipe', 'pipe'],
+  });
+
+  let buffer = '';
+  aiRouterProcess.stdout.on('data', (chunk) => {
+    buffer += chunk.toString();
+    let lines = buffer.split('\n');
+    buffer = lines.pop(); // Keep partial line in buffer
+
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      try {
+        const msg = JSON.parse(line);
+        // Only forward notifications (detection, alert, riskScore) to renderer
+        if (msg.jsonrpc === '2.0' && msg.method && !msg.id) {
+          mainWindow?.webContents.send('bridge:ai-event', msg);
+        }
+      } catch (err) {
+        process.stderr.write(`[router] JSON parse error: ${err.message}\n`);
+      }
+    }
+  });
+
+  aiRouterProcess.stderr.on('data', (chunk) => {
+    process.stderr.write(`[router-err] ${chunk}`);
+  });
+
+  aiRouterProcess.on('close', (code) => {
+    process.stderr.write(`[router] exited with code ${code}\n`);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// IPC handlers
+// ---------------------------------------------------------------------------
+
+ipcMain.handle('bridge:get-status', () => bridgeState);
+
+/**
+ * bridge:get-session-log — Read a session's JSONL log file from disk.
+ * Arg: { sessionId: string }
+ */
+ipcMain.handle('bridge:get-session-log', async (_event, { sessionId }) => {
+  try {
+    const logPath = path.join(__dirname, '..', 'sessions', `${sessionId}.jsonl`);
+    if (!fs.existsSync(logPath)) {
+      return { ok: false, error: { code: 'LOG_NOT_FOUND', message: 'Session log not found.' } };
+    }
+    const content = fs.readFileSync(logPath, 'utf-8');
+    const lines = content.split('\n').filter(line => line.trim());
+    return { ok: true, data: lines };
+  } catch (err) {
+    return { ok: false, error: { code: 'IO_ERROR', message: err.message } };
+  }
+});
+
+/**
+ * bridge:export-pdf — Export current webContents to a PDF file.
+ */
+ipcMain.handle('bridge:export-pdf', async (_event, { filename }) => {
+  try {
+    const { filePath } = await shell.showSaveDialog(mainWindow, {
+      defaultPath: filename,
+      filters: [{ name: 'PDF Files', extensions: ['pdf'] }]
+    });
+
+    if (!filePath) return { ok: false };
+
+    const data = await mainWindow.webContents.printToPDF({
+      printBackground: true,
+      margins: { top: 0, bottom: 0, left: 0, right: 0 }
+    });
+
+    fs.writeFileSync(filePath, data);
+    return { ok: true, path: filePath };
+  } catch (err) {
+    process.stderr.write(`[pdf] export failed: ${err.message}\n`);
+    return { ok: false };
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Session IPC handlers (T008 bridge:login, T014 get-saved-session + clear-session)
+// ---------------------------------------------------------------------------
 
 /**
  * Port the Python bridge is listening on.
@@ -302,8 +405,6 @@ module.exports = {
 // ---------------------------------------------------------------------------
 // IPC handlers
 // ---------------------------------------------------------------------------
-
-ipcMain.handle('bridge:get-status', () => bridgeState);
 
 // ---------------------------------------------------------------------------
 // Session IPC handlers (T008 bridge:login, T014 get-saved-session + clear-session)
@@ -724,6 +825,7 @@ app.whenReady().then(async () => {
 
   // --- Spawn bridge ---
   startBridge(pythonPort, configPath);
+  startAIRouter();
 
   // --- Poll until ready or timeout ---
   const isReady = await pollBridgeReady(pingUrl);

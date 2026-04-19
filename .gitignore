@@ -1,5 +1,8 @@
 # Dependencies
 node_modules/
+.venv/
+venv/
+*.egg-info/
 
 # Python
 python_bridge/__pycache__/
@@ -8,9 +11,14 @@ python_bridge/*.pyo
 
 # Runtime config (never commit real credentials or URLs)
 config.json
+.env*
 
 # Build output
 dist/
+build/
+
+# Logs
+*.log
 
 # Spec-kit internal memory (local reasoning files, not source)
 .specify/memory/
@@ -18,3 +26,7 @@ dist/
 # OS artifacts
 .DS_Store
 Thumbs.db
+*.tmp
+*.swp
+.vscode/
+.idea/
