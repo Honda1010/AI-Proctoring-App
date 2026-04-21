@@ -29,6 +29,7 @@ const ALLOWED_RECEIVE_CHANNELS = [
  */
 const ALLOWED_INVOKE_CHANNELS = [
   'bridge:get-status',          // Returns current BridgeStatus state string
+  'bridge:ai-rpc',               // JSON-RPC calls to the AI router
   'bridge:login',               // Proxy login credentials to Python bridge
   'bridge:get-saved-session',   // Restore previously saved session
   'bridge:clear-session',       // Delete all session data
@@ -95,6 +96,22 @@ contextBridge.exposeInMainWorld('bridge', {
    */
   getBridgeStatus() {
     return ipcRenderer.invoke('bridge:get-status');
+  },
+
+  /**
+   * Send a JSON-RPC request to the AI router.
+   *
+   * @param {string} method
+   * @param {object} params
+   * @param {{ timeoutMs?: number }} [options]
+   * @returns {Promise<{ok: true, result: object} | {ok: false, error: object}>}
+   */
+  aiRpc(method, params, options = {}) {
+    return ipcRenderer.invoke('bridge:ai-rpc', {
+      method,
+      params,
+      timeoutMs: options.timeoutMs,
+    });
   },
 
   /**

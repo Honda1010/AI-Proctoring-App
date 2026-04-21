@@ -22,6 +22,9 @@ let bridgeState = 'idle';
 /** @type {import('child_process').ChildProcess | null} */
 let aiRouterProcess = null;
 
+let aiRpcNextId = 1;
+const aiRpcPending = new Map();
+
 /**
  * Resolve the absolute path to config.json based on packaging state.
  * @returns {string}
@@ -56,8 +59,24 @@ function startAIRouter() {
       if (!line.trim()) continue;
       try {
         const msg = JSON.parse(line);
+        if (msg.jsonrpc !== '2.0') continue;
+
+        if (msg.id != null) {
+          const pending = aiRpcPending.get(msg.id);
+          if (pending) {
+            aiRpcPending.delete(msg.id);
+            clearTimeout(pending.timer);
+            if (msg.error) {
+              pending.resolve({ ok: false, error: msg.error });
+            } else {
+              pending.resolve({ ok: true, result: msg.result });
+            }
+          }
+          continue;
+        }
+
         // Only forward notifications (detection, alert, riskScore) to renderer
-        if (msg.jsonrpc === '2.0' && msg.method && !msg.id) {
+        if (msg.method && !msg.id) {
           mainWindow?.webContents.send('bridge:ai-event', msg);
         }
       } catch (err) {
@@ -75,11 +94,68 @@ function startAIRouter() {
   });
 }
 
+/**
+ * Send a JSON-RPC request to the AI router stdin and await the response.
+ * @param {string} method
+ * @param {object} params
+ * @param {number} timeoutMs
+ * @returns {Promise<{ok: true, result: object} | {ok: false, error: object}>}
+ */
+function sendAiRpc(method, params = {}, timeoutMs = 10000) {
+  if (!aiRouterProcess || !aiRouterProcess.stdin || aiRouterProcess.killed) {
+    return Promise.resolve({
+      ok: false,
+      error: { code: 'ROUTER_NOT_READY', message: 'AI router process is not running.' },
+    });
+  }
+
+  if (!method || typeof method !== 'string') {
+    return Promise.resolve({
+      ok: false,
+      error: { code: 'INVALID_REQUEST', message: 'AI router method must be a string.' },
+    });
+  }
+
+  const id = aiRpcNextId++;
+  const payload = { jsonrpc: '2.0', id, method, params };
+
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      aiRpcPending.delete(id);
+      resolve({
+        ok: false,
+        error: { code: 'ROUTER_TIMEOUT', message: `AI router timed out for ${method}.` },
+      });
+    }, timeoutMs);
+
+    aiRpcPending.set(id, { resolve, timer });
+
+    try {
+      aiRouterProcess.stdin.write(`${JSON.stringify(payload)}\n`);
+    } catch (err) {
+      aiRpcPending.delete(id);
+      clearTimeout(timer);
+      resolve({
+        ok: false,
+        error: { code: 'ROUTER_WRITE_FAILED', message: err.message },
+      });
+    }
+  });
+}
+
 // ---------------------------------------------------------------------------
 // IPC handlers
 // ---------------------------------------------------------------------------
 
 ipcMain.handle('bridge:get-status', () => bridgeState);
+
+/**
+ * bridge:ai-rpc — Forward a JSON-RPC request to the AI router stdin.
+ * Expected args: { method: string, params?: object, timeoutMs?: number }
+ */
+ipcMain.handle('bridge:ai-rpc', async (_event, { method, params, timeoutMs } = {}) => {
+  return sendAiRpc(method, params || {}, Number.isFinite(timeoutMs) ? timeoutMs : 10000);
+});
 
 /**
  * bridge:get-session-log — Read a session's JSONL log file from disk.
@@ -510,6 +586,13 @@ ipcMain.handle('bridge:start-exam', async (_event, { quizCode }) => {
 
     if (response.ok) {
       examSession = body;
+
+      const sessionId = examSession?.attemptId ? String(examSession.attemptId) : 'default-session';
+      await Promise.all([
+        sendAiRpc('startService', { service: 'face-recognition', sessionId }),
+        sendAiRpc('startService', { service: 'object-detection', sessionId }),
+      ]);
+
       return { ok: true, data: examSession };
     }
 
