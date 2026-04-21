@@ -1,0 +1,4 @@
+{"service": "object-detection", "timestamp": "2026-04-21T20:32:02.344282+00:00", "confidence": 0.0, "sessionId": "debug-session", "payload": {"status": "error", "code": "TIMEOUT", "message": "Request to Modal timed out (cold start threshold exceeded)."}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-21T20:32:02.355831+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-21T20:32:23.449646+00:00", "confidence": 0.0, "sessionId": "debug-session", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 422"}}
+{"type": "riskScore", "score": 5, "trend": "rising", "timestamp": "2026-04-21T20:32:23.458500+00:00"}
