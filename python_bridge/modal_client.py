@@ -11,7 +11,7 @@ class ModalClient:
         self.endpoint_url = endpoint_url
         self.token = token
         self.timeout = timeout
-
+    
     async def predict(self, service_name: str, session_id: str, frame: str) -> Dict[str, Any]:
         """
         Sends a frame to the Modal endpoint and returns a DetectionEvent.

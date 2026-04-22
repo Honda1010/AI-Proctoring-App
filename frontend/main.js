@@ -588,10 +588,8 @@ ipcMain.handle('bridge:start-exam', async (_event, { quizCode }) => {
       examSession = body;
 
       const sessionId = examSession?.attemptId ? String(examSession.attemptId) : 'default-session';
-      await Promise.all([
-        sendAiRpc('startService', { service: 'face-recognition', sessionId }),
-        sendAiRpc('startService', { service: 'object-detection', sessionId }),
-      ]);
+      // Focus only on speech detection for now.
+      await sendAiRpc('startService', { service: 'speech-detection', sessionId });
 
       return { ok: true, data: examSession };
     }

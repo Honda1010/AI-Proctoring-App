@@ -10,6 +10,7 @@ class DashboardController {
     this.riskScore = 0;
     this.alerts = [];
     this.maxAlerts = 20;
+    this.statusPollIntervalId = null;
 
     // DOM Elements
     this.statusPills = {
@@ -33,10 +34,39 @@ class DashboardController {
     this.unsubscribe = window.bridge.onAiEvent((event) => {
       this.handleAiEvent(event);
     });
+
+    // Status should reflect service lifecycle, not only detection traffic.
+    this.syncServiceStatuses();
+    this.statusPollIntervalId = setInterval(() => {
+      this.syncServiceStatuses();
+    }, 3000);
   }
 
   destroy() {
     if (this.unsubscribe) this.unsubscribe();
+    if (this.statusPollIntervalId) {
+      clearInterval(this.statusPollIntervalId);
+      this.statusPollIntervalId = null;
+    }
+  }
+
+  async syncServiceStatuses() {
+    if (!window.bridge?.aiRpc) return;
+
+    try {
+      const response = await window.bridge.aiRpc('queryStatus', {}, { timeoutMs: 5000 });
+      if (!response?.ok || !response.result) return;
+
+      Object.entries(response.result).forEach(([service, status]) => {
+        if (status === 'running') {
+          this.updateServiceStatus(service, 'active');
+        } else if (status === 'stopped') {
+          this.updateServiceStatus(service, 'inactive');
+        }
+      });
+    } catch {
+      // Ignore transient bridge/router errors; next poll will retry.
+    }
   }
 
   handleAiEvent(event) {
