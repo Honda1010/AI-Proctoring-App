@@ -1,0 +1,30 @@
+{"service": "object-detection", "timestamp": "2026-04-22T00:36:55.592009+00:00", "confidence": 0.1283, "sessionId": "24", "payload": {"objects": ["Mobile phone"], "count": 1, "suspicious": true}}
+{"type": "alert", "code": "UNAUTHORIZED_OBJECT", "severity": "high", "message": "Suspicious object detected: Mobile phone", "timestamp": "2026-04-22T00:36:55.596524+00:00", "sessionId": "24", "evidence": {"service": "object-detection", "confidence": 0.1283}}
+{"type": "riskScore", "score": 6, "trend": "rising", "timestamp": "2026-04-22T00:36:55.598547+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T00:36:56.009742+00:00", "confidence": 0.6778, "sessionId": "24", "payload": {"is_matched": true, "faces_count": 1}}
+{"type": "riskScore", "score": 6, "trend": "falling", "timestamp": "2026-04-22T00:36:56.020244+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T00:37:01.792298+00:00", "confidence": 0.5065999999999999, "sessionId": "24", "payload": {"is_matched": true, "faces_count": 1}}
+{"type": "riskScore", "score": 6, "trend": "falling", "timestamp": "2026-04-22T00:37:01.796298+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T00:37:07.085852+00:00", "confidence": 0.0, "sessionId": "24", "payload": {"objects": [], "count": 0, "suspicious": false}}
+{"type": "riskScore", "score": 6, "trend": "falling", "timestamp": "2026-04-22T00:37:07.090849+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T00:37:11.241262+00:00", "confidence": 0.5602, "sessionId": "24", "payload": {"is_matched": true, "faces_count": 1}}
+{"type": "riskScore", "score": 6, "trend": "falling", "timestamp": "2026-04-22T00:37:11.245263+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T00:37:18.990434+00:00", "confidence": 0.6469, "sessionId": "24", "payload": {"objects": ["Mobile phone"], "count": 1, "suspicious": true}}
+{"type": "alert", "code": "UNAUTHORIZED_OBJECT", "severity": "high", "message": "Suspicious object detected: Mobile phone", "timestamp": "2026-04-22T00:37:18.994432+00:00", "sessionId": "24", "evidence": {"service": "object-detection", "confidence": 0.6469}}
+{"type": "riskScore", "score": 12, "trend": "rising", "timestamp": "2026-04-22T00:37:18.997440+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T00:37:23.699692+00:00", "confidence": 0.6409999999999999, "sessionId": "24", "payload": {"is_matched": true, "faces_count": 1}}
+{"type": "riskScore", "score": 12, "trend": "falling", "timestamp": "2026-04-22T00:37:23.704731+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T00:37:33.068130+00:00", "confidence": 0.0, "sessionId": "24", "payload": {"objects": [], "count": 0, "suspicious": false}}
+{"type": "riskScore", "score": 12, "trend": "falling", "timestamp": "2026-04-22T00:37:33.072659+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T00:37:33.721599+00:00", "confidence": 0.7062999999999999, "sessionId": "24", "payload": {"is_matched": true, "faces_count": 1}}
+{"type": "riskScore", "score": 12, "trend": "falling", "timestamp": "2026-04-22T00:37:33.726604+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T00:37:41.635233+00:00", "confidence": 0.0, "sessionId": "24", "payload": {"objects": [], "count": 0, "suspicious": false}}
+{"type": "riskScore", "score": 12, "trend": "falling", "timestamp": "2026-04-22T00:37:41.639348+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T00:37:45.571771+00:00", "confidence": 0.6957, "sessionId": "24", "payload": {"is_matched": true, "faces_count": 1}}
+{"type": "riskScore", "score": 12, "trend": "falling", "timestamp": "2026-04-22T00:37:45.576770+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T00:37:53.435886+00:00", "confidence": 0.0, "sessionId": "24", "payload": {"objects": [], "count": 0, "suspicious": false}}
+{"type": "riskScore", "score": 12, "trend": "falling", "timestamp": "2026-04-22T00:37:53.439891+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T00:37:57.550375+00:00", "confidence": 0.6624, "sessionId": "24", "payload": {"is_matched": true, "faces_count": 1}}
+{"type": "riskScore", "score": 12, "trend": "falling", "timestamp": "2026-04-22T00:37:57.554797+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T00:38:05.618656+00:00", "confidence": 0.0, "sessionId": "24", "payload": {"objects": [], "count": 0, "suspicious": false}}
+{"type": "riskScore", "score": 12, "trend": "falling", "timestamp": "2026-04-22T00:38:05.622659+00:00"}

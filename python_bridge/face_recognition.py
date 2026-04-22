@@ -1,5 +1,6 @@
 from ai_base import AIService
 from modal_client import ModalClient
+from modal_response_adapters import adapt_face_modal_json, is_bridge_detection_event
 
 class FaceRecognitionService(AIService):
     """Face Recognition service (hosted on Modal)."""
@@ -28,7 +29,16 @@ class FaceRecognitionService(AIService):
         """Process a frame using Modal cloud inference."""
         if not self.is_running:
             return self._create_error_event("SERVICE_NOT_RUNNING", "Service is not running")
-        return await self.client.predict(self.service_name, self.session_id, frame)
+        raw = await self.client.predict(self.service_name, self.session_id, frame)
+        if is_bridge_detection_event(raw):
+            return raw
+        try:
+            return adapt_face_modal_json(raw, self.create_detection_event)
+        except (TypeError, ValueError, KeyError):
+            return self._create_error_event(
+                "BRIDGE_ERROR",
+                "Unexpected Modal face response shape",
+            )
 
     def get_mock_event(self) -> dict:
         """Returns a mock face recognition event."""

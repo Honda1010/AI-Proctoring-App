@@ -431,7 +431,7 @@ function startAiStreaming() {
     } finally {
       aiInFlight = false;
     }
-  }, 2000);
+  }, 2000); // Every 2 seconds (adjust as needed)
 }
 
 function stopAiStreaming() {

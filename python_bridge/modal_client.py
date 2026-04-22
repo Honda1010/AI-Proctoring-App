@@ -7,7 +7,7 @@ from typing import Dict, Any, Tuple
 class ModalClient:
     """Async client for calling Modal web endpoints."""
 
-    def __init__(self, endpoint_url: str, token: str, timeout: float = 10.0):
+    def __init__(self, endpoint_url: str, token: str, timeout: float = 30.0):
         self.endpoint_url = endpoint_url
         self.token = token
         self.timeout = timeout
@@ -59,7 +59,8 @@ class ModalClient:
 
         if "/analysis/verify-file" in endpoint_lower:
             image_bytes, mime = self._decode_frame_to_image(frame)
-            data = {"session_id": session_id}
+            data = {"session_id": "test_session_001"}
+            #data = {"session_id": session_id}
             files = {"frame": ("frame.jpg", image_bytes, mime)}
             return await client.post(self.endpoint_url, data=data, files=files)
 
