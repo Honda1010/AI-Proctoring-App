@@ -2,7 +2,6 @@ import cv2
 import threading
 import time
 import base64
-import os
 import sys
 from contextlib import redirect_stdout
 from typing import Callable, Optional
@@ -34,15 +33,9 @@ class LocalEyeGazeService(AIService):
         self._session_id = session_id
         self._process_frames_batch = None
 
-        # Load the existing local eye-gaze implementation without modifying it.
-        model_server_dir = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-            "AI", "Models", "EyeGazeDetection", "src", "Server"
-        )
-        if model_server_dir not in sys.path:
-            sys.path.insert(0, model_server_dir)
+        # Load the bridge-local port of localMain.py.
         try:
-            from localMain import process_frames_batch  # type: ignore
+            from service.localMain import process_frames_batch  # type: ignore
             self._process_frames_batch = process_frames_batch
         except Exception as exc:
             self._emit_hardware_error(f"Failed to load local eye-gaze model: {exc}")
