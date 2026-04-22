@@ -591,6 +591,10 @@ ipcMain.handle('bridge:start-exam', async (_event, { quizCode }) => {
       await Promise.all([
         sendAiRpc('startService', { service: 'eye-gaze', sessionId }),
         sendAiRpc('startService', { service: 'speech-detection', sessionId }),
+        // Cloud (Modal) services. If not configured, router responds with an error
+        // and the UI will remain "Inactive" (status poll retries continuously).
+        sendAiRpc('startService', { service: 'face-recognition', sessionId }),
+        sendAiRpc('startService', { service: 'object-detection', sessionId }),
       ]);
 
       return { ok: true, data: examSession };

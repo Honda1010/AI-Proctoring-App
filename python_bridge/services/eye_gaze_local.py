@@ -21,7 +21,10 @@ class LocalEyeGazeService(AIService):
         s_cfg = config.get("services", {}).get("eye-gaze", {})
         self.fps = s_cfg.get("fps", 5)
         self.camera_index = s_cfg.get("camera_index", 0)
-        self.input_mode = s_cfg.get("input_mode", "camera")
+        # Desktop app expects the renderer to own the webcam (getUserMedia) and
+        # send frames to Python via predict(). Defaulting to "camera" can cause
+        # device-lock conflicts with Chromium on Windows ("Camera unavailable").
+        self.input_mode = s_cfg.get("input_mode", "shared_frame")
         self.model_path = s_cfg.get("model_path")
         self.threshold = s_cfg.get("threshold", 0.5)
 

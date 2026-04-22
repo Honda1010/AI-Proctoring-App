@@ -21,6 +21,8 @@ except ImportError:
 from config import load_config, ConfigError
 from services.eye_gaze_local import LocalEyeGazeService
 from services.speech_local import SpeechDetectionService
+from face_recognition import FaceRecognitionService
+from object_detection import ObjectDetectionService
 
 # Phase 8: Proctoring Orchestration
 from orchestrator import ProctoringOrchestrator
@@ -35,7 +37,9 @@ class AIRouter:
         self.services = {}
         self.service_classes = {
             "eye-gaze": LocalEyeGazeService,
-            "speech-detection": SpeechDetectionService
+            "speech-detection": SpeechDetectionService,
+            "face-recognition": FaceRecognitionService,
+            "object-detection": ObjectDetectionService,
         }
         self.loop = None
 
@@ -179,12 +183,16 @@ class AIRouter:
 
         service_cls = self.service_classes[service_name]
         
-        if service_name == "eye-gaze":
-            service = service_cls(session_id, vars(self.config), self.thread_safe_emit)
-        else:
-            service = service_cls(session_id, vars(self.config))
-            
-        await service.start()
+        try:
+            if service_name == "eye-gaze":
+                service = service_cls(session_id, vars(self.config), self.thread_safe_emit)
+            else:
+                service = service_cls(session_id, vars(self.config))
+            await service.start()
+        except Exception as e:
+            self.send_error(request_id, -32603, f"Failed to start service {service_name}: {str(e)}")
+            return
+
         self.services[service_name] = service
         self.send_result(request_id, {"status": "started", "service": service_name})
 

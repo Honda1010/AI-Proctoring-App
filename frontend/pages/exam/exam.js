@@ -17,11 +17,13 @@ let remainingSeconds = 0; // U1 fix: track via variable, not DOM parsing
 let dashboard = null;
 let aiIntervalId = null;
 let speechPollIntervalId = null;
+let cloudVisionIntervalId = null;
 let aiInFlight = false;
 let aiCanvas = null;
 let aiContext = null;
 const EYE_GAZE_STREAM_INTERVAL_MS = 250;
 const SPEECH_POLL_INTERVAL_MS = 2000;
+const CLOUD_VISION_INTERVAL_MS = 1500;
 
 // ---------------------------------------------------------------------------
 // T012 — DOMContentLoaded: load session and initialise page
@@ -435,6 +437,25 @@ function startAiStreaming() {
     }
   }, EYE_GAZE_STREAM_INTERVAL_MS);
 
+  // Cloud vision services (Modal): send frames at a lower rate to avoid extra load.
+  // These calls create detection events which get written into sessions/<attemptId>.jsonl
+  // via the Python orchestrator.
+  cloudVisionIntervalId = setInterval(async () => {
+    try {
+      if (!aiContext) return;
+      if (video.readyState < 2) return;
+      aiContext.drawImage(video, 0, 0, aiCanvas.width, aiCanvas.height);
+      const frame = aiCanvas.toDataURL('image/jpeg', 0.6);
+
+      await Promise.all([
+        window.bridge.aiRpc('predict', { service: 'face-recognition', frame }),
+        window.bridge.aiRpc('predict', { service: 'object-detection', frame }),
+      ]);
+    } catch {
+      // Services may be unconfigured/stopped; ignore transient router errors.
+    }
+  }, CLOUD_VISION_INTERVAL_MS);
+
   // Speech detection runs local mic capture in the Python service and
   // this periodic predict call flushes speech violations to the UI/orchestrator.
   speechPollIntervalId = setInterval(async () => {
@@ -454,6 +475,10 @@ function stopAiStreaming() {
   if (speechPollIntervalId) {
     clearInterval(speechPollIntervalId);
     speechPollIntervalId = null;
+  }
+  if (cloudVisionIntervalId) {
+    clearInterval(cloudVisionIntervalId);
+    cloudVisionIntervalId = null;
   }
   aiCanvas = null;
   aiContext = null;

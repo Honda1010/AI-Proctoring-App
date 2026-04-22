@@ -15,6 +15,11 @@ class ProctoringOrchestrator:
         self.rules_config = self.config.get("rules", {})
         self.risk_score_decay = self.config.get("risk_score_decay", 0.9997)
         self.emit_callback = emit_callback
+
+        # Always write session logs into the project-level `sessions/` directory
+        # (not dependent on the router process working directory).
+        project_root = os.path.dirname(os.path.dirname(__file__))
+        self.sessions_dir = os.path.join(project_root, "sessions")
         
         self.current_session_id: Optional[str] = None
         self.log_file = None
@@ -44,8 +49,8 @@ class ProctoringOrchestrator:
         self.risk_score = 0.0
         
         # Ensure sessions directory exists
-        os.makedirs("sessions", exist_ok=True)
-        log_path = os.path.join("sessions", f"{session_id}.jsonl")
+        os.makedirs(self.sessions_dir, exist_ok=True)
+        log_path = os.path.join(self.sessions_dir, f"{session_id}.jsonl")
         
         # Open in append mode
         self.log_file_path = log_path
