@@ -19,6 +19,7 @@ except ImportError:
         return None
 
 from config import load_config, ConfigError
+from services.eye_gaze_local import LocalEyeGazeService
 from services.speech_local import SpeechDetectionService
 
 # Phase 8: Proctoring Orchestration
@@ -33,7 +34,7 @@ class AIRouter:
         self.orchestrator = None
         self.services = {}
         self.service_classes = {
-            # Speech-only mode for local proctoring runtime stability.
+            "eye-gaze": LocalEyeGazeService,
             "speech-detection": SpeechDetectionService
         }
         self.loop = None
@@ -178,7 +179,10 @@ class AIRouter:
 
         service_cls = self.service_classes[service_name]
         
-        service = service_cls(session_id, vars(self.config))
+        if service_name == "eye-gaze":
+            service = service_cls(session_id, vars(self.config), self.thread_safe_emit)
+        else:
+            service = service_cls(session_id, vars(self.config))
             
         await service.start()
         self.services[service_name] = service

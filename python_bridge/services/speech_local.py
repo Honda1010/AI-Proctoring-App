@@ -47,7 +47,7 @@ class SpeechDetectionService(AIService):
         self._use_energy_fallback = False
 
         # ── Load Silero VAD once at init time (fallback to energy VAD if unavailable) ──
-        print("[SpeechDetection] Loading Silero VAD model...")
+        self._log("[SpeechDetection] Loading Silero VAD model...")
         try:
             self._model, _ = torch.hub.load(
                 repo_or_dir='snakers4/silero-vad',
@@ -56,11 +56,11 @@ class SpeechDetectionService(AIService):
                 trust_repo=True
             )
             self._model.eval()
-            print("[SpeechDetection] Model ready.")
+            self._log("[SpeechDetection] Model ready.")
         except Exception as e:
             self._model = None
             self._use_energy_fallback = True
-            print(f"[SpeechDetection] Silero unavailable ({e}). Using RMS fallback detector.")
+            self._log(f"[SpeechDetection] Silero unavailable ({e}). Using RMS fallback detector.")
 
         # ── Stream handle ──
         self._stream: Optional[sd.InputStream] = None
@@ -86,7 +86,7 @@ class SpeechDetectionService(AIService):
     async def start(self):
         """Open the microphone stream and begin VAD in the background."""
         if self.is_running:
-            print("[SpeechDetection] Already running.")
+            self._log("[SpeechDetection] Already running.")
             return
 
         self._stream = sd.InputStream(
@@ -98,7 +98,7 @@ class SpeechDetectionService(AIService):
         )
         self._stream.start()
         self.is_running = True
-        print("[SpeechDetection] Microphone stream started.")
+        self._log("[SpeechDetection] Microphone stream started.")
 
     async def stop(self):
         """Stop the microphone stream cleanly."""
@@ -110,7 +110,7 @@ class SpeechDetectionService(AIService):
             self._stream.stop()
             self._stream.close()
             self._stream = None
-        print("[SpeechDetection] Microphone stream stopped.")
+        self._log("[SpeechDetection] Microphone stream stopped.")
 
     # ──────────────────────────────────────────────
     # Poll endpoint — called by frontend every ~2 seconds
@@ -165,7 +165,7 @@ class SpeechDetectionService(AIService):
             else:
                 speech_prob = self._model(tensor, SAMPLE_RATE).item()
         except Exception as e:
-            print(f"[SpeechDetection] VAD error: {e}")
+            self._log(f"[SpeechDetection] VAD error: {e}")
             return
 
         current_time = time.time()
@@ -175,7 +175,7 @@ class SpeechDetectionService(AIService):
             if not self._is_speaking:
                 self._is_speaking = True
                 self._speech_start_time = current_time
-                print("\n[SpeechDetection] Speech started.")
+                self._log("[SpeechDetection] Speech started.")
 
             self._last_speech_time = current_time
 
@@ -191,7 +191,7 @@ class SpeechDetectionService(AIService):
                         self._record_violation(segment_duration)
                         self._last_violation_time = current_time
 
-                    print(
+                    self._log(
                         f"\n[SpeechDetection] Speech ended "
                         f"(segment={segment_duration:.2f}s). Total strikes: {self._cheat_counter}"
                     )
@@ -216,4 +216,8 @@ class SpeechDetectionService(AIService):
             })
 
         flag = " CHEATER FLAGGED" if self._is_cheater else ""
-        print(f"[SpeechDetection] Strike {self._cheat_counter}/{CHEATING_THRESHOLD}{flag}")
+        self._log(f"[SpeechDetection] Strike {self._cheat_counter}/{CHEATING_THRESHOLD}{flag}")
+
+    def _log(self, message: str):
+        """Write service logs to stderr to avoid corrupting JSON-RPC stdout."""
+        print(message, file=sys.stderr, flush=True)
