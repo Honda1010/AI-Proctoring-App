@@ -78,10 +78,28 @@ class ProctoringOrchestrator:
                     event
                 )
 
-        # --- Rule: Speech Detection (Immediate/State-based) ---
+        # --- Rule: Speech Detection (Strike-based) ---
         if service == "speech-detection":
-            if payload.get("is_speech_detected"):
-                await self._emit_alert("SPEECH_DETECTED", "medium", "Speech presence detected in environment.", event)
+            new_violations = payload.get("new_violations", [])
+            is_cheater = payload.get("is_cheater", False)
+            total_strikes = payload.get("total_strikes", 0)
+
+            for violation in new_violations:
+                await self._emit_alert(
+                    "SPEECH_DETECTED",
+                    "high" if is_cheater else "medium",
+                    f"Student spoke for {violation['duration_seconds']}s. "
+                    f"Strike {violation['strike_number']}/{total_strikes}.",
+                    event
+                )
+
+            if is_cheater:
+                await self._emit_alert(
+                    "SPEECH_CHEATING_FLAGGED",
+                    "critical",
+                    f"Student flagged as cheater after {total_strikes} speech violations.",
+                    event
+                )
 
         # --- Rule: Eye Gaze (Time-based) ---
         if service == "eye-gaze":
@@ -125,20 +143,19 @@ class ProctoringOrchestrator:
             is_suspicious = True
         elif service == "face-recognition" and not payload.get("is_matched"):
             is_suspicious = True
-        elif service == "speech-detection" and payload.get("is_speech_detected"):
+        elif service == "speech-detection" and len(payload.get("new_violations", [])) > 0:
             is_suspicious = True
         elif service == "object-detection" and payload.get("suspicious"):
             is_suspicious = True
 
         if is_suspicious:
             # Increase risk score
-            self.risk_score = min(100.0, self.risk_score + (weight * 0.1)) # Scaling factor
+            self.risk_score = min(100.0, self.risk_score + (weight * 0.1))  # Scaling factor
         else:
             # Decay risk score
             self.risk_score *= self.risk_score_decay
             
-        # Emit score update if changed significantly (or every few events)
-        # For now, emit every time for simplicity
+        # Emit score update every time for simplicity
         score_update = {
             "type": "riskScore",
             "score": int(round(self.risk_score)),
@@ -174,6 +191,5 @@ class ProctoringOrchestrator:
                 with open(self.log_file_path, "a", encoding="utf-8") as f:
                     f.write(json.dumps(event) + "\n")
             except Exception as e:
-                # Fallback to stderr if logging fails
                 import sys
                 print(f"Logging error: {str(e)}", file=sys.stderr)

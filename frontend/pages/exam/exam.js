@@ -16,9 +16,12 @@ let autoSubmitted = false;
 let remainingSeconds = 0; // U1 fix: track via variable, not DOM parsing
 let dashboard = null;
 let aiIntervalId = null;
+let speechPollIntervalId = null;
 let aiInFlight = false;
 let aiCanvas = null;
 let aiContext = null;
+const EYE_GAZE_STREAM_INTERVAL_MS = 250;
+const SPEECH_POLL_INTERVAL_MS = 2000;
 
 // ---------------------------------------------------------------------------
 // T012 — DOMContentLoaded: load session and initialise page
@@ -424,20 +427,33 @@ function startAiStreaming() {
       aiContext.drawImage(video, 0, 0, aiCanvas.width, aiCanvas.height);
       const frame = aiCanvas.toDataURL('image/jpeg', 0.6);
 
-      await Promise.all([
-        window.bridge.aiRpc('predict', { service: 'face-recognition', frame }),
-        window.bridge.aiRpc('predict', { service: 'object-detection', frame }),
-      ]);
+      await window.bridge.aiRpc('predict', { service: 'eye-gaze', frame });
+    } catch {
+      // Eye-gaze may be disabled; ignore polling errors.
     } finally {
       aiInFlight = false;
     }
-  }, 2000); // Every 2 seconds (adjust as needed)
+  }, EYE_GAZE_STREAM_INTERVAL_MS);
+
+  // Speech detection runs local mic capture in the Python service and
+  // this periodic predict call flushes speech violations to the UI/orchestrator.
+  speechPollIntervalId = setInterval(async () => {
+    try {
+      await window.bridge.aiRpc('predict', { service: 'speech-detection', frame: 'MIC_POLL' });
+    } catch {
+      // Ignore transient router errors; status polling handles recovery.
+    }
+  }, SPEECH_POLL_INTERVAL_MS);
 }
 
 function stopAiStreaming() {
   if (aiIntervalId) {
     clearInterval(aiIntervalId);
     aiIntervalId = null;
+  }
+  if (speechPollIntervalId) {
+    clearInterval(speechPollIntervalId);
+    speechPollIntervalId = null;
   }
   aiCanvas = null;
   aiContext = null;

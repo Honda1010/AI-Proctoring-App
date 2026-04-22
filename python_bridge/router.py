@@ -3,17 +3,24 @@ import sys
 import os
 import asyncio
 from typing import Dict, Any, Optional
-from jsonschema import validate, ValidationError
+
+try:
+    from jsonschema import validate, ValidationError
+except ImportError:
+    class ValidationError(Exception):
+        """Fallback error type when jsonschema is unavailable."""
+        pass
+
+    def validate(instance, schema):
+        """
+        No-op validator fallback.
+        Keeps router operational in environments missing jsonschema.
+        """
+        return None
 
 from config import load_config, ConfigError
-from eye_gaze import EyeGazeService
-from object_detection import ObjectDetectionService
-from face_recognition import FaceRecognitionService
-from speech_detection import SpeechDetectionService
-
-# Phase 7: Local services
 from services.eye_gaze_local import LocalEyeGazeService
-from services.speech_local import LocalSpeechDetectionService
+from services.speech_local import SpeechDetectionService
 
 # Phase 8: Proctoring Orchestration
 from orchestrator import ProctoringOrchestrator
@@ -28,9 +35,7 @@ class AIRouter:
         self.services = {}
         self.service_classes = {
             "eye-gaze": LocalEyeGazeService,
-            "object-detection": ObjectDetectionService,
-            "face-recognition": FaceRecognitionService,
-            "speech-detection": LocalSpeechDetectionService
+            "speech-detection": SpeechDetectionService
         }
         self.loop = None
 
@@ -174,8 +179,7 @@ class AIRouter:
 
         service_cls = self.service_classes[service_name]
         
-        # Local services require the emitter callback
-        if service_name in ["eye-gaze", "speech-detection"]:
+        if service_name == "eye-gaze":
             service = service_cls(session_id, vars(self.config), self.thread_safe_emit)
         else:
             service = service_cls(session_id, vars(self.config))

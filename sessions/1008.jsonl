@@ -1,0 +1,2 @@
+{"service": "eye-gaze", "timestamp": "2026-04-22T16:21:05.081329+00:00", "confidence": 0.98, "sessionId": "1008", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T16:21:05.821373+00:00"}

@@ -1,0 +1,103 @@
+{"service": "object-detection", "timestamp": "2026-04-22T12:58:15.151684+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T12:58:15.157763+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T12:58:15.160766+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 5, "trend": "rising", "timestamp": "2026-04-22T12:58:15.163266+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T12:58:17.070804+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 5, "trend": "falling", "timestamp": "2026-04-22T12:58:17.072808+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T12:58:17.076071+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 10, "trend": "rising", "timestamp": "2026-04-22T12:58:17.080077+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T12:58:19.068307+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 15, "trend": "rising", "timestamp": "2026-04-22T12:58:19.071304+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T12:58:19.314299+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 15, "trend": "falling", "timestamp": "2026-04-22T12:58:19.315297+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T12:58:21.048145+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 15, "trend": "falling", "timestamp": "2026-04-22T12:58:21.049146+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T12:58:21.053671+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "alert", "code": "NO_FACE_DETECTED", "severity": "high", "message": "Student face missing for > 5s", "timestamp": "2026-04-22T12:58:21.056669+00:00", "sessionId": "1", "evidence": {"service": "face-recognition", "confidence": 0.0}}
+{"type": "riskScore", "score": 20, "trend": "rising", "timestamp": "2026-04-22T12:58:21.057184+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T12:58:23.052496+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 25, "trend": "rising", "timestamp": "2026-04-22T12:58:23.054524+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T12:58:23.067123+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 25, "trend": "falling", "timestamp": "2026-04-22T12:58:23.069123+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T12:58:25.066441+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 30, "trend": "rising", "timestamp": "2026-04-22T12:58:25.069448+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T12:58:25.071446+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 30, "trend": "falling", "timestamp": "2026-04-22T12:58:25.075975+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T12:58:27.061633+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "alert", "code": "NO_FACE_DETECTED", "severity": "high", "message": "Student face missing for > 5s", "timestamp": "2026-04-22T12:58:27.069775+00:00", "sessionId": "1", "evidence": {"service": "face-recognition", "confidence": 0.0}}
+{"type": "riskScore", "score": 35, "trend": "rising", "timestamp": "2026-04-22T12:58:27.069775+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T12:58:27.072774+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 35, "trend": "falling", "timestamp": "2026-04-22T12:58:27.076210+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T12:58:29.073632+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 40, "trend": "rising", "timestamp": "2026-04-22T12:58:29.076725+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T12:58:29.074631+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 40, "trend": "falling", "timestamp": "2026-04-22T12:58:29.079637+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T12:58:31.099045+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 40, "trend": "falling", "timestamp": "2026-04-22T12:58:31.101045+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T12:58:31.805054+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 45, "trend": "rising", "timestamp": "2026-04-22T12:58:31.807656+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T12:58:33.093546+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 45, "trend": "falling", "timestamp": "2026-04-22T12:58:33.094560+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T12:58:33.285567+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "alert", "code": "NO_FACE_DETECTED", "severity": "high", "message": "Student face missing for > 5s", "timestamp": "2026-04-22T12:58:33.287567+00:00", "sessionId": "1", "evidence": {"service": "face-recognition", "confidence": 0.0}}
+{"type": "riskScore", "score": 50, "trend": "rising", "timestamp": "2026-04-22T12:58:33.287567+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T12:58:35.071172+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 55, "trend": "rising", "timestamp": "2026-04-22T12:58:35.079724+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T12:58:35.073703+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 55, "trend": "falling", "timestamp": "2026-04-22T12:58:35.089794+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T12:58:37.084563+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 55, "trend": "falling", "timestamp": "2026-04-22T12:58:37.086514+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T12:58:37.090518+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 60, "trend": "rising", "timestamp": "2026-04-22T12:58:37.094038+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T12:58:39.070930+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "alert", "code": "NO_FACE_DETECTED", "severity": "high", "message": "Student face missing for > 5s", "timestamp": "2026-04-22T12:58:39.073431+00:00", "sessionId": "1", "evidence": {"service": "face-recognition", "confidence": 0.0}}
+{"type": "riskScore", "score": 65, "trend": "rising", "timestamp": "2026-04-22T12:58:39.073431+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T12:58:39.258417+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 65, "trend": "falling", "timestamp": "2026-04-22T12:58:39.265024+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T12:58:41.068538+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 70, "trend": "rising", "timestamp": "2026-04-22T12:58:41.071565+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T12:58:41.090579+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 70, "trend": "falling", "timestamp": "2026-04-22T12:58:41.098193+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T12:58:43.071466+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 75, "trend": "rising", "timestamp": "2026-04-22T12:58:43.076656+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T12:58:43.081754+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 75, "trend": "falling", "timestamp": "2026-04-22T12:58:43.087163+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T12:58:45.118540+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 75, "trend": "falling", "timestamp": "2026-04-22T12:58:45.125098+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T12:58:45.119544+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "alert", "code": "NO_FACE_DETECTED", "severity": "high", "message": "Student face missing for > 5s", "timestamp": "2026-04-22T12:58:45.128095+00:00", "sessionId": "1", "evidence": {"service": "face-recognition", "confidence": 0.0}}
+{"type": "riskScore", "score": 80, "trend": "rising", "timestamp": "2026-04-22T12:58:45.128095+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T12:58:47.066389+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 80, "trend": "falling", "timestamp": "2026-04-22T12:58:47.068389+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T12:58:47.071391+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 85, "trend": "rising", "timestamp": "2026-04-22T12:58:47.074920+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T12:58:49.066043+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 85, "trend": "falling", "timestamp": "2026-04-22T12:58:49.068062+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T12:58:49.071060+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 90, "trend": "rising", "timestamp": "2026-04-22T12:58:49.074577+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T12:58:51.050743+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "alert", "code": "NO_FACE_DETECTED", "severity": "high", "message": "Student face missing for > 5s", "timestamp": "2026-04-22T12:58:51.054810+00:00", "sessionId": "1", "evidence": {"service": "face-recognition", "confidence": 0.0}}
+{"type": "riskScore", "score": 95, "trend": "rising", "timestamp": "2026-04-22T12:58:51.055812+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T12:58:51.067064+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 95, "trend": "falling", "timestamp": "2026-04-22T12:58:51.072996+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T12:58:53.069810+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 95, "trend": "falling", "timestamp": "2026-04-22T12:58:53.071813+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T12:58:53.075342+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 100, "trend": "rising", "timestamp": "2026-04-22T12:58:53.076342+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T12:58:55.067177+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 100, "trend": "falling", "timestamp": "2026-04-22T12:58:55.069099+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T12:58:55.072690+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 100, "trend": "rising", "timestamp": "2026-04-22T12:58:55.076625+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T12:58:57.055012+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 100, "trend": "falling", "timestamp": "2026-04-22T12:58:57.058549+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T12:58:57.067702+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "alert", "code": "NO_FACE_DETECTED", "severity": "high", "message": "Student face missing for > 5s", "timestamp": "2026-04-22T12:58:57.070702+00:00", "sessionId": "1", "evidence": {"service": "face-recognition", "confidence": 0.0}}
+{"type": "riskScore", "score": 100, "trend": "rising", "timestamp": "2026-04-22T12:58:57.071705+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T12:58:59.074304+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 100, "trend": "falling", "timestamp": "2026-04-22T12:58:59.076308+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T12:58:59.079403+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 100, "trend": "rising", "timestamp": "2026-04-22T12:58:59.082842+00:00"}
+{"service": "object-detection", "timestamp": "2026-04-22T12:59:01.180440+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 100, "trend": "falling", "timestamp": "2026-04-22T12:59:01.182951+00:00"}
+{"service": "face-recognition", "timestamp": "2026-04-22T12:59:01.190483+00:00", "confidence": 0.0, "sessionId": "1", "payload": {"status": "error", "code": "BRIDGE_ERROR", "message": "Modal returned unexpected status: 404"}}
+{"type": "riskScore", "score": 100, "trend": "rising", "timestamp": "2026-04-22T12:59:01.194036+00:00"}

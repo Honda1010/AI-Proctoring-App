@@ -1,0 +1,114 @@
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:04.375070+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 0, "is_cheater": false}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T16:02:04.380067+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:06.947546+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 0, "is_cheater": false}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T16:02:06.950543+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:08.904591+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 0, "is_cheater": false}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T16:02:08.906097+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:10.910183+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 0, "is_cheater": false}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T16:02:10.912188+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:12.903853+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 0, "is_cheater": false}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T16:02:12.906359+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:14.906527+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 0, "is_cheater": false}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T16:02:14.910555+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:16.907208+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 0, "is_cheater": false}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T16:02:16.909210+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:18.906213+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 0, "is_cheater": false}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T16:02:18.908469+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:20.902848+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 0, "is_cheater": false}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T16:02:20.903862+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:22.909842+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [{"type": "speech_violation", "timestamp": "2026-04-22T16:02:21.852578+00:00", "duration_seconds": 16.13, "strike_number": 1, "cheater_flagged": false}], "violation_count": 1, "total_strikes": 1, "is_cheater": false}}
+{"type": "alert", "code": "SPEECH_DETECTED", "severity": "medium", "message": "Student spoke for 16.13s. Strike 1/1.", "timestamp": "2026-04-22T16:02:22.913845+00:00", "sessionId": "1007", "evidence": {"service": "speech-detection", "confidence": 1.0}}
+{"type": "riskScore", "score": 3, "trend": "rising", "timestamp": "2026-04-22T16:02:22.914838+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:24.908044+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T16:02:24.914044+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:26.903012+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T16:02:26.906080+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:28.907868+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T16:02:28.910928+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:30.909363+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [{"type": "speech_violation", "timestamp": "2026-04-22T16:02:29.214661+00:00", "duration_seconds": 2.85, "strike_number": 2, "cheater_flagged": false}], "violation_count": 1, "total_strikes": 2, "is_cheater": false}}
+{"type": "alert", "code": "SPEECH_DETECTED", "severity": "medium", "message": "Student spoke for 2.85s. Strike 2/2.", "timestamp": "2026-04-22T16:02:30.913357+00:00", "sessionId": "1007", "evidence": {"service": "speech-detection", "confidence": 1.0}}
+{"type": "riskScore", "score": 6, "trend": "rising", "timestamp": "2026-04-22T16:02:30.914360+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:32.911032+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 2, "is_cheater": false}}
+{"type": "riskScore", "score": 6, "trend": "falling", "timestamp": "2026-04-22T16:02:32.914040+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:34.908454+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 2, "is_cheater": false}}
+{"type": "riskScore", "score": 6, "trend": "falling", "timestamp": "2026-04-22T16:02:34.912457+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:36.902945+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 2, "is_cheater": false}}
+{"type": "riskScore", "score": 6, "trend": "falling", "timestamp": "2026-04-22T16:02:36.905979+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:38.911747+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [{"type": "speech_violation", "timestamp": "2026-04-22T16:02:37.623645+00:00", "duration_seconds": 3.91, "strike_number": 3, "cheater_flagged": false}], "violation_count": 1, "total_strikes": 3, "is_cheater": false}}
+{"type": "alert", "code": "SPEECH_DETECTED", "severity": "medium", "message": "Student spoke for 3.91s. Strike 3/3.", "timestamp": "2026-04-22T16:02:38.913749+00:00", "sessionId": "1007", "evidence": {"service": "speech-detection", "confidence": 1.0}}
+{"type": "riskScore", "score": 9, "trend": "rising", "timestamp": "2026-04-22T16:02:38.913749+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:40.907002+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 3, "is_cheater": false}}
+{"type": "riskScore", "score": 9, "trend": "falling", "timestamp": "2026-04-22T16:02:40.910154+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:42.906428+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 3, "is_cheater": false}}
+{"type": "riskScore", "score": 9, "trend": "falling", "timestamp": "2026-04-22T16:02:42.908436+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:44.907396+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 3, "is_cheater": false}}
+{"type": "riskScore", "score": 9, "trend": "falling", "timestamp": "2026-04-22T16:02:44.908394+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:46.916769+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 3, "is_cheater": false}}
+{"type": "riskScore", "score": 9, "trend": "falling", "timestamp": "2026-04-22T16:02:46.919761+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:48.906962+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 3, "is_cheater": false}}
+{"type": "riskScore", "score": 9, "trend": "falling", "timestamp": "2026-04-22T16:02:48.907974+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:50.904084+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [{"type": "speech_violation", "timestamp": "2026-04-22T16:02:49.243029+00:00", "duration_seconds": 9.47, "strike_number": 4, "cheater_flagged": false}], "violation_count": 1, "total_strikes": 4, "is_cheater": false}}
+{"type": "alert", "code": "SPEECH_DETECTED", "severity": "medium", "message": "Student spoke for 9.47s. Strike 4/4.", "timestamp": "2026-04-22T16:02:50.908166+00:00", "sessionId": "1007", "evidence": {"service": "speech-detection", "confidence": 1.0}}
+{"type": "riskScore", "score": 12, "trend": "rising", "timestamp": "2026-04-22T16:02:50.908166+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:52.907949+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 4, "is_cheater": false}}
+{"type": "riskScore", "score": 12, "trend": "falling", "timestamp": "2026-04-22T16:02:52.910011+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:54.903835+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 4, "is_cheater": false}}
+{"type": "riskScore", "score": 12, "trend": "falling", "timestamp": "2026-04-22T16:02:54.906898+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:56.907186+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 4, "is_cheater": false}}
+{"type": "riskScore", "score": 12, "trend": "falling", "timestamp": "2026-04-22T16:02:56.911283+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:02:58.910847+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 4, "is_cheater": false}}
+{"type": "riskScore", "score": 12, "trend": "falling", "timestamp": "2026-04-22T16:02:58.912855+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:03:00.909584+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 4, "is_cheater": false}}
+{"type": "riskScore", "score": 12, "trend": "falling", "timestamp": "2026-04-22T16:03:00.911124+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:03:02.903613+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 4, "is_cheater": false}}
+{"type": "riskScore", "score": 12, "trend": "falling", "timestamp": "2026-04-22T16:03:02.907344+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:03:05.031600+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 4, "is_cheater": false}}
+{"type": "riskScore", "score": 12, "trend": "falling", "timestamp": "2026-04-22T16:03:05.033601+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:03:06.907532+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 4, "is_cheater": false}}
+{"type": "riskScore", "score": 12, "trend": "falling", "timestamp": "2026-04-22T16:03:06.909541+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:03:08.902971+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 4, "is_cheater": false}}
+{"type": "riskScore", "score": 12, "trend": "falling", "timestamp": "2026-04-22T16:03:08.905034+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:03:10.902823+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 4, "is_cheater": false}}
+{"type": "riskScore", "score": 12, "trend": "falling", "timestamp": "2026-04-22T16:03:10.905864+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:03:12.905965+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [{"type": "speech_violation", "timestamp": "2026-04-22T16:03:11.963231+00:00", "duration_seconds": 6.65, "strike_number": 5, "cheater_flagged": true}], "violation_count": 1, "total_strikes": 5, "is_cheater": true}}
+{"type": "alert", "code": "SPEECH_DETECTED", "severity": "high", "message": "Student spoke for 6.65s. Strike 5/5.", "timestamp": "2026-04-22T16:03:12.907992+00:00", "sessionId": "1007", "evidence": {"service": "speech-detection", "confidence": 1.0}}
+{"type": "alert", "code": "SPEECH_CHEATING_FLAGGED", "severity": "critical", "message": "Student flagged as cheater after 5 speech violations.", "timestamp": "2026-04-22T16:03:12.908993+00:00", "sessionId": "1007", "evidence": {"service": "speech-detection", "confidence": 1.0}}
+{"type": "riskScore", "score": 15, "trend": "rising", "timestamp": "2026-04-22T16:03:12.909992+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:03:14.905771+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 5, "is_cheater": true}}
+{"type": "alert", "code": "SPEECH_CHEATING_FLAGGED", "severity": "critical", "message": "Student flagged as cheater after 5 speech violations.", "timestamp": "2026-04-22T16:03:14.907784+00:00", "sessionId": "1007", "evidence": {"service": "speech-detection", "confidence": 1.0}}
+{"type": "riskScore", "score": 15, "trend": "falling", "timestamp": "2026-04-22T16:03:14.907784+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:03:16.908479+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 5, "is_cheater": true}}
+{"type": "alert", "code": "SPEECH_CHEATING_FLAGGED", "severity": "critical", "message": "Student flagged as cheater after 5 speech violations.", "timestamp": "2026-04-22T16:03:16.910708+00:00", "sessionId": "1007", "evidence": {"service": "speech-detection", "confidence": 1.0}}
+{"type": "riskScore", "score": 15, "trend": "falling", "timestamp": "2026-04-22T16:03:16.910708+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:03:18.906548+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [{"type": "speech_violation", "timestamp": "2026-04-22T16:03:17.212907+00:00", "duration_seconds": 3.65, "strike_number": 6, "cheater_flagged": true}], "violation_count": 1, "total_strikes": 6, "is_cheater": true}}
+{"type": "alert", "code": "SPEECH_DETECTED", "severity": "high", "message": "Student spoke for 3.65s. Strike 6/6.", "timestamp": "2026-04-22T16:03:18.908561+00:00", "sessionId": "1007", "evidence": {"service": "speech-detection", "confidence": 1.0}}
+{"type": "alert", "code": "SPEECH_CHEATING_FLAGGED", "severity": "critical", "message": "Student flagged as cheater after 6 speech violations.", "timestamp": "2026-04-22T16:03:18.909562+00:00", "sessionId": "1007", "evidence": {"service": "speech-detection", "confidence": 1.0}}
+{"type": "riskScore", "score": 18, "trend": "rising", "timestamp": "2026-04-22T16:03:18.910560+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:03:20.903409+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 6, "is_cheater": true}}
+{"type": "alert", "code": "SPEECH_CHEATING_FLAGGED", "severity": "critical", "message": "Student flagged as cheater after 6 speech violations.", "timestamp": "2026-04-22T16:03:20.904917+00:00", "sessionId": "1007", "evidence": {"service": "speech-detection", "confidence": 1.0}}
+{"type": "riskScore", "score": 18, "trend": "falling", "timestamp": "2026-04-22T16:03:20.905928+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:03:22.909532+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 6, "is_cheater": true}}
+{"type": "alert", "code": "SPEECH_CHEATING_FLAGGED", "severity": "critical", "message": "Student flagged as cheater after 6 speech violations.", "timestamp": "2026-04-22T16:03:22.913566+00:00", "sessionId": "1007", "evidence": {"service": "speech-detection", "confidence": 1.0}}
+{"type": "riskScore", "score": 18, "trend": "falling", "timestamp": "2026-04-22T16:03:22.913566+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:03:24.908309+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 6, "is_cheater": true}}
+{"type": "alert", "code": "SPEECH_CHEATING_FLAGGED", "severity": "critical", "message": "Student flagged as cheater after 6 speech violations.", "timestamp": "2026-04-22T16:03:24.913327+00:00", "sessionId": "1007", "evidence": {"service": "speech-detection", "confidence": 1.0}}
+{"type": "riskScore", "score": 18, "trend": "falling", "timestamp": "2026-04-22T16:03:24.914329+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:03:26.904716+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 6, "is_cheater": true}}
+{"type": "alert", "code": "SPEECH_CHEATING_FLAGGED", "severity": "critical", "message": "Student flagged as cheater after 6 speech violations.", "timestamp": "2026-04-22T16:03:26.906228+00:00", "sessionId": "1007", "evidence": {"service": "speech-detection", "confidence": 1.0}}
+{"type": "riskScore", "score": 18, "trend": "falling", "timestamp": "2026-04-22T16:03:26.907237+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:03:28.908433+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 6, "is_cheater": true}}
+{"type": "alert", "code": "SPEECH_CHEATING_FLAGGED", "severity": "critical", "message": "Student flagged as cheater after 6 speech violations.", "timestamp": "2026-04-22T16:03:28.912452+00:00", "sessionId": "1007", "evidence": {"service": "speech-detection", "confidence": 1.0}}
+{"type": "riskScore", "score": 18, "trend": "falling", "timestamp": "2026-04-22T16:03:28.913452+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:03:30.909293+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 6, "is_cheater": true}}
+{"type": "alert", "code": "SPEECH_CHEATING_FLAGGED", "severity": "critical", "message": "Student flagged as cheater after 6 speech violations.", "timestamp": "2026-04-22T16:03:30.913315+00:00", "sessionId": "1007", "evidence": {"service": "speech-detection", "confidence": 1.0}}
+{"type": "riskScore", "score": 18, "trend": "falling", "timestamp": "2026-04-22T16:03:30.914309+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:03:32.905721+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [{"type": "speech_violation", "timestamp": "2026-04-22T16:03:31.133409+00:00", "duration_seconds": 1.89, "strike_number": 7, "cheater_flagged": true}], "violation_count": 1, "total_strikes": 7, "is_cheater": true}}
+{"type": "alert", "code": "SPEECH_DETECTED", "severity": "high", "message": "Student spoke for 1.89s. Strike 7/7.", "timestamp": "2026-04-22T16:03:32.907285+00:00", "sessionId": "1007", "evidence": {"service": "speech-detection", "confidence": 1.0}}
+{"type": "alert", "code": "SPEECH_CHEATING_FLAGGED", "severity": "critical", "message": "Student flagged as cheater after 7 speech violations.", "timestamp": "2026-04-22T16:03:32.907285+00:00", "sessionId": "1007", "evidence": {"service": "speech-detection", "confidence": 1.0}}
+{"type": "riskScore", "score": 21, "trend": "rising", "timestamp": "2026-04-22T16:03:32.907285+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:03:34.907583+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 7, "is_cheater": true}}
+{"type": "alert", "code": "SPEECH_CHEATING_FLAGGED", "severity": "critical", "message": "Student flagged as cheater after 7 speech violations.", "timestamp": "2026-04-22T16:03:34.909629+00:00", "sessionId": "1007", "evidence": {"service": "speech-detection", "confidence": 1.0}}
+{"type": "riskScore", "score": 21, "trend": "falling", "timestamp": "2026-04-22T16:03:34.910601+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T16:03:36.907486+00:00", "confidence": 1.0, "sessionId": "1007", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 7, "is_cheater": true}}
+{"type": "alert", "code": "SPEECH_CHEATING_FLAGGED", "severity": "critical", "message": "Student flagged as cheater after 7 speech violations.", "timestamp": "2026-04-22T16:03:36.910502+00:00", "sessionId": "1007", "evidence": {"service": "speech-detection", "confidence": 1.0}}
+{"type": "riskScore", "score": 21, "trend": "falling", "timestamp": "2026-04-22T16:03:36.911502+00:00"}
