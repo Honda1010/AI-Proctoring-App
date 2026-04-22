@@ -43,8 +43,16 @@ function resolveConfigPath() {
 function startAIRouter() {
   const routerScript = path.join(__dirname, '..', 'python_bridge', 'router.py');
   const configPath = resolveConfigPath();
+  const projectRoot = path.join(__dirname, '..');
 
-  aiRouterProcess = spawn('python', [routerScript], {
+  // Prefer the venv Python so all AI packages are available.
+  // Fall back to the system 'python' / 'python3' if venv is absent.
+  const venvPython = process.platform === 'win32'
+    ? path.join(projectRoot, '.venv', 'Scripts', 'python.exe')
+    : path.join(projectRoot, '.venv', 'bin', 'python');
+  const pythonExe = fs.existsSync(venvPython) ? venvPython : 'python';
+
+  aiRouterProcess = spawn(pythonExe, [routerScript], {
     env: { ...process.env, LUMINA_CONFIG_PATH: configPath },
     stdio: ['pipe', 'pipe', 'pipe'],
   });

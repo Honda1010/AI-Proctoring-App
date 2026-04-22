@@ -19,13 +19,39 @@ except ImportError:
         return None
 
 from config import load_config, ConfigError
-from services.eye_gaze_local import LocalEyeGazeService
-from services.speech_local import SpeechDetectionService
-from face_recognition import FaceRecognitionService
-from object_detection import ObjectDetectionService
 
 # Phase 8: Proctoring Orchestration
 from orchestrator import ProctoringOrchestrator
+
+# ---------------------------------------------------------------------------
+# Lazy service imports — guarded so the router stays operational even when
+# optional AI packages (cv2, torch, mediapipe, sounddevice …) are absent.
+# ---------------------------------------------------------------------------
+_service_import_errors: Dict[str, str] = {}
+
+try:
+    from services.eye_gaze_local import LocalEyeGazeService as _LocalEyeGazeService
+except Exception as _e:
+    _LocalEyeGazeService = None  # type: ignore
+    _service_import_errors["eye-gaze"] = str(_e)
+
+try:
+    from services.speech_local import SpeechDetectionService as _SpeechDetectionService
+except Exception as _e:
+    _SpeechDetectionService = None  # type: ignore
+    _service_import_errors["speech-detection"] = str(_e)
+
+try:
+    from face_recognition import FaceRecognitionService as _FaceRecognitionService
+except Exception as _e:
+    _FaceRecognitionService = None  # type: ignore
+    _service_import_errors["face-recognition"] = str(_e)
+
+try:
+    from object_detection import ObjectDetectionService as _ObjectDetectionService
+except Exception as _e:
+    _ObjectDetectionService = None  # type: ignore
+    _service_import_errors["object-detection"] = str(_e)
 
 class AIRouter:
     def __init__(self, config_path: str, schema_path: str):
@@ -35,12 +61,16 @@ class AIRouter:
         self.schema = None
         self.orchestrator = None
         self.services = {}
-        self.service_classes = {
-            "eye-gaze": LocalEyeGazeService,
-            "speech-detection": SpeechDetectionService,
-            "face-recognition": FaceRecognitionService,
-            "object-detection": ObjectDetectionService,
-        }
+        # Only register services whose packages were successfully imported.
+        self.service_classes = {}
+        if _LocalEyeGazeService is not None:
+            self.service_classes["eye-gaze"] = _LocalEyeGazeService
+        if _SpeechDetectionService is not None:
+            self.service_classes["speech-detection"] = _SpeechDetectionService
+        if _FaceRecognitionService is not None:
+            self.service_classes["face-recognition"] = _FaceRecognitionService
+        if _ObjectDetectionService is not None:
+            self.service_classes["object-detection"] = _ObjectDetectionService
         self.loop = None
 
     def load_configuration(self):
@@ -172,9 +202,17 @@ class AIRouter:
     async def handle_start_service(self, request_id: Any, params: Dict[str, Any]):
         service_name = params.get("service")
         session_id = params.get("sessionId", "default-session")
-        
+
+        # Report import failures as a clear error (not just "Invalid service")
         if service_name not in self.service_classes:
-            self.send_error(request_id, -32602, f"Invalid service: {service_name}")
+            import_err = _service_import_errors.get(service_name)
+            if import_err:
+                self.send_error(
+                    request_id, -32603,
+                    f"Service '{service_name}' unavailable — missing dependency: {import_err}"
+                )
+            else:
+                self.send_error(request_id, -32602, f"Invalid service: {service_name}")
             return
 
         if service_name in self.services:
@@ -206,12 +244,25 @@ class AIRouter:
             self.send_error(request_id, -32602, f"Service not running: {service_name}")
 
     def handle_query_status(self, request_id: Any, params: Dict[str, Any]):
+        all_service_names = set(self.service_classes) | set(_service_import_errors)
         service_name = params.get("service")
         if service_name:
-            status = "running" if service_name in self.services else "stopped"
+            if service_name in _service_import_errors:
+                status = "unavailable"
+            elif service_name in self.services:
+                status = "running"
+            else:
+                status = "stopped"
             self.send_result(request_id, {"service": service_name, "status": status})
         else:
-            statuses = {name: ("running" if name in self.services else "stopped") for name in self.service_classes}
+            statuses = {}
+            for name in all_service_names:
+                if name in _service_import_errors:
+                    statuses[name] = "unavailable"
+                elif name in self.services:
+                    statuses[name] = "running"
+                else:
+                    statuses[name] = "stopped"
             self.send_result(request_id, statuses)
 
     async def handle_mock_detection(self, request_id: Any, params: Dict[str, Any]):

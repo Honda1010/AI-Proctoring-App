@@ -7,7 +7,13 @@ from typing import Dict, Any, List, Optional
 
 import numpy as np
 import sounddevice as sd
-import torch
+
+try:
+    import torch
+    _TORCH_AVAILABLE = True
+except ImportError:
+    torch = None  # type: ignore
+    _TORCH_AVAILABLE = False
 
 import sys
 import os
@@ -48,19 +54,24 @@ class SpeechDetectionService(AIService):
 
         # ── Load Silero VAD once at init time (fallback to energy VAD if unavailable) ──
         self._log("[SpeechDetection] Loading Silero VAD model...")
-        try:
-            self._model, _ = torch.hub.load(
-                repo_or_dir='snakers4/silero-vad',
-                model='silero_vad',
-                force_reload=False,
-                trust_repo=True
-            )
-            self._model.eval()
-            self._log("[SpeechDetection] Model ready.")
-        except Exception as e:
+        if not _TORCH_AVAILABLE:
             self._model = None
             self._use_energy_fallback = True
-            self._log(f"[SpeechDetection] Silero unavailable ({e}). Using RMS fallback detector.")
+            self._log("[SpeechDetection] torch not installed. Using RMS fallback detector.")
+        else:
+            try:
+                self._model, _ = torch.hub.load(
+                    repo_or_dir='snakers4/silero-vad',
+                    model='silero_vad',
+                    force_reload=False,
+                    trust_repo=True
+                )
+                self._model.eval()
+                self._log("[SpeechDetection] Model ready.")
+            except Exception as e:
+                self._model = None
+                self._use_energy_fallback = True
+                self._log(f"[SpeechDetection] Silero unavailable ({e}). Using RMS fallback detector.")
 
         # ── Stream handle ──
         self._stream: Optional[sd.InputStream] = None
@@ -152,9 +163,8 @@ class SpeechDetectionService(AIService):
         if not self.is_running:
             return
 
-        # 1. Prepare tensor
+        # 1. Prepare audio array
         audio = indata[:, 0]
-        tensor = torch.from_numpy(audio.copy())
 
         # 2. VAD inference
         try:
@@ -163,6 +173,7 @@ class SpeechDetectionService(AIService):
                 rms = float(np.sqrt(np.mean(np.square(audio))))
                 speech_prob = min(1.0, max(0.0, rms / max(self._energy_threshold * 2.0, 1e-6)))
             else:
+                tensor = torch.from_numpy(audio.copy())
                 speech_prob = self._model(tensor, SAMPLE_RATE).item()
         except Exception as e:
             self._log(f"[SpeechDetection] VAD error: {e}")

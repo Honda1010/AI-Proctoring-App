@@ -9,6 +9,6 @@ respx>=0.21.0
 pytest-asyncio>=0.23.0
 opencv-python>=4.8.0
 PyAudio>=0.2.13
-
+sounddevice>=0.4.6
 mediapipe>=0.10.8
 numpy>=1.26.0

@@ -23,7 +23,7 @@ let aiCanvas = null;
 let aiContext = null;
 const EYE_GAZE_STREAM_INTERVAL_MS = 250;
 const SPEECH_POLL_INTERVAL_MS = 2000;
-const CLOUD_VISION_INTERVAL_MS = 1500;
+const CLOUD_VISION_INTERVAL_MS = 5000; // modal_Frame_Rate
 
 // ---------------------------------------------------------------------------
 // T012 — DOMContentLoaded: load session and initialise page

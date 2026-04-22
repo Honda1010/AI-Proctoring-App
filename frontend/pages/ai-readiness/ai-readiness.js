@@ -118,6 +118,10 @@ async function runSpeechTick() {
     if (res?.ok) {
       speechReady = true;
       setPill(speechStatusEl, 'ready', 'Ready');
+    } else {
+      // Service not running or router error — mark as not available
+      speechReady = false;
+      setPill(speechStatusEl, 'error', 'Not Running');
     }
   } catch {
     setPill(speechStatusEl, 'pending', 'Checking');
@@ -129,17 +133,28 @@ async function runSpeechTick() {
 async function syncStatusTick() {
   try {
     const res = await window.bridge.aiRpc('queryStatus', {}, { timeoutMs: 5000 });
-    if (!res?.ok) return;
-    const statuses = res.result || {};
-    if (statuses['speech-detection'] === 'running' && !speechReady) {
-      setPill(speechStatusEl, 'pending', 'Checking');
-    }
-    if (statuses['eye-gaze'] !== 'running') {
+    if (!res?.ok) {
+      // Router unreachable — surface an error so pills don't stay pending forever
       setPill(eyeStatusEl, 'error', 'Not Running');
+      setPill(speechStatusEl, 'error', 'Not Running');
+      eyeReady = false;
+      speechReady = false;
+      return;
+    }
+    const statuses = res.result || {};
+    const eyeStatus = statuses['eye-gaze'];
+    const speechStatus = statuses['speech-detection'];
+
+    if (eyeStatus !== 'running') {
+      const label = eyeStatus === 'unavailable' ? 'Unavailable' : 'Not Running';
+      setPill(eyeStatusEl, 'error', label);
       eyeReady = false;
     }
-    if (statuses['speech-detection'] !== 'running') {
-      setPill(speechStatusEl, 'error', 'Not Running');
+    if (speechStatus === 'running' && !speechReady) {
+      setPill(speechStatusEl, 'pending', 'Checking');
+    } else if (speechStatus !== 'running') {
+      const label = speechStatus === 'unavailable' ? 'Unavailable' : 'Not Running';
+      setPill(speechStatusEl, 'error', label);
       speechReady = false;
     }
   } catch {
