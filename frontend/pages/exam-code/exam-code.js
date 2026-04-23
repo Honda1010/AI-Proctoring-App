@@ -188,7 +188,7 @@ async function handleSubmit(event) {
     }
     // examSession is already stored in main.js — no data to pass via URL.
     // Route through AI readiness so local model calibration finishes pre-exam.
-    window.location.href = '../ai-readiness/index.html';
+    window.location.href = '../identity-verification/index.html';
     return;
   }
 

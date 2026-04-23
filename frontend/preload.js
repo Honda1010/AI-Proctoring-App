@@ -42,6 +42,8 @@ const ALLOWED_INVOKE_CHANNELS = [
   'bridge:clear-submit-result', // Clear submitResult + examSession; navigate to Exam Access
   'bridge:get-session-log',     // Retrieve session JSONL log lines
   'bridge:export-pdf',          // Export current page to PDF
+  'bridge:enroll-reference',    // Enroll a captured reference photo for face recognition
+  'bridge:get-enrollment-status', // Check whether enrollment succeeded
 ];
 
 contextBridge.exposeInMainWorld('bridge', {
@@ -224,5 +226,25 @@ contextBridge.exposeInMainWorld('bridge', {
    */
   clearSubmitResult() {
     return ipcRenderer.invoke('bridge:clear-submit-result');
+  },
+
+  /**
+   * Enroll a captured reference photo for face recognition.
+   * Main process chains face-detect → enroll via the AI router.
+   *
+   * @param {string} frame  Base64 data URL of the captured JPEG
+   * @returns {Promise<{ok: true} | {ok: false, error: {code: string, message: string}}>}
+   */
+  enrollReference(frame) {
+    return ipcRenderer.invoke('bridge:enroll-reference', { frame });
+  },
+
+  /**
+   * Check whether the student has successfully enrolled a reference photo.
+   *
+   * @returns {Promise<{enrolled: boolean}>}
+   */
+  getEnrollmentStatus() {
+    return ipcRenderer.invoke('bridge:get-enrollment-status');
   },
 });

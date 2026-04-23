@@ -161,6 +161,10 @@ class AIRouter:
             await self.handle_predict(request_id, params)
         elif method == "mockDetection": # Helper for testing/wiring
             await self.handle_mock_detection(request_id, params)
+        elif method == "enrollReference":
+            await self.handle_enroll_reference(request_id, params)
+        elif method == "unenrollReference":
+            await self.handle_unenroll_reference(request_id, params)
         else:
             self.send_error(request_id, -32601, "Method not found")
 
@@ -198,6 +202,44 @@ class AIRouter:
         except Exception as e:
             self.send_error(request_id, -32603, f"Internal error during prediction: {str(e)}")
 
+
+    async def handle_enroll_reference(self, request_id: Any, params: Dict[str, Any]):
+        """Enroll a reference frame for face recognition."""
+        frame = params.get("frame")
+        session_id = params.get("sessionId", "default-session")
+
+        if not frame:
+            self.send_error(request_id, -32602, "Missing frame data")
+            return
+
+        service = self.services.get("face-recognition")
+        if service is None:
+            self.send_result(request_id, {
+                "ok": False,
+                "error": {"code": "SERVICE_NOT_RUNNING",
+                           "message": "Face recognition service is not running."}
+            })
+            return
+
+        try:
+            result = await service.enroll(frame)
+            self.send_result(request_id, result)
+        except Exception as e:
+            self.send_result(request_id, {
+                "ok": False,
+                "error": {"code": "BRIDGE_ERROR", "message": str(e)}
+            })
+
+    async def handle_unenroll_reference(self, request_id: Any, params: Dict[str, Any]):
+        """Unenroll (remove) the stored face embedding for a session (fire-and-forget)."""
+        service = self.services.get("face-recognition")
+        if service is not None:
+            try:
+                await service.unenroll()
+            except Exception:
+                pass  # fire-and-forget
+        # Always respond with ok — unenroll is best-effort
+        self.send_result(request_id, {"ok": True})
 
     async def handle_start_service(self, request_id: Any, params: Dict[str, Any]):
         service_name = params.get("service")

@@ -30,6 +30,13 @@ const CLOUD_VISION_INTERVAL_MS = 5000; // modal_Frame_Rate
 // ---------------------------------------------------------------------------
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // T026 — Guard: require completed enrollment before exam page loads
+  const enrollResult = await window.bridge.getEnrollmentStatus();
+  if (!enrollResult?.enrolled) {
+    window.location.replace('../identity-verification/index.html');
+    return;
+  }
+
   const result = await window.bridge.getExamSession();
 
   if (!result || !result.ok) {

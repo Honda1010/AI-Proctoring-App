@@ -242,6 +242,14 @@ let examSession = null;
  */
 let submitResult = null;
 
+/**
+ * Enrollment state for the current exam attempt.
+ * Set after a successful bridge:enroll-reference call.
+ * Cleared on all exam exit paths (submit, back-to-home, clear-session).
+ * @type {{ sessionId: string, enrolledAt: Date, succeeded: boolean } | null}
+ */
+let enrollmentState = null;
+
 /** keytar service identifier shared across all session keys. */
 const KEYTAR_SERVICE = 'lumina-ai-proctoring';
 
@@ -547,8 +555,56 @@ ipcMain.handle('bridge:get-saved-session', async () => {
 ipcMain.handle('bridge:clear-session', async () => {
   await clearAllKeytarEntries();
   sessionMemory = null;
+  // T029 — Unenroll face recognition embedding on logout (fire-and-forget)
+  sendAiRpc('unenrollReference', { sessionId: enrollmentState?.sessionId }).catch(() => {});
+  enrollmentState = null;
   return { ok: true };
 });
+
+// ---------------------------------------------------------------------------
+// Identity Verification IPC handlers (spec 010)
+// ---------------------------------------------------------------------------
+
+/**
+ * bridge:enroll-reference — Enroll a captured reference photo for face recognition.
+ *
+ * Expected args: { frame: string }  — base64 data URL of the captured JPEG
+ * Returns: { ok: true } | { ok: false, error: { code, message } }
+ *
+ * Chains face-detect → enroll via the AI router (FaceRecognitionService.enroll).
+ * On success sets enrollmentState so the exam page guard can pass.
+ */
+ipcMain.handle('bridge:enroll-reference', async (_event, { frame } = {}) => {
+  if (!frame || typeof frame !== 'string') {
+    return { ok: false, error: { code: 'BRIDGE_ERROR', message: 'No frame provided.' } };
+  }
+
+  const sessionId = examSession?.attemptId ? String(examSession.attemptId) : 'default-session';
+
+  const rpcResult = await sendAiRpc('enrollReference', { frame, sessionId }, 30000);
+
+  if (rpcResult.ok && rpcResult.result?.ok === true) {
+    enrollmentState = { sessionId, enrolledAt: new Date(), succeeded: true };
+    return { ok: true };
+  }
+
+  // Propagate typed error from the service layer when available
+  const error = rpcResult.result?.error || rpcResult.error || {
+    code: 'ENROLLMENT_FAILED',
+    message: 'Enrollment did not succeed.',
+  };
+  return { ok: false, error };
+});
+
+/**
+ * bridge:get-enrollment-status — Check whether enrollment has succeeded.
+ *
+ * Returns: { enrolled: boolean }
+ * Returns { enrolled: false } (not an error) when no enrollment has occurred.
+ */
+ipcMain.handle('bridge:get-enrollment-status', () => ({
+  enrolled: enrollmentState?.succeeded === true,
+}));
 
 /**
  * bridge:open-external — Open a URL in the system default browser.
@@ -666,6 +722,9 @@ ipcMain.handle('bridge:submit-exam', async (_event, { answers }) => {
 
     if (response.ok) {
       submitResult = body;
+      // T027 — Unenroll face recognition embedding on exam submit (fire-and-forget)
+      sendAiRpc('unenrollReference', { sessionId: enrollmentState?.sessionId }).catch(() => {});
+      enrollmentState = null;
       return { ok: true, data: submitResult };
     }
 
@@ -767,6 +826,9 @@ ipcMain.handle('bridge:get-result', async () => {
  */
 ipcMain.handle('bridge:clear-submit-result', async () => {
   submitResult = null;
+  // T028 — Unenroll face recognition embedding on back-to-home (fire-and-forget)
+  sendAiRpc('unenrollReference', { sessionId: enrollmentState?.sessionId }).catch(() => {});
+  enrollmentState = null;
   examSession = null;
   mainWindow?.loadFile(path.join(__dirname, 'pages/exam-code/index.html'));
   return { ok: true };
