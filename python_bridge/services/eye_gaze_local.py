@@ -39,7 +39,7 @@ class LocalEyeGazeService(AIService):
             self._process_frames_batch = process_frames_batch
         except Exception as exc:
             self._emit_hardware_error(f"Failed to load local eye-gaze model: {exc}")
-
+#
     async def start(self):
         """Start the background capture and inference thread."""
         if self.is_running:
