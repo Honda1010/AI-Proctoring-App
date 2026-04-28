@@ -28,6 +28,8 @@ class ConfigError(Exception):
         "MISSING_BASE_URL",
         "INSECURE_PROTOCOL",
         "INVALID_PORT",
+        "MISSING_MODAL_CONFIG",
+        "MISSING_MODAL_ENDPOINT",
     }
 
     def __init__(self, code: str, message: str) -> None:
@@ -147,6 +149,42 @@ def load_config(config_path: str) -> AppConfig:
     modal = data.get("modal", {})
     services = data.get("services", {})
     orchestration = data.get("orchestration", {})
+
+    def require_non_empty_str(value: Any, field_name: str, code: str) -> str:
+        if not isinstance(value, str) or not value.strip():
+            err = ConfigError(code, f"config.json missing required field: {field_name}.")
+            err.emit_stderr()
+            raise err
+        return value.strip()
+
+    if not isinstance(modal, dict):
+        err = ConfigError("MISSING_MODAL_CONFIG", "config.json modal config must be an object.")
+        err.emit_stderr()
+        raise err
+
+    require_non_empty_str(modal.get("token_id"), "modal.token_id", "MISSING_MODAL_CONFIG")
+    require_non_empty_str(modal.get("token_secret"), "modal.token_secret", "MISSING_MODAL_CONFIG")
+    require_non_empty_str(modal.get("user_id"), "modal.user_id", "MISSING_MODAL_CONFIG")
+
+    if not isinstance(services, dict):
+        err = ConfigError("INVALID_JSON", "config.json services config must be an object.")
+        err.emit_stderr()
+        raise err
+
+    for service_name in ["face-recognition", "object-detection"]:
+        service_cfg = services.get(service_name)
+        if not isinstance(service_cfg, dict):
+            err = ConfigError(
+                "MISSING_MODAL_ENDPOINT",
+                f"config.json missing services.{service_name} config.",
+            )
+            err.emit_stderr()
+            raise err
+        require_non_empty_str(
+            service_cfg.get("endpoint_url"),
+            f"services.{service_name}.endpoint_url",
+            "MISSING_MODAL_ENDPOINT",
+        )
 
     # Optional: Basic validation for local service settings if they exist
     for service_name in ["eye-gaze", "speech-detection"]:

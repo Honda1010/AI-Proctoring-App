@@ -1,125 +1,234 @@
-import pyaudio
+# python_bridge/services/speech_local.py
+
+import datetime
 import threading
 import time
-import asyncio
-import datetime
+from typing import Dict, Any, List, Optional
+
 import numpy as np
-from typing import Dict, Any, Callable, Optional
+import sounddevice as sd
+
+try:
+    import torch
+    _TORCH_AVAILABLE = True
+except ImportError:
+    torch = None  # type: ignore
+    _TORCH_AVAILABLE = False
+
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from ai_base import AIService
 
-class LocalSpeechDetectionService(AIService):
+
+# ──────────────────────────────────────────────
+# Configuration — tweak these without touching logic
+# ──────────────────────────────────────────────
+SAMPLE_RATE = 16000
+CHUNK = 512
+SPEECH_PROB_THRESHOLD = 0.5
+CHEATING_DURATION = 5.0   # seconds of speech = 1 strike
+CHEATING_THRESHOLD = 5    # strikes before flagging as cheater
+ALLOWED_PAUSE = 1.5       # silence gap that resets the speech timer
+MIN_SPEECH_SEGMENT = 1.0  # minimum segment length to count as speech
+VIOLATION_COOLDOWN = 1.0  # avoid duplicate alerts from jittery boundaries
+
+
+class SpeechDetectionService(AIService):
     """
-    Local Speech Detection service using PyAudio and a background thread.
+    Listens to the local microphone using Silero VAD.
+    Violations accumulate internally and are flushed on every predict() poll.
+
+    Threading model:
+      - sounddevice fires _audio_callback() from its own C-level thread (writes state)
+      - predict() is called from the async server thread (reads state)
+      - threading.Lock guards all shared mutable state between the two
     """
 
-    def __init__(self, session_id: str, config: dict, event_callback: Callable[[dict], None]):
+    def __init__(self, session_id: str, config: Dict[str, Any]):
         super().__init__("speech-detection", session_id, config)
-        self.event_callback = event_callback
-        
-        # Load service specific config
-        s_cfg = config.get("services", {}).get("speech-detection", {})
-        self.chunk_size = s_cfg.get("chunk_size", 1024)
-        self.sample_rate = s_cfg.get("sample_rate", 16000)
-        self.threshold = s_cfg.get("threshold", 0.05)
-        self.model_path = s_cfg.get("model_path")
 
-        self._thread: Optional[threading.Thread] = None
-        self._pa: Optional[pyaudio.PyAudio] = None
-        self._stream: Optional[pyaudio.Stream] = None
-        self._is_speech_detected = False
-        
-        # Aggregation window (5 seconds as per clarification)
-        self._agg_window = 5.0
-        self._last_event_time = 0
+        speech_cfg = (config or {}).get("services", {}).get("speech-detection", {})
+        self._energy_threshold = float(speech_cfg.get("threshold", 0.02))
+        self._use_energy_fallback = False
+
+        # ── Load Silero VAD once at init time (fallback to energy VAD if unavailable) ──
+        self._log("[SpeechDetection] Loading Silero VAD model...")
+        if not _TORCH_AVAILABLE:
+            self._model = None
+            self._use_energy_fallback = True
+            self._log("[SpeechDetection] torch not installed. Using RMS fallback detector.")
+        else:
+            try:
+                self._model, _ = torch.hub.load(
+                    repo_or_dir='snakers4/silero-vad',
+                    model='silero_vad',
+                    force_reload=False,
+                    trust_repo=True
+                )
+                self._model.eval()
+                self._log("[SpeechDetection] Model ready.")
+            except Exception as e:
+                self._model = None
+                self._use_energy_fallback = True
+                self._log(f"[SpeechDetection] Silero unavailable ({e}). Using RMS fallback detector.")
+
+        # ── Stream handle ──
+        self._stream: Optional[sd.InputStream] = None
+
+        # ── Shared state (guarded by _lock) ──
+        # Written by sounddevice thread, read by async predict()
+        self._lock = threading.Lock()
+        self._violation_log: List[Dict[str, Any]] = []
+        self._cheat_counter: int = 0
+        self._is_cheater: bool = False
+
+        # ── Speech timing state ──
+        # Only touched inside _audio_callback, so no lock needed
+        self._is_speaking: bool = False
+        self._speech_start_time: float = 0.0
+        self._last_speech_time: float = 0.0
+        self._last_violation_time: float = 0.0
+
+    # ──────────────────────────────────────────────
+    # Lifecycle
+    # ──────────────────────────────────────────────
 
     async def start(self):
-        """Start the audio capture and detection thread."""
+        """Open the microphone stream and begin VAD in the background."""
         if self.is_running:
+            self._log("[SpeechDetection] Already running.")
             return
 
-        try:
-            self._pa = pyaudio.PyAudio()
-            self._stream = self._pa.open(
-                format=pyaudio.paFloat32,
-                channels=1,
-                rate=self.sample_rate,
-                input=True,
-                frames_per_buffer=self.chunk_size
-            )
-        except Exception as e:
-            self._emit_hardware_error(f"Unable to access microphone: {str(e)}")
-            return
-
+        self._stream = sd.InputStream(
+            samplerate=SAMPLE_RATE,
+            channels=1,
+            dtype='float32',
+            blocksize=CHUNK,
+            callback=self._audio_callback  # sounddevice calls this every ~32ms
+        )
+        self._stream.start()
         self.is_running = True
-        self._thread = threading.Thread(target=self._run_loop, daemon=True)
-        self._thread.start()
+        self._log("[SpeechDetection] Microphone stream started.")
 
     async def stop(self):
-        """Stop the background thread and release hardware."""
+        """Stop the microphone stream cleanly."""
+        if not self.is_running:
+            return
+
         self.is_running = False
-        if self._thread:
-            self._thread.join(timeout=2.0)
-        if self._stream:
-            self._stream.stop_stream()
+        if self._stream is not None:
+            self._stream.stop()
             self._stream.close()
-        if self._pa:
-            self._pa.terminate()
+            self._stream = None
+        self._log("[SpeechDetection] Microphone stream stopped.")
 
-    async def predict(self, frame: str) -> dict:
-        """Manual trigger - returns current state."""
-        return self.create_detection_event(1.0, {"is_speech_detected": self._is_speech_detected})
+    # ──────────────────────────────────────────────
+    # Poll endpoint — called by frontend every ~2 seconds
+    # ──────────────────────────────────────────────
 
-    def get_mock_event(self) -> dict:
-        """Returns a mock speech event."""
-        return self.create_detection_event(0.75, {
-            "is_speech_detected": True,
-            "language": "en-US",
-            "db_level": -24.5
-        })
+    async def predict(self, frame: str) -> Dict[str, Any]:
+        """
+        Flush and return all violations recorded since the last poll.
+        `frame` is intentionally unused — audio is captured locally via sounddevice.
+        """
+        with self._lock:
+            flushed = self._violation_log.copy()
+            self._violation_log.clear()
+            strikes = self._cheat_counter
+            is_cheater = self._is_cheater
 
-    def _run_loop(self):
-        """Background audio processing loop."""
-        
-        # Energy aggregation buffers
-        energy_buffer = []
-        frames_per_window = int(self._agg_window * self.sample_rate / self.chunk_size)
-
-        while self.is_running:
-            try:
-                data = self._stream.read(self.chunk_size, exception_on_overflow=False)
-                samples = np.frombuffer(data, dtype=np.float32)
-                
-                # Simple energy-based detection
-                energy = np.sqrt(np.mean(samples**2))
-                energy_buffer.append(energy)
-                
-                if len(energy_buffer) >= frames_per_window:
-                    avg_energy = np.mean(energy_buffer)
-                    detected = avg_energy > self.threshold
-                    
-                    if detected != self._is_speech_detected:
-                        event = self.create_detection_event(0.9, {
-                            "is_speech_detected": detected,
-                            "db_level": 20 * np.log10(avg_energy + 1e-6),
-                            "language": "en-US"
-                        })
-                        self.event_callback(event)
-                        self._is_speech_detected = detected
-                    
-                    energy_buffer = [] # Reset window
-
-            except Exception as e:
-                self._emit_hardware_error(f"Audio stream error: {str(e)}")
-                break
-
-    def _emit_hardware_error(self, message: str):
-        error_event = {
-            "method": "serviceError",
-            "params": {
-                "service": self.service_name,
-                "code": "HARDWARE_FAILURE",
-                "message": message
+        return self.create_detection_event(
+            confidence=1.0,
+            payload={
+                "new_violations": flushed,          # list of violation dicts since last poll
+                "violation_count": len(flushed),
+                "total_strikes": strikes,
+                "is_cheater": is_cheater,
             }
-        }
-        self.event_callback(error_event)
-        self.is_running = False
+        )
+
+    # ──────────────────────────────────────────────
+    # Audio callback — runs on sounddevice's internal C thread
+    # ──────────────────────────────────────────────
+
+    def _audio_callback(
+        self,
+        indata: np.ndarray,
+        frames: int,
+        time_info,
+        status: sd.CallbackFlags
+    ):
+        """Called every ~32ms. Must be fast and non-blocking."""
+        if not self.is_running:
+            return
+
+        # 1. Prepare audio array
+        audio = indata[:, 0]
+
+        # 2. VAD inference
+        try:
+            if self._use_energy_fallback:
+                # Scale RMS energy to a pseudo-probability in [0, 1].
+                rms = float(np.sqrt(np.mean(np.square(audio))))
+                speech_prob = min(1.0, max(0.0, rms / max(self._energy_threshold * 2.0, 1e-6)))
+            else:
+                tensor = torch.from_numpy(audio.copy())
+                speech_prob = self._model(tensor, SAMPLE_RATE).item()
+        except Exception as e:
+            self._log(f"[SpeechDetection] VAD error: {e}")
+            return
+
+        current_time = time.time()
+
+        # 3. State machine
+        if speech_prob > SPEECH_PROB_THRESHOLD:
+            if not self._is_speaking:
+                self._is_speaking = True
+                self._speech_start_time = current_time
+                self._log("[SpeechDetection] Speech started.")
+
+            self._last_speech_time = current_time
+
+        else:
+            if self._is_speaking:
+                if current_time - self._last_speech_time > ALLOWED_PAUSE:
+                    segment_duration = max(0.0, self._last_speech_time - self._speech_start_time)
+                    should_count_segment = (
+                        segment_duration >= MIN_SPEECH_SEGMENT
+                        and current_time - self._last_violation_time >= VIOLATION_COOLDOWN
+                    )
+                    if should_count_segment:
+                        self._record_violation(segment_duration)
+                        self._last_violation_time = current_time
+
+                    self._log(
+                        f"\n[SpeechDetection] Speech ended "
+                        f"(segment={segment_duration:.2f}s). Total strikes: {self._cheat_counter}"
+                    )
+                    self._is_speaking = False
+
+    # ──────────────────────────────────────────────
+    # Internal helpers
+    # ──────────────────────────────────────────────
+
+    def _record_violation(self, duration: float):
+        """Append a violation to the log. Called from sounddevice thread → use lock."""
+        with self._lock:
+            self._cheat_counter += 1
+            self._is_cheater = self._cheat_counter >= CHEATING_THRESHOLD
+
+            self._violation_log.append({
+                "type": "speech_violation",
+                "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                "duration_seconds": round(duration, 2),
+                "strike_number": self._cheat_counter,
+                "cheater_flagged": self._is_cheater,
+            })
+
+        flag = " CHEATER FLAGGED" if self._is_cheater else ""
+        self._log(f"[SpeechDetection] Strike {self._cheat_counter}/{CHEATING_THRESHOLD}{flag}")
+
+    def _log(self, message: str):
+        """Write service logs to stderr to avoid corrupting JSON-RPC stdout."""
+        print(message, file=sys.stderr, flush=True)

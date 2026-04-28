@@ -1,9 +1,10 @@
 import cv2
 import threading
 import time
-import asyncio
-import datetime
-from typing import Dict, Any, Callable, Optional
+import base64
+import sys
+from contextlib import redirect_stdout
+from typing import Callable, Optional
 from ai_base import AIService
 
 class LocalEyeGazeService(AIService):
@@ -19,16 +20,34 @@ class LocalEyeGazeService(AIService):
         s_cfg = config.get("services", {}).get("eye-gaze", {})
         self.fps = s_cfg.get("fps", 5)
         self.camera_index = s_cfg.get("camera_index", 0)
+        # Desktop app expects the renderer to own the webcam (getUserMedia) and
+        # send frames to Python via predict(). Defaulting to "camera" can cause
+        # device-lock conflicts with Chromium on Windows ("Camera unavailable").
+        self.input_mode = s_cfg.get("input_mode", "shared_frame")
         self.model_path = s_cfg.get("model_path")
         self.threshold = s_cfg.get("threshold", 0.5)
 
         self._thread: Optional[threading.Thread] = None
         self._cap: Optional[cv2.VideoCapture] = None
         self._last_status = None
+        self._session_id = session_id
+        self._process_frames_batch = None
+
+        # Load the bridge-local port of localMain.py.
+        try:
+            from service.localMain import process_frames_batch  # type: ignore
+            self._process_frames_batch = process_frames_batch
+        except Exception as exc:
+            self._emit_hardware_error(f"Failed to load local eye-gaze model: {exc}")
 
     async def start(self):
         """Start the background capture and inference thread."""
         if self.is_running:
+            return
+
+        # In shared_frame mode, renderer owns the webcam and sends frames via predict().
+        if self.input_mode == "shared_frame":
+            self.is_running = True
             return
 
         self._cap = cv2.VideoCapture(self.camera_index)
@@ -52,9 +71,50 @@ class LocalEyeGazeService(AIService):
 
     async def predict(self, frame: str) -> dict:
         """
-        The local service runs its own capture loop, so manual predict calls 
-        from the router (which passes a frame) are ignored or return current state.
+        In shared_frame mode, this service consumes renderer-provided frames.
+        In camera mode, the local service runs its own capture loop and returns
+        current state for polling.
         """
+        if self.input_mode == "shared_frame":
+            if self._process_frames_batch is None:
+                return self.create_detection_event(0.0, {"status": "initializing"})
+
+            frame_b64 = frame
+            if isinstance(frame_b64, str) and frame_b64.startswith("data:") and "," in frame_b64:
+                frame_b64 = frame_b64.split(",", 1)[1]
+
+            try:
+                # localMain prints timing info; redirect to stderr so router stdout stays JSON-only.
+                with redirect_stdout(sys.stderr):
+                    results = self._process_frames_batch(self._session_id, [frame_b64], fps=max(1, int(self.fps)))
+            except Exception as exc:
+                self._emit_hardware_error(f"Eye-gaze inference error: {exc}")
+                return self.create_detection_event(0.0, {"status": "initializing"})
+
+            verdict = results[-1] if results else {}
+            raw_flag = str(verdict.get("flag", "INITIALIZING"))
+            probability = float(verdict.get("probability", 0.0))
+            evidence = str(verdict.get("evidence", raw_flag))
+
+            status_map = {
+                "ON_SCREEN": "on-screen",
+                "AWAY_SHORT": "away",
+                "AWAY_LONG": "away",
+                "NO_FACE": "no-face",
+                "INITIALIZING": "initializing",
+            }
+            status = status_map.get(raw_flag, "initializing")
+            self._last_status = status
+
+            return self.create_detection_event(1.0 - min(max(probability, 0.0), 1.0), {
+                "gaze_x": 0.5,
+                "gaze_y": 0.5,
+                "status": status,
+                "raw_flag": raw_flag,
+                "probability": probability,
+                "evidence": evidence,
+            })
+
         return self.create_detection_event(1.0, {"status": self._last_status or "initializing"})
 
     def get_mock_event(self) -> dict:

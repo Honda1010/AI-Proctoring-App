@@ -1,6 +1,6 @@
 ﻿# AI-Proctoring-App Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-04-17
+Auto-generated from all feature plans. Last updated: 2026-04-23
 
 ## Active Technologies
 - Node.js 20 LTS + JavaScript (Electron 33+) / Python 3.11+ + Electron 33+, Flask 3.x, flask-cors 4.x, @fontsource/manrope, @fontsource/inter, keytar 7.x (001-foundation)
@@ -11,6 +11,8 @@ Auto-generated from all feature plans. Last updated: 2026-04-17
 - OS keychain via keytar (existing session — read only in this spec); module-scope `examSession` variable (in-memory, not persisted) (002-login-page)
 - OS keychain via keytar (existing session — read only in this spec); module-scope `examSession` (read only, written by spec 003); module-scope `submitResult` (written once on submit success, read by spec 005 via IPC) (004-exam-page)
 - OS keychain via keytar (read-only in this spec); module-scope `submitResult` (read then cleared); module-scope `examSession` (read for `attemptId` in recovery path, then cleared on Back to Home) (005-result-page)
+- Node.js 20 LTS (Electron 33+) / Python 3.11 + Electron 33, httpx 0.27+, @fontsource/manrope, @fontsource/inter (010-identity-verification)
+- Module-scope variable `enrollmentSucceeded: boolean` in `frontend/main.js` (same pattern as `examSession`); no disk writes (010-identity-verification)
 
 - [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION] + [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION] (001-foundation)
 
@@ -31,9 +33,9 @@ cd src; pytest; ruff check .
 [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]: Follow standard conventions
 
 ## Recent Changes
+- 010-identity-verification: Added Node.js 20 LTS (Electron 33+) / Python 3.11 + Electron 33, httpx 0.27+, @fontsource/manrope, @fontsource/inter
 - 005-result-page: Added Node.js 20 LTS (Electron 33+) / Python 3.11+ + Electron 33, keytar 7.x, Flask 3.x, flask-cors 4.x, requests 2.32+, @fontsource/manrope, @fontsource/inter
 - 005-result-page: Added Node.js 20 LTS (Electron 33+) / Python 3.11+ + Electron 33, keytar 7.x, Flask 3.x, flask-cors 4.x, requests 2.32+, @fontsource/manrope, @fontsource/inter
-- 004-exam-page: Added Node.js 20 LTS (Electron 33+) / Python 3.11+ + Electron 33, keytar 7.x, Flask 3.x, flask-cors 4.x, requests 2.32+, @fontsource/manrope, @fontsource/inter
 
 
 <!-- MANUAL ADDITIONS START -->

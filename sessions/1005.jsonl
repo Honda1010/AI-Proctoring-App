@@ -1,0 +1,245 @@
+{"service": "speech-detection", "timestamp": "2026-04-22T15:51:57.830116+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 0, "is_cheater": false}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T15:51:57.833114+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:51:59.834595+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 0, "is_cheater": false}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T15:51:59.839144+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:01.832844+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 0, "is_cheater": false}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T15:52:01.833845+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:03.834001+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 0, "is_cheater": false}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T15:52:03.837542+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:05.835812+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 0, "is_cheater": false}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T15:52:05.839436+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:07.831616+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 0, "is_cheater": false}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T15:52:07.832643+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:09.909690+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [{"type": "speech_violation", "timestamp": "2026-04-22T15:52:07.962342+00:00", "duration_seconds": 5.28, "strike_number": 1, "cheater_flagged": false}], "violation_count": 1, "total_strikes": 1, "is_cheater": false}}
+{"type": "alert", "code": "SPEECH_DETECTED", "severity": "medium", "message": "Student spoke for 5.28s. Strike 1/1.", "timestamp": "2026-04-22T15:52:09.911692+00:00", "sessionId": "1005", "evidence": {"service": "speech-detection", "confidence": 1.0}}
+{"type": "riskScore", "score": 3, "trend": "rising", "timestamp": "2026-04-22T15:52:09.912690+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:11.901521+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:52:11.903520+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:13.910292+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:52:13.917883+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:15.901524+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:52:15.902525+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:17.903890+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:52:17.909510+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:19.908701+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:52:19.910722+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:21.901758+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:52:21.903759+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:23.901586+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:52:23.903585+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:25.901996+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:52:25.903996+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:27.908326+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:52:27.911363+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:29.902599+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:52:29.905601+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:31.901891+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:52:31.903893+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:33.902242+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:52:33.904243+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:35.911268+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:52:35.914350+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:37.907263+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:52:37.910253+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:39.902488+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:52:39.904487+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:41.909017+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:52:41.913016+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:43.902606+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:52:43.905635+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:45.903484+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:52:45.908138+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:47.902939+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:52:47.909650+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:49.908771+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:52:49.912728+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:51.906113+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:52:51.913147+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:53.910629+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:52:53.913628+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:55.909550+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:52:55.913548+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:57.912298+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:52:57.915817+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:52:59.913385+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:52:59.920908+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:01.902996+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:01.906594+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:03.902820+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:03.905817+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:05.908838+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:05.913878+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:07.905555+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:07.907473+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:09.902601+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:09.909251+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:11.913702+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:11.920283+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:13.906121+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:13.913135+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:15.904820+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:15.906869+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:17.904786+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:17.911018+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:19.904978+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:19.906680+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:21.905770+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:21.908150+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:23.906850+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:23.907860+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:25.906649+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:25.910506+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:27.905898+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:27.908312+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:29.901731+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:29.908253+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:32.061211+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:32.062721+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:33.831421+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:33.833425+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:35.829618+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:35.831620+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:37.834131+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:37.839677+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:39.840846+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:39.844854+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:41.831903+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:41.833921+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:43.915831+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:43.921380+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:45.908224+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:45.910224+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:47.916822+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:47.922373+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:49.906540+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:49.909592+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:51.914902+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:51.925636+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:53.905674+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:53.908196+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:55.901490+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:55.904496+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:57.914367+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:57.921520+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:53:59.910960+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:53:59.915521+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:01.909190+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:01.911981+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:03.910747+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:03.915744+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:05.910438+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:05.913985+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:07.900899+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:07.902898+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:09.904271+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:09.906794+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:11.913809+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:11.920375+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:13.913278+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:13.919370+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:15.901876+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:15.902868+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:17.915299+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:17.919839+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:19.913607+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:19.916706+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:21.908462+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:21.911475+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:23.906026+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:23.908836+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:25.912449+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:25.918073+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:27.911022+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:27.913544+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:29.907412+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:29.911016+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:31.908777+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:31.912335+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:33.919485+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:33.924021+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:35.901692+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:35.903694+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:37.911165+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:37.916092+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:39.922209+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:39.927785+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:41.920827+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:41.923649+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:43.902867+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:43.903870+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:45.906977+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:45.909972+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:47.924855+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:47.927036+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:49.906831+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:49.914872+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:51.912172+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:51.919730+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:53.911347+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:53.914880+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:55.907049+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:55.912037+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:57.911079+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:57.918647+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:54:59.910287+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:54:59.915577+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:01.910457+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:01.920416+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:03.910217+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:03.914606+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:05.908672+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:05.910671+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:07.902593+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:07.903591+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:09.907634+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:09.913646+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:11.912744+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:11.916242+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:13.831378+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:13.834381+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:15.831170+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:15.832186+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:17.832385+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:17.833382+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:19.831777+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:19.836282+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:21.904251+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:21.906771+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:23.905913+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:23.907858+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:25.906243+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:25.909206+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:27.908256+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:27.911017+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:29.907173+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:29.909182+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:31.905843+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:31.909726+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:33.901196+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:33.903200+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:35.907727+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:35.910945+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:37.903600+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:37.904598+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:39.902117+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:39.904115+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:41.909680+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:41.913653+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:43.905916+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:43.909254+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:45.906516+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:45.910540+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:47.909883+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:47.912874+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:49.905193+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:49.907709+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:51.907221+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:51.909302+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:53.901729+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:53.903732+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:55.902134+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:55.903135+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:57.906500+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:57.911164+00:00"}
+{"service": "speech-detection", "timestamp": "2026-04-22T15:55:59.874917+00:00", "confidence": 1.0, "sessionId": "1005", "payload": {"new_violations": [], "violation_count": 0, "total_strikes": 1, "is_cheater": false}}
+{"type": "riskScore", "score": 3, "trend": "falling", "timestamp": "2026-04-22T15:55:59.889099+00:00"}

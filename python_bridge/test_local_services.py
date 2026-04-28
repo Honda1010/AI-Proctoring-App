@@ -9,7 +9,7 @@ from services.speech_local import LocalSpeechDetectionService
 def mock_config():
     return {
         "services": {
-            "eye-gaze": {"fps": 10, "camera_index": 0},
+            "eye-gaze": {"fps": 10, "camera_index": 0, "input_mode": "camera"},
             "speech-detection": {"chunk_size": 1024, "sample_rate": 16000, "threshold": 0.05}
         }
     }
@@ -70,3 +70,22 @@ async def test_eye_gaze_hardware_failure(mock_config):
         args = emitter.call_args[0][0]
         assert args["method"] == "serviceError"
         assert args["params"]["code"] == "HARDWARE_FAILURE"
+
+
+@pytest.mark.asyncio
+async def test_eye_gaze_shared_frame_mode_does_not_open_camera():
+    emitter = mock.Mock()
+    shared_mode_config = {
+        "services": {
+            "eye-gaze": {"fps": 10, "camera_index": 0, "input_mode": "shared_frame"}
+        }
+    }
+    service = LocalEyeGazeService("session-1", shared_mode_config, emitter)
+
+    with mock.patch('cv2.VideoCapture') as mock_vc:
+        await service.start()
+        assert service.is_running is True
+        mock_vc.assert_not_called()
+
+        await service.stop()
+        assert service.is_running is False

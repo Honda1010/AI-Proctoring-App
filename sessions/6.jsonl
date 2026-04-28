@@ -1,0 +1,302 @@
+{"service": "speech-detection", "timestamp": "2026-04-22T14:12:20.734801+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"is_speech_detected": false, "language": "en-US", "db_level": -120.0}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:20.736799+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:23.663093+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:23.665097+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:23.887594+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:23.888631+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:24.134733+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:24.136734+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:24.416481+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:24.420271+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:24.681196+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:24.683203+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:24.882678+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:24.884681+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:25.137857+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:25.138853+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:25.919871+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:25.921881+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:26.936934+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:26.940356+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:27.969100+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:27.970613+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:28.916288+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:28.918650+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:29.913092+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:29.916034+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:30.913180+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:30.914180+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:31.931731+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:31.932721+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:32.912784+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:32.913892+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:33.916641+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:33.918642+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:34.910900+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:34.912901+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:35.927039+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:35.929045+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:36.927605+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:36.930128+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:37.912511+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:37.913511+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:38.921130+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:38.923137+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:39.923503+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:39.924503+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:40.915526+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:40.917297+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:41.920937+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:41.921938+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:42.918190+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:42.920193+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:43.920239+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:43.921246+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:44.918994+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:44.920027+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:45.936154+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:45.938160+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:46.940593+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:46.942612+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:47.920852+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:47.921852+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:48.916811+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:48.918812+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:49.920137+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:49.921187+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:50.933909+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:50.936936+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:51.918579+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:51.920089+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:52.917296+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:52.918335+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:53.933933+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:53.936932+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:54.924282+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:54.925280+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:55.921161+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:55.924180+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:56.938786+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:56.941298+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:57.923212+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:57.925219+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:58.928407+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:58.933980+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:12:59.925143+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:12:59.927526+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:00.917499+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:00.920016+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:01.938053+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:01.939975+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:02.912084+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:02.914085+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:03.914060+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:03.916063+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:04.919777+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:04.922800+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:05.932588+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:05.934587+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:06.924582+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:06.928535+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:07.913238+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:07.914236+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:08.916567+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:08.918566+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:09.920831+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:09.922824+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:10.939969+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:10.943908+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:11.938581+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:11.943162+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:12.937762+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:12.938764+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:13.576753+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:13.583815+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:13.658194+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:13.670359+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:13.902766+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:13.904770+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:14.155689+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:14.158582+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:14.382186+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:14.383186+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:14.633915+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:14.634932+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:14.887490+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:14.890014+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:15.140015+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:15.142490+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:15.386993+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:15.387989+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:15.635636+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:15.636633+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:15.889231+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:15.890734+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:16.158894+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:16.163365+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:16.384697+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:16.386699+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:16.654488+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:16.656496+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:16.892476+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:16.894476+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:17.140098+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:17.141102+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:17.383801+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:17.384805+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:17.635127+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:17.636127+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:17.884913+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:17.885914+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:18.133032+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:18.134031+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:18.384020+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:18.387018+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:18.658321+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:18.662952+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:18.884029+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:18.886035+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:19.135575+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:19.137577+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:19.407094+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:19.410607+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:19.644274+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:19.646271+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:19.885466+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:19.886467+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:20.162176+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:20.165186+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:20.411994+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:20.414995+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:20.636017+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:20.637036+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:20.883072+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:20.884072+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:21.162459+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:21.164459+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:21.404155+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:21.406137+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:21.634427+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:21.635424+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:21.900874+00:00", "confidence": 0.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "initializing", "raw_flag": "INITIALIZING", "probability": 0.0, "evidence": "CALIBRATING"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:21.902852+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:22.166102+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:22.169099+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:22.400947+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:22.402941+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:22.633742+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:22.634747+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:22.883139+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:22.884139+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:23.135157+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:23.137269+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:23.410090+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:23.413632+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:23.655851+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:23.659968+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:23.888256+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:23.890805+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:24.138426+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:24.139931+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:24.383996+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:24.384996+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:24.658429+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:24.664144+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:24.887121+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:24.888121+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:25.162964+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:25.166875+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:25.405172+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:25.424757+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:25.638279+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:25.640280+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:25.900917+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:25.902917+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:26.133498+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:26.134534+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:26.389899+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:26.391991+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:26.633094+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:26.634095+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:26.885939+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:26.887942+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:27.138120+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:27.139114+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:27.389249+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:27.390797+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:27.642144+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:27.645203+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:27.887870+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:27.889874+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:28.139252+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:28.140806+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:28.389928+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:28.391936+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:28.638569+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:28.641084+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:28.900026+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:28.901981+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:29.148778+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:29.151306+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:29.396447+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:29.400235+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:29.650274+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:29.653821+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:29.887371+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:29.888373+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:30.139975+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:30.142020+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:30.404997+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:30.406947+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:30.920895+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:30.921900+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:31.947810+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:31.949808+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:32.919995+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:32.921361+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:33.932173+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:33.936173+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:34.925300+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:34.926303+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:35.928778+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:35.932310+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:36.918520+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:36.921048+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:37.595102+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:37.599101+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:37.638952+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:37.640465+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:37.904417+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:37.907416+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:38.148406+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:38.150928+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:38.386874+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:38.389387+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:38.636527+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:38.637531+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:38.902165+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:38.903165+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:39.137955+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:39.139955+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:39.389946+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:39.391313+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:39.642652+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:39.643649+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:39.908313+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:39.912843+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:40.135759+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:40.136779+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:40.382920+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:40.383922+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:40.662123+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:40.664117+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:40.892098+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:40.894107+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:41.132755+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:41.133756+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:41.558616+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:41.597708+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:41.848788+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:41.890361+00:00"}
+{"service": "eye-gaze", "timestamp": "2026-04-22T14:13:42.163884+00:00", "confidence": 1.0, "sessionId": "6", "payload": {"gaze_x": 0.5, "gaze_y": 0.5, "status": "on-screen", "raw_flag": "ON_SCREEN", "probability": 0.0, "evidence": "ON_SCREEN"}}
+{"type": "riskScore", "score": 0, "trend": "falling", "timestamp": "2026-04-22T14:13:42.231834+00:00"}

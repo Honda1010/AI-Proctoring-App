@@ -15,12 +15,28 @@ let isSubmitting = false;
 let autoSubmitted = false;
 let remainingSeconds = 0; // U1 fix: track via variable, not DOM parsing
 let dashboard = null;
+let aiIntervalId = null;
+let speechPollIntervalId = null;
+let cloudVisionIntervalId = null;
+let aiInFlight = false;
+let aiCanvas = null;
+let aiContext = null;
+const EYE_GAZE_STREAM_INTERVAL_MS = 250;
+const SPEECH_POLL_INTERVAL_MS = 2000;
+const CLOUD_VISION_INTERVAL_MS = 5000; // modal_Frame_Rate
 
 // ---------------------------------------------------------------------------
 // T012 — DOMContentLoaded: load session and initialise page
 // ---------------------------------------------------------------------------
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // T026 — Guard: require completed enrollment before exam page loads
+  const enrollResult = await window.bridge.getEnrollmentStatus();
+  if (!enrollResult?.enrolled) {
+    window.location.replace('../identity-verification/index.html');
+    return;
+  }
+
   const result = await window.bridge.getExamSession();
 
   if (!result || !result.ok) {
@@ -59,6 +75,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.addEventListener('beforeunload', () => {
     activeStream?.getTracks().forEach(t => t.stop());
     dashboard?.destroy();
+    stopAiStreaming();
   });
 
   document.getElementById('skeletonOverlay').classList.add('hidden');
@@ -388,8 +405,88 @@ async function initWebcam() {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
     activeStream = stream;
     document.getElementById('webcamFeed').srcObject = stream;
+    startAiStreaming();
   } catch {
     document.getElementById('webcamFeed').classList.add('hidden');
     document.getElementById('cameraUnavailable').classList.remove('hidden');
   }
+}
+
+// ---------------------------------------------------------------------------
+// AI streaming — capture frames and send predict to router
+// ---------------------------------------------------------------------------
+
+function startAiStreaming() {
+  if (aiIntervalId || !window.bridge?.aiRpc) return;
+
+  const video = document.getElementById('webcamFeed');
+  if (!video) return;
+
+  aiCanvas = document.createElement('canvas');
+  aiCanvas.width = 320;
+  aiCanvas.height = 240;
+  aiContext = aiCanvas.getContext('2d');
+
+  aiIntervalId = setInterval(async () => {
+    if (aiInFlight || !aiContext) return;
+    if (video.readyState < 2) return; // Not enough data yet
+
+    aiInFlight = true;
+    try {
+      aiContext.drawImage(video, 0, 0, aiCanvas.width, aiCanvas.height);
+      const frame = aiCanvas.toDataURL('image/jpeg', 0.6);
+
+      await window.bridge.aiRpc('predict', { service: 'eye-gaze', frame });
+    } catch {
+      // Eye-gaze may be disabled; ignore polling errors.
+    } finally {
+      aiInFlight = false;
+    }
+  }, EYE_GAZE_STREAM_INTERVAL_MS);
+
+  // Cloud vision services (Modal): send frames at a lower rate to avoid extra load.
+  // These calls create detection events which get written into sessions/<attemptId>.jsonl
+  // via the Python orchestrator.
+  cloudVisionIntervalId = setInterval(async () => {
+    try {
+      if (!aiContext) return;
+      if (video.readyState < 2) return;
+      aiContext.drawImage(video, 0, 0, aiCanvas.width, aiCanvas.height);
+      const frame = aiCanvas.toDataURL('image/jpeg', 0.6);
+
+      await Promise.all([
+        window.bridge.aiRpc('predict', { service: 'face-recognition', frame }),
+        window.bridge.aiRpc('predict', { service: 'object-detection', frame }),
+      ]);
+    } catch {
+      // Services may be unconfigured/stopped; ignore transient router errors.
+    }
+  }, CLOUD_VISION_INTERVAL_MS);
+
+  // Speech detection runs local mic capture in the Python service and
+  // this periodic predict call flushes speech violations to the UI/orchestrator.
+  speechPollIntervalId = setInterval(async () => {
+    try {
+      await window.bridge.aiRpc('predict', { service: 'speech-detection', frame: 'MIC_POLL' });
+    } catch {
+      // Ignore transient router errors; status polling handles recovery.
+    }
+  }, SPEECH_POLL_INTERVAL_MS);
+}
+
+function stopAiStreaming() {
+  if (aiIntervalId) {
+    clearInterval(aiIntervalId);
+    aiIntervalId = null;
+  }
+  if (speechPollIntervalId) {
+    clearInterval(speechPollIntervalId);
+    speechPollIntervalId = null;
+  }
+  if (cloudVisionIntervalId) {
+    clearInterval(cloudVisionIntervalId);
+    cloudVisionIntervalId = null;
+  }
+  aiCanvas = null;
+  aiContext = null;
 }

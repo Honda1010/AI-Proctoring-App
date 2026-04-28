@@ -22,6 +22,9 @@ let bridgeState = 'idle';
 /** @type {import('child_process').ChildProcess | null} */
 let aiRouterProcess = null;
 
+let aiRpcNextId = 1;
+const aiRpcPending = new Map();
+
 /**
  * Resolve the absolute path to config.json based on packaging state.
  * @returns {string}
@@ -40,8 +43,16 @@ function resolveConfigPath() {
 function startAIRouter() {
   const routerScript = path.join(__dirname, '..', 'python_bridge', 'router.py');
   const configPath = resolveConfigPath();
+  const projectRoot = path.join(__dirname, '..');
 
-  aiRouterProcess = spawn('python', [routerScript], {
+  // Prefer the venv Python so all AI packages are available.
+  // Fall back to the system 'python' / 'python3' if venv is absent.
+  const venvPython = process.platform === 'win32'
+    ? path.join(projectRoot, '.venv', 'Scripts', 'python.exe')
+    : path.join(projectRoot, '.venv', 'bin', 'python');
+  const pythonExe = fs.existsSync(venvPython) ? venvPython : 'python';
+
+  aiRouterProcess = spawn(pythonExe, [routerScript], {
     env: { ...process.env, LUMINA_CONFIG_PATH: configPath },
     stdio: ['pipe', 'pipe', 'pipe'],
   });
@@ -56,8 +67,24 @@ function startAIRouter() {
       if (!line.trim()) continue;
       try {
         const msg = JSON.parse(line);
+        if (msg.jsonrpc !== '2.0') continue;
+
+        if (msg.id != null) {
+          const pending = aiRpcPending.get(msg.id);
+          if (pending) {
+            aiRpcPending.delete(msg.id);
+            clearTimeout(pending.timer);
+            if (msg.error) {
+              pending.resolve({ ok: false, error: msg.error });
+            } else {
+              pending.resolve({ ok: true, result: msg.result });
+            }
+          }
+          continue;
+        }
+
         // Only forward notifications (detection, alert, riskScore) to renderer
-        if (msg.jsonrpc === '2.0' && msg.method && !msg.id) {
+        if (msg.method && !msg.id) {
           mainWindow?.webContents.send('bridge:ai-event', msg);
         }
       } catch (err) {
@@ -75,11 +102,68 @@ function startAIRouter() {
   });
 }
 
+/**
+ * Send a JSON-RPC request to the AI router stdin and await the response.
+ * @param {string} method
+ * @param {object} params
+ * @param {number} timeoutMs
+ * @returns {Promise<{ok: true, result: object} | {ok: false, error: object}>}
+ */
+function sendAiRpc(method, params = {}, timeoutMs = 10000) {
+  if (!aiRouterProcess || !aiRouterProcess.stdin || aiRouterProcess.killed) {
+    return Promise.resolve({
+      ok: false,
+      error: { code: 'ROUTER_NOT_READY', message: 'AI router process is not running.' },
+    });
+  }
+
+  if (!method || typeof method !== 'string') {
+    return Promise.resolve({
+      ok: false,
+      error: { code: 'INVALID_REQUEST', message: 'AI router method must be a string.' },
+    });
+  }
+
+  const id = aiRpcNextId++;
+  const payload = { jsonrpc: '2.0', id, method, params };
+
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      aiRpcPending.delete(id);
+      resolve({
+        ok: false,
+        error: { code: 'ROUTER_TIMEOUT', message: `AI router timed out for ${method}.` },
+      });
+    }, timeoutMs);
+
+    aiRpcPending.set(id, { resolve, timer });
+
+    try {
+      aiRouterProcess.stdin.write(`${JSON.stringify(payload)}\n`);
+    } catch (err) {
+      aiRpcPending.delete(id);
+      clearTimeout(timer);
+      resolve({
+        ok: false,
+        error: { code: 'ROUTER_WRITE_FAILED', message: err.message },
+      });
+    }
+  });
+}
+
 // ---------------------------------------------------------------------------
 // IPC handlers
 // ---------------------------------------------------------------------------
 
 ipcMain.handle('bridge:get-status', () => bridgeState);
+
+/**
+ * bridge:ai-rpc — Forward a JSON-RPC request to the AI router stdin.
+ * Expected args: { method: string, params?: object, timeoutMs?: number }
+ */
+ipcMain.handle('bridge:ai-rpc', async (_event, { method, params, timeoutMs } = {}) => {
+  return sendAiRpc(method, params || {}, Number.isFinite(timeoutMs) ? timeoutMs : 10000);
+});
 
 /**
  * bridge:get-session-log — Read a session's JSONL log file from disk.
@@ -157,6 +241,14 @@ let examSession = null;
  * @type {object | null}
  */
 let submitResult = null;
+
+/**
+ * Enrollment state for the current exam attempt.
+ * Set after a successful bridge:enroll-reference call.
+ * Cleared on all exam exit paths (submit, back-to-home, clear-session).
+ * @type {{ sessionId: string, enrolledAt: Date, succeeded: boolean } | null}
+ */
+let enrollmentState = null;
 
 /** keytar service identifier shared across all session keys. */
 const KEYTAR_SERVICE = 'lumina-ai-proctoring';
@@ -463,8 +555,56 @@ ipcMain.handle('bridge:get-saved-session', async () => {
 ipcMain.handle('bridge:clear-session', async () => {
   await clearAllKeytarEntries();
   sessionMemory = null;
+  // T029 — Unenroll face recognition embedding on logout (fire-and-forget)
+  sendAiRpc('unenrollReference', { sessionId: enrollmentState?.sessionId }).catch(() => {});
+  enrollmentState = null;
   return { ok: true };
 });
+
+// ---------------------------------------------------------------------------
+// Identity Verification IPC handlers (spec 010)
+// ---------------------------------------------------------------------------
+
+/**
+ * bridge:enroll-reference — Enroll a captured reference photo for face recognition.
+ *
+ * Expected args: { frame: string }  — base64 data URL of the captured JPEG
+ * Returns: { ok: true } | { ok: false, error: { code, message } }
+ *
+ * Chains face-detect → enroll via the AI router (FaceRecognitionService.enroll).
+ * On success sets enrollmentState so the exam page guard can pass.
+ */
+ipcMain.handle('bridge:enroll-reference', async (_event, { frame } = {}) => {
+  if (!frame || typeof frame !== 'string') {
+    return { ok: false, error: { code: 'BRIDGE_ERROR', message: 'No frame provided.' } };
+  }
+
+  const sessionId = examSession?.attemptId ? String(examSession.attemptId) : 'default-session';
+
+  const rpcResult = await sendAiRpc('enrollReference', { frame, sessionId }, 30000);
+
+  if (rpcResult.ok && rpcResult.result?.ok === true) {
+    enrollmentState = { sessionId, enrolledAt: new Date(), succeeded: true };
+    return { ok: true };
+  }
+
+  // Propagate typed error from the service layer when available
+  const error = rpcResult.result?.error || rpcResult.error || {
+    code: 'ENROLLMENT_FAILED',
+    message: 'Enrollment did not succeed.',
+  };
+  return { ok: false, error };
+});
+
+/**
+ * bridge:get-enrollment-status — Check whether enrollment has succeeded.
+ *
+ * Returns: { enrolled: boolean }
+ * Returns { enrolled: false } (not an error) when no enrollment has occurred.
+ */
+ipcMain.handle('bridge:get-enrollment-status', () => ({
+  enrolled: enrollmentState?.succeeded === true,
+}));
 
 /**
  * bridge:open-external — Open a URL in the system default browser.
@@ -510,6 +650,17 @@ ipcMain.handle('bridge:start-exam', async (_event, { quizCode }) => {
 
     if (response.ok) {
       examSession = body;
+
+      const sessionId = examSession?.attemptId ? String(examSession.attemptId) : 'default-session';
+      await Promise.all([
+        sendAiRpc('startService', { service: 'eye-gaze', sessionId }),
+        sendAiRpc('startService', { service: 'speech-detection', sessionId }),
+        // Cloud (Modal) services. If not configured, router responds with an error
+        // and the UI will remain "Inactive" (status poll retries continuously).
+        sendAiRpc('startService', { service: 'face-recognition', sessionId }),
+        sendAiRpc('startService', { service: 'object-detection', sessionId }),
+      ]);
+
       return { ok: true, data: examSession };
     }
 
@@ -571,6 +722,9 @@ ipcMain.handle('bridge:submit-exam', async (_event, { answers }) => {
 
     if (response.ok) {
       submitResult = body;
+      // T027 — Unenroll face recognition embedding on exam submit (fire-and-forget)
+      sendAiRpc('unenrollReference', { sessionId: enrollmentState?.sessionId }).catch(() => {});
+      enrollmentState = null;
       return { ok: true, data: submitResult };
     }
 
@@ -672,6 +826,9 @@ ipcMain.handle('bridge:get-result', async () => {
  */
 ipcMain.handle('bridge:clear-submit-result', async () => {
   submitResult = null;
+  // T028 — Unenroll face recognition embedding on back-to-home (fire-and-forget)
+  sendAiRpc('unenrollReference', { sessionId: enrollmentState?.sessionId }).catch(() => {});
+  enrollmentState = null;
   examSession = null;
   mainWindow?.loadFile(path.join(__dirname, 'pages/exam-code/index.html'));
   return { ok: true };
