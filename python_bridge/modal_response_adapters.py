@@ -54,16 +54,33 @@ def _parse_percent_or_fraction(val: Any) -> float:
     return 0.0
 
 
-def _infer_face_is_matched(inner: Dict[str, Any]) -> bool:
+# Sentinel used to distinguish "threshold not provided" from threshold=0.0.
+_THRESHOLD_DEFAULT = 0.5
+
+
+def _infer_face_is_matched(inner: Dict[str, Any], threshold: float = _THRESHOLD_DEFAULT) -> bool:
     """
     Map Modal `face_recognition` object to bridge `is_matched` (True = authorised / OK).
 
+    Threshold-based decision layer
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    For the two similarity-based outcomes — 'Authorised person verified' and
+    'Face does not match reference' — the final decision is made by comparing the
+    returned `probability` value against *threshold* (read from
+    ``config.json → services.face-recognition.probability_threshold``).
+
+      probability >= threshold  →  is_matched = True   (face accepted)
+      probability <  threshold  →  is_matched = False  (face rejected)
+
+    All other outcomes (no face, multiple faces, spoof, no enrollment, no `flag`
+    field present) are **not affected** by the threshold — their result is returned
+    directly from the API evidence / flag fields as before.
+
+    The logged payload is unchanged: only the value of `is_matched` may differ
+    when the threshold overrides the API's own verdict.
+
     The FaceRecognition pipeline in AI/Models/Face_Recognition_Service/face_recognition.py
     sets `flag`: True means suspicious (spoof, mismatch, no face, etc.), False means match.
-    Cosine similarity is compared to `similarity_threshold` (default 0.5) inside `verify()`;
-    that threshold is not repeated in the JSON — you see the outcome as `flag` / `result` /
-    `evidence`.
-
     Some deployments strip `flag`; never default missing `flag` to True (that marks everyone
     as not matched). Use `result` or `evidence` when `flag` is absent.
     """
@@ -79,13 +96,22 @@ def _infer_face_is_matched(inner: Dict[str, Any]) -> bool:
             return False
 
     ev = (inner.get("evidence") or "").lower()
-    if "authorised person verified" in ev or "authorized person verified" in ev:
-        return True
+
+    # ── Threshold-gated cases ────────────────────────────────────────────────
+    # Only 'verified' and 'mismatch' carry a meaningful cosine-similarity
+    # probability that can be compared against the project threshold.
+    # For all other cases the API result is authoritative (see below).
+    is_verified_case  = "authorised person verified" in ev or "authorized person verified" in ev
+    is_mismatch_case  = "face does not match" in ev or "does not match reference" in ev
+
+    if is_verified_case or is_mismatch_case:
+        prob = _parse_percent_or_fraction(inner.get("probability"))
+        return prob >= threshold
+
+    # ── Non-threshold cases — API verdict is authoritative ───────────────────
     if "no enrollment" in ev:
         return False
     if "no face detected" in ev:
-        return False
-    if "face does not match" in ev or "does not match reference" in ev:
         return False
     if "multiple faces" in ev:
         return False
@@ -100,18 +126,33 @@ def _infer_face_is_matched(inner: Dict[str, Any]) -> bool:
         return False
 
     prob = _parse_percent_or_fraction(inner.get("probability"))
-    return prob > 0.5
+    return prob >= threshold
 
 
 def adapt_face_modal_json(
     body: Dict[str, Any],
     create_detection_event: Callable[[float, Dict[str, Any]], Dict[str, Any]],
+    threshold: float = _THRESHOLD_DEFAULT,
 ) -> Dict[str, Any]:
+    """
+    Adapt a Modal /analysis/verify-file JSON response into a bridge DetectionEvent.
+
+    Args:
+        body: Raw JSON dict from Modal (must contain a ``face_recognition`` key).
+        create_detection_event: Factory from the calling AIService.
+        threshold: Project-side probability threshold for the match/mismatch
+            decision.  Read from
+            ``config.json → services.face-recognition.probability_threshold``
+            and forwarded here by FaceRecognitionService.  Default: 0.5.
+    """
     inner = body.get("face_recognition")
     if not isinstance(inner, dict):
         raise ValueError("Modal face response missing face_recognition object")
 
-    is_matched = _infer_face_is_matched(inner)
+    # Pass the configurable threshold into the decision layer.
+    # Logging payload (conf, faces_count, is_matched) is unchanged — only
+    # the *value* of is_matched may differ from the API's own verdict.
+    is_matched = _infer_face_is_matched(inner, threshold=threshold)
     conf = _parse_percent_or_fraction(inner.get("probability"))
     if conf <= 0.0 and is_matched:
         conf = _parse_percent_or_fraction(inner.get("match_similarity"))
@@ -124,9 +165,32 @@ def adapt_face_modal_json(
     except (TypeError, ValueError):
         faces = 0
 
+    # liveness_score: anti-spoofing signal (MiniFASNetV2). Returned as "89.21%".
+    # quality: frame sharpness/brightness signal. Returned as "75.00%".
+    # Both are parsed to [0, 1] floats for uniform downstream handling.
+    liveness_score: float = _parse_percent_or_fraction(inner.get("liveness_score"))
+    quality: float        = _parse_percent_or_fraction(inner.get("quality"))
+
+    # Extract the full outcome message from the API for logging.
+    # Covers all five outcome cases:
+    #   "Authorised person verified (similarity: X)"  → is_matched True
+    #   "No enrollment found for session '...'"        → is_matched False
+    #   "No face detected in frame"                   → is_matched False
+    #   "Multiple faces detected: N faces in frame"   → is_matched False
+    #   "Face does not match reference identity (similarity: X)" → is_matched False
+    recognition_message: str = (inner.get("evidence") or "").strip()
+
+    # Derive is_spoof from the evidence string so the orchestrator can emit a
+    # dedicated SPOOF_DETECTED alert rather than the generic NO_FACE_DETECTED one.
+    is_spoof: bool = "spoof detected" in recognition_message.lower()
+
     payload: Dict[str, Any] = {
         "is_matched": is_matched,
         "faces_count": faces,
+        "recognition_message": recognition_message,
+        "is_spoof": is_spoof,
+        "liveness_score": liveness_score,
+        "quality": quality,
     }
     return create_detection_event(conf, payload)
 
@@ -134,8 +198,30 @@ def adapt_face_modal_json(
 def adapt_object_modal_json(
     body: Dict[str, Any],
     create_detection_event: Callable[[float, Dict[str, Any]], Dict[str, Any]],
+    threshold: float = 0.3,
 ) -> Dict[str, Any]:
-    """OWL-ViT /analysis/detect_objects shape: id, timestamp, probability, evidence."""
+    """
+    Adapt a Modal /analysis/detect_objects JSON response into a bridge DetectionEvent.
+
+    Threshold-based decision layer
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    OWL-ViT returns a ``probability`` field representing the max confidence across
+    all detected objects in the frame (already filtered server-side at >0.1).
+    The ``suspicious`` flag is only raised when:
+
+      - At least one restricted object appears in ``evidence``, **AND**
+      - ``probability >= threshold``
+
+    If ``probability < threshold`` the objects list is preserved in the payload
+    (for logging) but ``suspicious`` is set to ``False`` so no alert is raised.
+
+    Args:
+        body: Raw JSON dict from Modal OWL-ViT endpoint.
+        create_detection_event: Factory from the calling AIService.
+        threshold: Project-side confidence threshold.  Read from
+            ``config.json -> services.object-detection.probability_threshold``.
+            Default: 0.3  (above server minimum of 0.1).
+    """
     if not isinstance(body.get("evidence"), str):
         raise ValueError("Modal object response missing evidence string")
 
@@ -147,7 +233,9 @@ def adapt_object_modal_json(
         if rest and "no restricted" not in evidence.lower():
             objects = [x.strip() for x in rest.split(",") if x.strip()]
 
-    suspicious = len(objects) > 0
+    # Objects present in the evidence but probability below threshold -> log
+    # the objects for forensic purposes but do NOT raise the suspicious flag.
+    suspicious = len(objects) > 0 and prob >= threshold
     payload: Dict[str, Any] = {
         "objects": objects,
         "count": len(objects),

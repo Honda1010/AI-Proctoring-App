@@ -17,6 +17,7 @@
         "eye-gaze",
         "object-detection",
         "face-recognition",
+        "face-detection",
         "speech-detection"
       ],
       "description": "Name of the AI service emitting the event"

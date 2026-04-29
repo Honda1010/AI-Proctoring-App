@@ -48,6 +48,12 @@ except Exception as _e:
     _service_import_errors["face-recognition"] = str(_e)
 
 try:
+    from face_detection import FaceDetectionService as _FaceDetectionService
+except Exception as _e:
+    _FaceDetectionService = None  # type: ignore
+    _service_import_errors["face-detection"] = str(_e)
+
+try:
     from object_detection import ObjectDetectionService as _ObjectDetectionService
 except Exception as _e:
     _ObjectDetectionService = None  # type: ignore
@@ -69,6 +75,8 @@ class AIRouter:
             self.service_classes["speech-detection"] = _SpeechDetectionService
         if _FaceRecognitionService is not None:
             self.service_classes["face-recognition"] = _FaceRecognitionService
+        if _FaceDetectionService is not None:
+            self.service_classes["face-detection"] = _FaceDetectionService
         if _ObjectDetectionService is not None:
             self.service_classes["object-detection"] = _ObjectDetectionService
         self.loop = None
@@ -224,6 +232,17 @@ class AIRouter:
         try:
             result = await service.enroll(frame)
             self.send_result(request_id, result)
+            # Log the lifecycle event so post-exam forensics can confirm enrollment.
+            if self.orchestrator:
+                self.orchestrator.set_session(session_id)
+                await self.orchestrator._log_event({
+                    "type": "lifecycle",
+                    "event": "enrollment",
+                    "ok": result.get("ok", False),
+                    "sessionId": session_id,
+                    "timestamp": __import__('datetime').datetime.now(
+                        __import__('datetime').timezone.utc).isoformat(),
+                })
         except Exception as e:
             self.send_result(request_id, {
                 "ok": False,
@@ -240,6 +259,15 @@ class AIRouter:
                 pass  # fire-and-forget
         # Always respond with ok — unenroll is best-effort
         self.send_result(request_id, {"ok": True})
+        # Log the lifecycle event so the session log records when cleanup happened.
+        if self.orchestrator and self.orchestrator.current_session_id:
+            await self.orchestrator._log_event({
+                "type": "lifecycle",
+                "event": "unenrollment",
+                "sessionId": self.orchestrator.current_session_id,
+                "timestamp": __import__('datetime').datetime.now(
+                    __import__('datetime').timezone.utc).isoformat(),
+            })
 
     async def handle_start_service(self, request_id: Any, params: Dict[str, Any]):
         service_name = params.get("service")

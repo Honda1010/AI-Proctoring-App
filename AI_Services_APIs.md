@@ -1,44 +1,189 @@
-Enroll File
-Endpoint: POST /analysis/enroll-file
+# Modal API Documentation
 
-Description: The multipart/form-data variant of the enrollment process, used for testing or administrative uploads to register an authorized user's face.
+All endpoints are hosted on Modal and expect a `POST` request. Most endpoints use `multipart/form-data` for image uploads.
 
-Functionality: It accepts a session_id and one or more image files. The system processes these to compute an averaged ArcFace embedding, which is cached in-memory as the "ground truth" for identity verification during the exam.
+---
 
-Requirements: session_id (string) and references (one or more image files).
+## Endpoints
 
-Unenroll
-Endpoint: POST /analysis/unenroll
+### 1. Object Detection
 
-Description: A session management utility used to clear session-specific biometric data.
+| Field | Value |
+|-------|-------|
+| **Endpoint** | `/analysis/detect_objects` |
+| **Method** | `POST` |
+| **Content-Type** | `multipart/form-data` |
 
-Functionality: Removes the cached reference face embedding for the provided session_id. This should be called after an exam ends to free memory and ensure data privacy.
+**Parameters:**
 
-Requirements: session_id (string) provided via form-data.
+| Name | Required | Type | Description |
+|------|----------|------|-------------|
+| `file` | ✅ | binary | The image frame to analyze for prohibited objects (e.g., cell phones) |
 
-Verify File
-Endpoint: POST /analysis/verify-file
+**Response:**
+```json
+{
+  "probability": 0.85,
+  "evidence": "Detected: cell phone"
+}
+```
 
-Description: A testing-focused multipart variant of the live verification endpoint used to confirm the identity of the person taking the exam.
+| Field | Type | Description |
+|-------|------|-------------|
+| `probability` | float | Confidence score (`0.0` to `1.0`) |
+| `evidence` | string | Description of detected objects. If prefixed with `"Detected:"`, the bridge extracts the objects |
 
-Functionality: Compares a live frame against the enrolled embedding. It simultaneously runs Face Anti-Spoofing (FAS) to ensure the subject is a real person and not a digital or physical spoof (like a photo or tablet).
+---
 
-Requirements: Must be called after enrollment. Requires session_id (string) and frame (image file).
+### 2. Face Detection (Presence Check)
 
-Detect Objects (OWL-ViT)
-Endpoint: POST /analysis/detect_objects
+| Field | Value |
+|-------|-------|
+| **Endpoint** | `/analysis/face-detection-file` |
+| **Method** | `POST` |
+| **Content-Type** | `multipart/form-data` |
 
-Description: High-accuracy prohibited object detection utilizing the OWL-ViT (Vision Transformer) model.
+**Parameters:**
 
-Functionality: Analyzes an image to identify proctoring violations (e.g., phones or books). It returns labels, confidence scores, and bounding boxes for any detected objects that may compromise exam integrity.
+| Name | Required | Type | Description |
+|------|----------|------|-------------|
+| `session_id` | ✅ | string | Unique ID for the proctoring session |
+| `frame` | ✅ | binary | The image frame to check for a face |
 
-Requirements: Image file (multipart/form-data).
+**Response:**
+```json
+{
+  "session_id": "test_session_001",
+  "timestamp": "2026-04-25T02:12:39.498784",
+  "num_faces": 1,
+  "evidence": "One face detected"
+}
+```
 
-Face Detection File
-Endpoint: POST /analysis/face-detection-file
+| Field | Type | Description |
+|-------|------|-------------|
+| `session_id` | string | The session ID associated with this request |
+| `timestamp` | string | ISO 8601 timestamp of when the detection occurred |
+| `num_faces` | int | Number of faces detected in the frame |
+| `evidence` | string | Human-readable description of the detection result |
 
-Description: A diagnostic endpoint used to verify the system's ability to locate a face within a specific session context.
+---
 
-Functionality: This runs the detection phase of the pipeline. It ensures that the current environment (lighting, positioning, and image quality) allows the AI to successfully isolate a face before proceeding to more intensive recognition or anti-spoofing checks.
+### 3. Face Verification (Recognition)
 
-Requirements: session_id (string) and frame (image file).
+| Field | Value |
+|-------|-------|
+| **Endpoint** | `/analysis/verify-file` |
+| **Method** | `POST` |
+| **Content-Type** | `multipart/form-data` |
+
+**Parameters:**
+
+| Name | Required | Type | Description |
+|------|----------|------|-------------|
+| `session_id` | ✅ | string | Used to retrieve the previously enrolled reference face |
+| `frame` | ✅ | binary | The image frame to verify against the reference |
+
+**Response:**
+```json
+{
+  "face_recognition": {
+    "flag": false,
+    "result": "No Cheating",
+    "evidence": "Authorised person verified",
+    "probability": 0.98,
+    "num_faces": 1
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `flag` | boolean | `true` indicates suspicious activity (mismatch, spoof, or no face) |
+| `result` | string | Human-readable status (e.g., `"No Cheating"`) |
+| `evidence` | string | Explanation of the result |
+| `probability` | float | Confidence score (`0.0` to `1.0`) |
+| `num_faces` | int | Number of faces detected in the frame |
+
+---
+
+### 4. Face Enrollment
+
+| Field | Value |
+|-------|-------|
+| **Endpoint** | `/analysis/enroll-file` |
+| **Method** | `POST` |
+| **Content-Type** | `multipart/form-data` |
+
+**Parameters:**
+
+| Name | Required | Type | Description |
+|------|----------|------|-------------|
+| `session_id` | ✅ | string | The ID to associate this reference face with |
+| `references` | ✅ | binary | The reference image to store |
+
+**Response:**
+```json
+{
+  "success": true,
+  "session_id": "test_session_001",
+  "num_images": 1
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | boolean | `true` if enrollment completed successfully |
+| `session_id` | string | The session ID the reference face was enrolled under |
+| `num_images` | int | Number of reference images stored for this session |
+
+---
+
+### 5. Unenrollment
+
+| Field | Value |
+|-------|-------|
+| **Endpoint** | `/analysis/unenroll` |
+| **Method** | `POST` |
+| **Content-Type** | `application/x-www-form-urlencoded` |
+
+**Parameters:**
+
+| Name | Required | Type | Description |
+|------|----------|------|-------------|
+| `session_id` | ✅ | string | The ID of the session to clear |
+
+**Response:**
+```json
+{
+  "success": true,
+  "session_id": "test_session_001"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | boolean | `true` if the session was successfully cleared |
+| `session_id` | string | The session ID that was unenrolled |
+
+---
+
+## Shared Error Structure
+
+If a request fails on the Modal side, the bridge returns:
+
+```json
+{
+  "ok": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Human readable reason"
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `ok` | boolean | Always `false` on error |
+| `error.code` | string | Machine-readable error code |
+| `error.message` | string | Human-readable explanation |

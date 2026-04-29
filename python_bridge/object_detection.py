@@ -9,6 +9,12 @@ class ObjectDetectionService(AIService):
         super().__init__("object-detection", session_id, config)
         service_config = config.get("services", {}).get("object-detection", {})
         self.endpoint_url = service_config.get("endpoint_url")
+        # Project-side confidence threshold for the suspicious flag.
+        # Detections below this probability are logged but do not trigger alerts.
+        self.probability_threshold: float = float(
+            service_config.get("probability_threshold", 0.3)
+        )
+        self.timeout: float = float(service_config.get("timeout_seconds", 10.0))
         modal_config = config.get("modal", {})
         self.token = modal_config.get("token_id", "test-token")
         self.client = None
@@ -16,7 +22,7 @@ class ObjectDetectionService(AIService):
     async def start(self):
         if not self.endpoint_url:
             raise ValueError("Object Detection endpoint_url not configured")
-        self.client = ModalClient(self.endpoint_url, self.token)
+        self.client = ModalClient(self.endpoint_url, self.token, timeout=self.timeout)
         self.is_running = True
         # Pre-warm Modal
         await self.client.predict(self.service_name, self.session_id, "WARMUP")
@@ -33,7 +39,11 @@ class ObjectDetectionService(AIService):
         if is_bridge_detection_event(raw):
             return raw
         try:
-            return adapt_object_modal_json(raw, self.create_detection_event)
+            return adapt_object_modal_json(
+                raw,
+                self.create_detection_event,
+                threshold=self.probability_threshold,
+            )
         except (TypeError, ValueError, KeyError):
             return self._create_error_event(
                 "BRIDGE_ERROR",

@@ -1,5 +1,6 @@
 import json
 import os
+import time
 import datetime
 import asyncio
 from typing import Dict, Any, List, Optional, Callable
@@ -8,6 +9,12 @@ class ProctoringOrchestrator:
     """
     Fuses AI signals into high-level alerts and a running risk score.
     Persists all events to a Session Log (JSONL).
+
+    Strict separation of responsibilities:
+    - face-detection handles "missing face" scoring (weight 15) and alerts.
+    - face-recognition handles "impersonation / spoof" scoring (weight 50) and alerts.
+    This guarantees that the exact same offense is always weighted the same way,
+    regardless of which pipeline happens to process it.
     """
 
     def __init__(self, config: Dict[str, Any], emit_callback: Callable[[Dict[str, Any]], None]):
@@ -20,39 +27,38 @@ class ProctoringOrchestrator:
         # (not dependent on the router process working directory).
         project_root = os.path.dirname(os.path.dirname(__file__))
         self.sessions_dir = os.path.join(project_root, "sessions")
-        
+
         self.current_session_id: Optional[str] = None
         self.log_file = None
-        
+
         # State tracking
         self.risk_score = 0.0
         self.active_violations: Dict[str, bool] = {
-            "eye-gaze": False,
+            "eye-gaze":         False,
+            "face-detection":   False,
             "face-recognition": False,
             "speech-detection": False,
-            "object-detection": False
+            "object-detection": False,
         }
-        
+
         # Timers for time-based rules
-        self.missing_face_start: Optional[float] = None
-        self.off_screen_gaze_start: Optional[float] = None
-        
-        # Lock for thread-safe logging if needed, though we use asyncio
+        self.missing_face_start: Optional[float]     = None
+        self.off_screen_gaze_start: Optional[float]  = None
+
+        # Lock for thread-safe logging
         self._log_lock = asyncio.Lock()
 
     def set_session(self, session_id: str):
         """Initialize logging for a new session."""
         if self.current_session_id == session_id:
             return
-            
+
         self.current_session_id = session_id
         self.risk_score = 0.0
-        
+
         # Ensure sessions directory exists
         os.makedirs(self.sessions_dir, exist_ok=True)
         log_path = os.path.join(self.sessions_dir, f"{session_id}.jsonl")
-        
-        # Open in append mode
         self.log_file_path = log_path
 
     async def on_detection_event(self, event: Dict[str, Any]):
@@ -60,14 +66,11 @@ class ProctoringOrchestrator:
         if not self.current_session_id:
             self.set_session(event.get("sessionId", "default-session"))
 
-        # 1. Log the raw detection
-        await self._log_event(event)
-
-        # 2. Process rules
+        # Process rules and annotate risk score BEFORE logging so that any
+        # annotation (e.g. risk_suppressed) is captured in the log entry.
         await self._process_rules(event)
-
-        # 3. Update risk score (additive weighted sum)
         await self._update_risk_score(event)
+        await self._log_event(event)
 
     async def _process_rules(self, event: Dict[str, Any]):
         service = event.get("service")
@@ -78,8 +81,8 @@ class ProctoringOrchestrator:
         if service == "object-detection":
             if payload.get("suspicious"):
                 await self._emit_alert(
-                    "UNAUTHORIZED_OBJECT", "high", 
-                    f"Suspicious object detected: {', '.join(payload.get('objects', []))}", 
+                    "UNAUTHORIZED_OBJECT", "high",
+                    f"Suspicious object detected: {', '.join(payload.get('objects', []))}",
                     event
                 )
 
@@ -106,82 +109,119 @@ class ProctoringOrchestrator:
                     event
                 )
 
-        # --- Rule: Eye Gaze (Time-based) ---
+        # --- Rule: Eye Gaze (Time-based logic managed by localMain.py) ---
         if service == "eye-gaze":
             status = payload.get("status")
-            threshold = self.rules_config.get("eye-gaze", {}).get("away_threshold_seconds", 3)
-            
-            if status == "away":
-                if self.off_screen_gaze_start is None:
-                    self.off_screen_gaze_start = now
-                elif now - self.off_screen_gaze_start > threshold:
-                    await self._emit_alert("GAZE_OFF_SCREEN", "low", f"Gaze away from screen for > {threshold}s", event)
-                    # Reset start so we don't spam alerts every frame
-                    self.off_screen_gaze_start = now 
-            else:
-                self.off_screen_gaze_start = None
 
-        # --- Rule: Face Recognition (Time-based) ---
-        if service == "face-recognition":
-            matched = payload.get("is_matched", False)
-            threshold = self.rules_config.get("face-recognition", {}).get("missing_threshold_seconds", 5)
-            
-            if not matched:
+            if status == "away":
+                if not self.active_violations["eye-gaze"]:
+                    self.active_violations["eye-gaze"] = True
+                    await self._emit_alert(
+                        "GAZE_OFF_SCREEN", "low",
+                        "Gaze away from screen (detected by local model)", event
+                    )
+            else:
+                self.active_violations["eye-gaze"] = False
+
+        # --- Rule: Face Detection (Missing face timer) ---
+        if service == "face-detection":
+            face_detected = payload.get("face_detected", True)
+            threshold = self.rules_config.get("face-detection", {}).get("missing_threshold_seconds", 5)
+
+            if not face_detected:
                 if self.missing_face_start is None:
                     self.missing_face_start = now
                 elif now - self.missing_face_start > threshold:
-                    await self._emit_alert("NO_FACE_DETECTED", "high", f"Student face missing for > {threshold}s", event)
+                    await self._emit_alert(
+                        "NO_FACE_DETECTED", "high",
+                        f"Student face missing for > {threshold}s", event
+                    )
                     self.missing_face_start = now
             else:
                 self.missing_face_start = None
 
+        # --- Rule: Face Recognition (Spoof + Impersonation) ---
+        if service == "face-recognition":
+            # Spoof: immediate critical alert — does not wait for any timer.
+            if payload.get("is_spoof"):
+                await self._emit_alert(
+                    "SPOOF_DETECTED", "critical",
+                    "Anti-spoofing check failed — a non-live face was presented.",
+                    event
+                )
+
+            # Impersonation: recognition ran and the person does not match the reference.
+            # Using 'elif' ensures we don't fire an 'Unauthorized Person' alert if we 
+            # already fired a 'Spoof Detected' alert for the same frame.
+            elif not payload.get("is_matched", True) and payload.get("recognition_ran", False):
+                await self._emit_alert(
+                    "UNAUTHORIZED_PERSON", "critical",
+                    "Unrecognized person detected at the workstation.",
+                    event
+                )
+
     async def _update_risk_score(self, event: Dict[str, Any]):
-        """Additive weighted sum calculation."""
+        """
+        Additive weighted-sum risk calculation.
+
+        Strict Mutually Exclusive Separation:
+        - face-detection ONLY scores for "missing face" scenarios (weight 15).
+        - face-recognition ONLY scores for "impersonation" scenarios (face is
+          present, but identity does not match) (weight 50).
+        This eliminates double-counting without complex time-window deduplication.
+        """
         service = event.get("service")
         payload = event.get("payload", {})
-        
+
         weight = self.rules_config.get(service, {}).get("weight", 10)
-        
-        # Determine if this specific event is "suspicious"
+
         is_suspicious = False
+
         if service == "eye-gaze" and payload.get("status") == "away":
             is_suspicious = True
-        elif service == "face-recognition" and not payload.get("is_matched"):
-            is_suspicious = True
+
+        elif service == "face-detection":
+            if not payload.get("face_detected", True):
+                is_suspicious = True
+
+        elif service == "face-recognition":
+            # Only score on actual recognition passes (not cached between-interval results).
+            # The "face absent" case is handled entirely by face-detection with weight 15.
+            if not payload.get("is_matched", True) and payload.get("recognition_ran", False):
+                is_suspicious = True
+
         elif service == "speech-detection" and len(payload.get("new_violations", [])) > 0:
             is_suspicious = True
+
         elif service == "object-detection" and payload.get("suspicious"):
             is_suspicious = True
 
         if is_suspicious:
-            # Increase risk score
-            self.risk_score = min(100.0, self.risk_score + (weight * 0.1))  # Scaling factor
+            self.risk_score = min(100.0, self.risk_score + (weight * 0.1)) 
         else:
-            # Decay risk score
             self.risk_score *= self.risk_score_decay
-            
-        # Emit score update every time for simplicity
+
         score_update = {
-            "type": "riskScore",
-            "score": int(round(self.risk_score)),
-            "trend": "rising" if is_suspicious else "falling",
-            "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()
+            "type":      "riskScore",
+            "score":     int(round(self.risk_score)),
+            "trend":     "rising" if is_suspicious else "falling",
+            "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         }
         self.emit_callback(score_update)
         await self._log_event(score_update)
 
     async def _emit_alert(self, code: str, severity: str, message: str, evidence: Dict[str, Any]):
         alert = {
-            "type": "alert",
-            "code": code,
-            "severity": severity,
-            "message": message,
+            "type":      "alert",
+            "code":      code,
+            "severity":  severity,
+            "message":   message,
             "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
             "sessionId": self.current_session_id,
             "evidence": {
-                "service": evidence.get("service"),
-                "confidence": evidence.get("confidence")
-            }
+                "service":    evidence.get("service"),
+                "confidence": evidence.get("confidence"),
+            },
         }
         self.emit_callback(alert)
         await self._log_event(alert)
@@ -190,7 +230,7 @@ class ProctoringOrchestrator:
         """Write event to JSONL file."""
         if not self.current_session_id:
             return
-            
+
         async with self._log_lock:
             try:
                 with open(self.log_file_path, "a", encoding="utf-8") as f:

@@ -34,16 +34,28 @@ class LocalEyeGazeService(AIService):
         self._process_frames_batch = None
 
         # Load the bridge-local port of localMain.py.
+        self._load_error: str | None = None  # FIX: store import failure for start()-time emission
         try:
             from service.localMain import process_frames_batch  # type: ignore
             self._process_frames_batch = process_frames_batch
         except Exception as exc:
-            self._emit_hardware_error(f"Failed to load local eye-gaze model: {exc}")
+            # FIX: Do NOT call _emit_hardware_error here — the event loop is not
+            # yet running and the callback (loop.call_soon_threadsafe) will silently
+            # drop the notification. Store the message and emit it in start() instead.
+            self._load_error = f"Failed to load local eye-gaze model: {exc}"
 
     async def start(self):
         """Start the background capture and inference thread."""
         if self.is_running:
             return
+
+        # FIX: If the model failed to import, emit the error now — the event loop
+        # is guaranteed to be running at this point (we are inside an async call
+        # from the router). This ensures the serviceError notification reaches the
+        # renderer and the UI can display an error pill instead of spinning forever.
+        if self._load_error is not None:
+            self._emit_hardware_error(self._load_error)
+            return  # do NOT set is_running=True — service is non-functional
 
         # In shared_frame mode, renderer owns the webcam and sends frames via predict().
         if self.input_mode == "shared_frame":
@@ -77,6 +89,19 @@ class LocalEyeGazeService(AIService):
         """
         if self.input_mode == "shared_frame":
             if self._process_frames_batch is None:
+                # FIX: The model failed to load at __init__ time (localMain import
+                # error, missing face_landmarker.task, or missing cv2/mediapipe).
+                # Returning "initializing" silently here causes the calibration phase
+                # to loop forever because the UI waits for any status != 'initializing'.
+                # Emit a one-shot serviceError so the UI can surface a real error pill
+                # instead of spinning forever.
+                self._emit_hardware_error(
+                    "Eye-gaze model unavailable: localMain failed to load. "
+                    "Check that face_landmarker.task exists in python_bridge/service/face_landmarker/ "
+                    "and that mediapipe + opencv-python are installed."
+                )
+                # Return a final 'error' status so the router can still send a
+                # well-formed DetectionEvent if the callback path is unavailable.
                 return self.create_detection_event(0.0, {"status": "initializing"})
 
             frame_b64 = frame

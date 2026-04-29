@@ -63,17 +63,18 @@ class ModalClient:
 
         if "/analysis/verify-file" in endpoint_lower:
             image_bytes, mime = self._decode_frame_to_image(frame)
-            data = {"session_id": "test_session_001"}
-            #data = {"session_id": session_id}
+            # data = {"session_id": "test_session_001"}
+            data = {"session_id": session_id}
             files = {"frame": ("frame.jpg", image_bytes, mime)}
             return await client.post(self.endpoint_url, data=data, files=files)
 
-        payload = {
-            "token": self.token,
-            "sessionId": session_id,
-            "frame": frame,
-        }
-        return await client.post(self.endpoint_url, json=payload)
+        # No known endpoint pattern matched — fail loudly rather than sending a
+        # malformed payload that no active Modal route accepts.
+        raise ValueError(
+            f"No matching request format for endpoint: {self.endpoint_url!r}. "
+            "Verify that config endpoint_url contains a recognised Modal route "
+            "(/analysis/verify-file or /analysis/detect_objects)."
+        )
 
     def _decode_frame_to_image(self, frame: str) -> Tuple[bytes, str]:
         """Decode a base64 frame (or data URL) into image bytes for multipart upload."""
@@ -115,8 +116,13 @@ class ModalClient:
                 response = await client.post(self._face_detect_url, data=data, files=files)
                 if response.status_code == 200:
                     return response.json()
+                # Extract the human-readable detail from 422 bodies (e.g. "No face detected").
+                try:
+                    detail = response.json().get("detail", "")
+                except Exception:
+                    detail = ""
                 return {"ok": False, "error": {"code": "FACE_DETECT_ERROR",
-                        "message": f"Modal face-detect returned {response.status_code}"}}
+                        "message": detail or f"Modal face-detect returned {response.status_code}"}}
         except httpx.TimeoutException:
             return {"ok": False, "error": {"code": "TIMEOUT", "message": "Face-detect request timed out."}}
         except Exception as e:
@@ -136,8 +142,14 @@ class ModalClient:
                 response = await client.post(self._enroll_url, data=data, files=files)
                 if response.status_code == 200:
                     return response.json()
+                # Extract the human-readable detail from 422 bodies
+                # (e.g. "No face detected in reference image 0", "Multiple faces in reference image 0").
+                try:
+                    detail = response.json().get("detail", "")
+                except Exception:
+                    detail = ""
                 return {"ok": False, "error": {"code": "ENROLLMENT_FAILED",
-                        "message": f"Modal enroll returned {response.status_code}"}}
+                        "message": detail or f"Modal enroll returned {response.status_code}"}}
         except httpx.TimeoutException:
             return {"ok": False, "error": {"code": "TIMEOUT", "message": "Enrollment request timed out."}}
         except Exception as e:

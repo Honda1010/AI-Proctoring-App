@@ -658,6 +658,7 @@ ipcMain.handle('bridge:start-exam', async (_event, { quizCode }) => {
         // Cloud (Modal) services. If not configured, router responds with an error
         // and the UI will remain "Inactive" (status poll retries continuously).
         sendAiRpc('startService', { service: 'face-recognition', sessionId }),
+        sendAiRpc('startService', { service: 'face-detection', sessionId }),
         sendAiRpc('startService', { service: 'object-detection', sessionId }),
       ]);
 
