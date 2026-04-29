@@ -36,6 +36,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   unsubscribeAi = window.bridge.onAiEvent((event) => {
     const data = event?.params || event;
     const msgType = event?.type || event?.method;
+
+    // FIX: Handle serviceError notifications for eye-gaze.
+    // Previously only 'detection' events were handled, so a model-load failure
+    // (e.g. missing face_landmarker.task) was silently ignored and the pill
+    // stayed on 'Calibrating' forever.
+    if (msgType === 'serviceError' && data?.service === 'eye-gaze') {
+      eyeReady = false;
+      setPill(eyeStatusEl, 'error', 'Unavailable');
+      updateGate();
+      return;
+    }
+
     if (msgType !== 'detection') return;
     if (data?.service !== 'eye-gaze') return;
 
@@ -146,8 +158,15 @@ async function syncStatusTick() {
     const speechStatus = statuses['speech-detection'];
 
     if (eyeStatus !== 'running') {
-      const label = eyeStatus === 'unavailable' ? 'Unavailable' : 'Not Running';
-      setPill(eyeStatusEl, 'error', label);
+      // FIX: Only set eyeReady=false and show an error pill when the service is
+      // genuinely not running/unavailable.  Do NOT override eyeReady=true here —
+      // a previous detection event may have already completed calibration and set
+      // it. The status poll only fires every 1 s, so clobbering 'ready' would
+      // cause a 1-second flicker even when calibration succeeded.
+      if (!eyeReady) {
+        const label = eyeStatus === 'unavailable' ? 'Unavailable' : 'Not Running';
+        setPill(eyeStatusEl, 'error', label);
+      }
       eyeReady = false;
     }
     if (speechStatus === 'running' && !speechReady) {

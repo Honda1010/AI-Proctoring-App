@@ -18,12 +18,14 @@ let dashboard = null;
 let aiIntervalId = null;
 let speechPollIntervalId = null;
 let cloudVisionIntervalId = null;
+let faceDetectIntervalId = null;
 let aiInFlight = false;
 let aiCanvas = null;
 let aiContext = null;
 const EYE_GAZE_STREAM_INTERVAL_MS = 250;
 const SPEECH_POLL_INTERVAL_MS = 2000;
 const CLOUD_VISION_INTERVAL_MS = 5000; // modal_Frame_Rate
+const FACE_DETECT_INTERVAL_MS = 1000;
 
 // ---------------------------------------------------------------------------
 // T012 — DOMContentLoaded: load session and initialise page
@@ -428,19 +430,19 @@ function startAiStreaming() {
   aiContext = aiCanvas.getContext('2d');
 
   aiIntervalId = setInterval(async () => {
-    if (aiInFlight || !aiContext) return;
+    if (!aiContext) return;
     if (video.readyState < 2) return; // Not enough data yet
 
-    aiInFlight = true;
     try {
       aiContext.drawImage(video, 0, 0, aiCanvas.width, aiCanvas.height);
       const frame = aiCanvas.toDataURL('image/jpeg', 0.6);
 
-      await window.bridge.aiRpc('predict', { service: 'eye-gaze', frame });
+      // Fire-and-forget: do NOT await here so frames are sent at a fixed
+      // rate regardless of inference time. This ensures the GazeSession's
+      // away_start_time accumulates correctly across consecutive calls.
+      window.bridge.aiRpc('predict', { service: 'eye-gaze', frame }).catch(() => {});
     } catch {
       // Eye-gaze may be disabled; ignore polling errors.
-    } finally {
-      aiInFlight = false;
     }
   }, EYE_GAZE_STREAM_INTERVAL_MS);
 
@@ -462,6 +464,21 @@ function startAiStreaming() {
       // Services may be unconfigured/stopped; ignore transient router errors.
     }
   }, CLOUD_VISION_INTERVAL_MS);
+
+  // Face Detection runs independently from Face Recognition, at a much higher frequency (1s)
+  // to ensure 'missing face' events are caught quickly without burning Modal credits on full recognition.
+  faceDetectIntervalId = setInterval(async () => {
+    try {
+      if (!aiContext) return;
+      if (video.readyState < 2) return;
+      aiContext.drawImage(video, 0, 0, aiCanvas.width, aiCanvas.height);
+      const frame = aiCanvas.toDataURL('image/jpeg', 0.6);
+
+      await window.bridge.aiRpc('predict', { service: 'face-detection', frame });
+    } catch {
+      // Services may be unconfigured/stopped; ignore transient router errors.
+    }
+  }, FACE_DETECT_INTERVAL_MS);
 
   // Speech detection runs local mic capture in the Python service and
   // this periodic predict call flushes speech violations to the UI/orchestrator.
@@ -486,6 +503,10 @@ function stopAiStreaming() {
   if (cloudVisionIntervalId) {
     clearInterval(cloudVisionIntervalId);
     cloudVisionIntervalId = null;
+  }
+  if (faceDetectIntervalId) {
+    clearInterval(faceDetectIntervalId);
+    faceDetectIntervalId = null;
   }
   aiCanvas = null;
   aiContext = null;
