@@ -46,10 +46,15 @@ let faceValue       = null;
 // ---------------------------------------------------------------------------
 
 const ERROR_MESSAGES = {
-  NO_FACE_DETECTED:  'No face detected \u2014 adjust your position and try again.',
-  ENROLLMENT_FAILED: 'Verification failed \u2014 please retake your photo.',
-  SERVICE_NOT_RUNNING: 'Face recognition service is not available. Please try again shortly.',
-  TIMEOUT:           'Verification timed out. Please try again.',
+  NO_FACE_DETECTED:      'No face detected \u2014 adjust your position and try again.',
+  MULTIPLE_FACES:        'Multiple faces detected \u2014 make sure only you are visible.',
+  SPOOF_DETECTED:        'Liveness check failed \u2014 please use a live webcam.',
+  IDENTITY_MISMATCH:     'Your face does not match your official student record \u2014 please try again.',
+  REFERENCE_FETCH_FAILED:'Could not load your official profile image. Please check your connection.',
+  FACE_FRAME_ERROR:      'Identity comparison failed \u2014 please retake your photo.',
+  ENROLLMENT_FAILED:     'Verification failed \u2014 please retake your photo.',
+  SERVICE_NOT_RUNNING:   'Face recognition service is not available. Please try again shortly.',
+  TIMEOUT:               'Verification timed out. Please try again.',
 };
 
 // ---------------------------------------------------------------------------

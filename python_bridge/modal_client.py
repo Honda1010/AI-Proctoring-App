@@ -8,13 +8,15 @@ class ModalClient:
     """Async client for calling Modal web endpoints."""
 
     def __init__(self, endpoint_url: str, token: str, timeout: float = 30.0,
-                 enroll_url: str = "", unenroll_url: str = "", face_detect_url: str = ""):
+                 enroll_url: str = "", unenroll_url: str = "",
+                 face_detect_url: str = "", face_frame_url: str = ""):
         self.endpoint_url = endpoint_url
         self.token = token
         self.timeout = timeout
         self._enroll_url = enroll_url or endpoint_url
         self._unenroll_url = unenroll_url or endpoint_url
         self._face_detect_url = face_detect_url or endpoint_url
+        self._face_frame_url = face_frame_url or endpoint_url
     
     async def predict(self, service_name: str, session_id: str, frame: str) -> Dict[str, Any]:
         """
@@ -102,6 +104,85 @@ class ModalClient:
             return base64.b64decode(frame_data, validate=True), mime
         except (binascii.Error, ValueError) as exc:
             raise ValueError("Frame must be a valid base64 image payload") from exc
+
+    async def face_frame_compare(
+        self,
+        session_id: str,
+        live_frame: str,
+        reference_image_bytes: bytes,
+        reference_mime: str = "image/jpeg",
+    ) -> Dict[str, Any]:
+        """
+        Compare a live webcam frame against an official reference image via
+        POST /analysis/face-frame (multipart/form-data).
+
+        Parameters
+        ----------
+        session_id : str
+            Optional session_id forwarded for server-side embedding caching.
+        live_frame : str
+            Base64 data-URL or raw base64 JPEG of the live webcam capture.
+        reference_image_bytes : bytes
+            Raw bytes of the authorised reference image (e.g. fetched from
+            profilePictureUrl).
+        reference_mime : str
+            MIME type of the reference image, default 'image/jpeg'.
+
+        Returns
+        -------
+        dict with keys:
+          ok : bool
+          probability : float   (normalised 0.0–1.0)
+          evidence : str        (raw 'evidence' string from Modal)
+          error : dict | None   (code + message when ok is False)
+        """
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                live_bytes, live_mime = self._decode_frame_to_image(live_frame)
+                data = {"session_id": session_id}
+                files = {
+                    "frame":     ("frame.jpg",     live_bytes,            live_mime),
+                    "reference": ("reference.jpg", reference_image_bytes, reference_mime),
+                }
+                response = await client.post(self._face_frame_url, data=data, files=files)
+
+                if response.status_code == 200:
+                    body = response.json()
+                    # The /analysis/face-frame response is wrapped in face_recognition key
+                    face_data = body.get("face_recognition", body)
+                    raw_prob = face_data.get("probability", "0.0%")
+                    # probability comes back as a percentage string, e.g. "98.21%"
+                    try:
+                        prob_float = float(str(raw_prob).replace("%", "").strip()) / 100.0
+                    except (ValueError, TypeError):
+                        prob_float = 0.0
+                    evidence = face_data.get("evidence", "")
+                    return {
+                        "ok":          True,
+                        "probability": prob_float,
+                        "evidence":    evidence,
+                    }
+
+                # Non-200 — try to extract a readable detail
+                try:
+                    detail = response.json().get("detail", "")
+                except Exception:
+                    detail = ""
+                return {
+                    "ok":    False,
+                    "error": {
+                        "code":    "FACE_FRAME_ERROR",
+                        "message": detail or f"face-frame returned {response.status_code}",
+                    },
+                }
+
+        except httpx.TimeoutException:
+            return {"ok": False, "error": {"code": "TIMEOUT",
+                    "message": "face-frame comparison request timed out."}}
+        except ValueError as e:
+            return {"ok": False, "error": {"code": "INVALID_FRAME", "message": str(e)}}
+        except Exception as e:
+            return {"ok": False, "error": {"code": "UNKNOWN_ERROR", "message": str(e)}}
 
     async def face_detect(self, session_id: str, frame: str) -> Dict[str, Any]:
         """

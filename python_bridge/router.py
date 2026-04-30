@@ -212,9 +212,18 @@ class AIRouter:
 
 
     async def handle_enroll_reference(self, request_id: Any, params: Dict[str, Any]):
-        """Enroll a reference frame for face recognition."""
+        """Enroll a reference frame for face recognition.
+
+        Expected params:
+          frame             : str  — base64 data-URL of the live webcam capture
+          sessionId         : str  — exam/attempt session identifier
+          profilePictureUrl : str | None — official CDN URL from the login response;
+                              when provided, identity is confirmed via /analysis/face-frame
+                              before the embedding is stored.
+        """
         frame = params.get("frame")
         session_id = params.get("sessionId", "default-session")
+        profile_picture_url = params.get("profilePictureUrl") or None
 
         if not frame:
             self.send_error(request_id, -32602, "Missing frame data")
@@ -230,19 +239,29 @@ class AIRouter:
             return
 
         try:
-            result = await service.enroll(frame)
+            result = await service.enroll(frame, profile_picture_url=profile_picture_url)
             self.send_result(request_id, result)
             # Log the lifecycle event so post-exam forensics can confirm enrollment.
             if self.orchestrator:
                 self.orchestrator.set_session(session_id)
-                await self.orchestrator._log_event({
+                
+                log_payload = {
                     "type": "lifecycle",
                     "event": "enrollment",
                     "ok": result.get("ok", False),
                     "sessionId": session_id,
                     "timestamp": __import__('datetime').datetime.now(
                         __import__('datetime').timezone.utc).isoformat(),
-                })
+                }
+                
+                if "probability" in result:
+                    log_payload["probability"] = result["probability"]
+                if "evidence" in result:
+                    log_payload["evidence"] = result["evidence"]
+                if "error" in result:
+                    log_payload["error"] = result["error"]
+                    
+                await self.orchestrator._log_event(log_payload)
         except Exception as e:
             self.send_result(request_id, {
                 "ok": False,
