@@ -581,7 +581,30 @@ ipcMain.handle('bridge:enroll-reference', async (_event, { frame } = {}) => {
 
   const sessionId = examSession?.attemptId ? String(examSession.attemptId) : 'default-session';
 
-  const rpcResult = await sendAiRpc('enrollReference', { frame, sessionId }, 30000);
+  // Retrieve the official profile picture URL from the stored session.
+  // sessionMemory is preferred (in-memory, set on login); falls back to keytar for
+  // "Remember this device" sessions. The renderer never holds this value.
+  let profilePictureUrl = null;
+  try {
+    if (sessionMemory?.userProfile?.profilePictureUrl) {
+      profilePictureUrl = sessionMemory.userProfile.profilePictureUrl;
+    } else {
+      const profileRaw = await keytar.getPassword(KEYTAR_SERVICE, 'user-profile');
+      if (profileRaw) {
+        const parsed = JSON.parse(profileRaw);
+        profilePictureUrl = parsed?.profilePictureUrl ?? null;
+      }
+    }
+  } catch (_err) {
+    // profilePictureUrl stays null — enrollment proceeds without identity confirmation
+    process.stderr.write(`[enroll] failed to read profilePictureUrl: ${_err.message}\n`);
+  }
+
+  const rpcResult = await sendAiRpc('enrollReference', {
+    frame,
+    sessionId,
+    profilePictureUrl,
+  }, 45000);
 
   if (rpcResult.ok && rpcResult.result?.ok === true) {
     enrollmentState = { sessionId, enrolledAt: new Date(), succeeded: true };

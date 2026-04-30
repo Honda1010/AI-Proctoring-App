@@ -1,5 +1,6 @@
 import time
 import datetime
+import httpx
 from ai_base import AIService
 from modal_client import ModalClient
 from modal_response_adapters import adapt_face_modal_json, is_bridge_detection_event
@@ -30,11 +31,17 @@ class FaceRecognitionService(AIService):
         self.enroll_endpoint_url   = service_config.get("enroll_endpoint_url", "")
         self.unenroll_endpoint_url = service_config.get("unenroll_endpoint_url", "")
         self.face_detect_endpoint_url = service_config.get("face_detect_endpoint_url", "")
-        # Project-side probability threshold for the match/mismatch decision.
-        # Applies only to 'Authorised person verified' and 'Face does not match'
-        # outcomes from the Modal API. Default 0.5 matches the server-side threshold.
+        self.face_frame_endpoint_url  = service_config.get("face_frame_endpoint_url", "")
+        # Project-side probability threshold for the match/mismatch decision during
+        # live proctoring (verify). Applies only to 'Authorised person verified' and
+        # 'Face does not match' outcomes. Default 0.5 matches the server-side threshold.
         self.probability_threshold: float = float(
             service_config.get("probability_threshold", 0.5)
+        )
+        # Separate threshold used ONLY during enrollment identity confirmation.
+        # Compared against the similarity returned by /analysis/face-frame.
+        self.enrollment_similarity_threshold: float = float(
+            service_config.get("enrollment_similarity_threshold", 0.5)
         )
         self.timeout: float = float(service_config.get("timeout_seconds", 15.0))
         modal_config = config.get("modal", {})
@@ -59,6 +66,7 @@ class FaceRecognitionService(AIService):
             enroll_url=self.enroll_endpoint_url,
             unenroll_url=self.unenroll_endpoint_url,
             face_detect_url=self.face_detect_endpoint_url,
+            face_frame_url=self.face_frame_endpoint_url,
         )
         self.is_running = True
 
@@ -70,28 +78,107 @@ class FaceRecognitionService(AIService):
     # Enrollment
     # ------------------------------------------------------------------
 
-    async def enroll(self, frame: str) -> dict:
+    async def enroll(self, frame: str, profile_picture_url: str | None = None) -> dict:
         """
         Enroll a reference image for this session.
-        Gate: calls /analysis/face-detection-file to confirm a face is present
-        before storing the embedding via /analysis/enroll-file.
+
+        Identity-confirmation gate (replaces the old face-detection gate):
+          1. If ``profile_picture_url`` is provided, fetch the official image and
+             call POST /analysis/face-frame to compare the live capture against it.
+             The similarity must exceed ``enrollment_similarity_threshold`` (from
+             config.json) and the API must report an authorised match.
+          2. Only when identity is confirmed, store the embedding via
+             POST /analysis/enroll-file.
+
         Returns: {ok: True} on success or {ok: False, error: {code, message}}.
         """
         if not self.is_running or self.client is None:
             return {"ok": False, "error": {"code": "SERVICE_NOT_RUNNING",
                     "message": "Face recognition service is not running."}}
 
-        # Gate: confirm a face is present before enrolling.
-        detect_result = await self.client.face_detect(self.session_id, frame)
-        face_found = int(detect_result.get("num_faces", 0) or 0) > 0
-        if not face_found:
-            if detect_result.get("ok") is False:
-                return {"ok": False, "error": detect_result.get("error",
-                        {"code": "NO_FACE_DETECTED", "message": "No face detected in the image."})}
-            return {"ok": False, "error": {"code": "NO_FACE_DETECTED",
-                    "message": "No face detected — please adjust your position."}}
+        # ------------------------------------------------------------------
+        # Step 1 — Identity confirmation via /analysis/face-frame
+        # ------------------------------------------------------------------
+        probability = None
+        evidence = None
+        
+        if profile_picture_url:
+            # Fetch the reference image bytes from the CDN/LMS URL.
+            ref_bytes: bytes | None = None
+            ref_mime = "image/jpeg"
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout) as http:
+                    ref_response = await http.get(profile_picture_url)
+                    if ref_response.status_code == 200:
+                        ref_bytes = ref_response.content
+                        content_type = ref_response.headers.get("content-type", "image/jpeg")
+                        ref_mime = content_type.split(";")[0].strip() or "image/jpeg"
+                    else:
+                        return {
+                            "ok": False,
+                            "error": {
+                                "code": "REFERENCE_FETCH_FAILED",
+                                "message": (
+                                    f"Could not download official profile image "
+                                    f"(HTTP {ref_response.status_code})."
+                                ),
+                            },
+                        }
+            except httpx.TimeoutException:
+                return {"ok": False, "error": {"code": "TIMEOUT",
+                        "message": "Timed out while fetching official profile image."}}
+            except Exception as exc:
+                return {"ok": False, "error": {"code": "REFERENCE_FETCH_FAILED",
+                        "message": str(exc)}}
 
-        # Enroll the reference image.
+            # Compare live frame vs official reference image.
+            compare_result = await self.client.face_frame_compare(
+                session_id=self.session_id,
+                live_frame=frame,
+                reference_image_bytes=ref_bytes,
+                reference_mime=ref_mime,
+            )
+
+            if not compare_result.get("ok"):
+                # Network/HTTP error during comparison
+                return {"ok": False, "error": compare_result.get("error",
+                        {"code": "FACE_FRAME_ERROR",
+                         "message": "Failed to compare face against official record."})}
+
+            probability = compare_result.get("probability", 0.0)
+            evidence    = compare_result.get("evidence", "")
+
+            # Evidence-based checks (no-face / multiple-faces / mismatch / spoof)
+            if "No face detected" in evidence:
+                return {"ok": False, "error": {
+                    "code":    "NO_FACE_DETECTED",
+                    "message": "No face detected — adjust your position and lighting.",
+                }}
+            if "Multiple faces" in evidence:
+                return {"ok": False, "error": {
+                    "code":    "MULTIPLE_FACES",
+                    "message": "Multiple faces detected — ensure only you are visible.",
+                }}
+            if "Spoof detected" in evidence:
+                return {"ok": False, "error": {
+                    "code":    "SPOOF_DETECTED",
+                    "message": "Liveness check failed — please use a live webcam.",
+                }}
+
+            # Threshold check against enrollment_similarity_threshold from config
+            if probability < self.enrollment_similarity_threshold:
+                return {"ok": False, "error": {
+                    "code":    "IDENTITY_MISMATCH",
+                    "message": (
+                        "Your live photo does not match your official student record. "
+                        f"Similarity: {probability * 100:.1f}% "
+                        f"(required ≥ {self.enrollment_similarity_threshold * 100:.0f}%)."
+                    ),
+                }}
+
+        # ------------------------------------------------------------------
+        # Step 2 — Persist the embedding via /analysis/enroll-file
+        # ------------------------------------------------------------------
         enroll_result = await self.client.enroll(self.session_id, frame)
         # Network/HTTP-level failure (non-200 status code).
         if enroll_result.get("ok") is False:
@@ -105,7 +192,14 @@ class FaceRecognitionService(AIService):
         # Reset recognition timer so the first verify() after enrollment runs immediately.
         self._last_recognition_time = 0.0
         self._last_recognition_payload = {"is_matched": False, "faces_count": 0}
-        return {"ok": True}
+        
+        out = {"ok": True}
+        if probability is not None:
+            out["probability"] = probability
+        if evidence is not None:
+            out["evidence"] = evidence
+            
+        return out
 
     async def unenroll(self) -> None:
         """Remove the stored embedding for this session (fire-and-forget)."""
