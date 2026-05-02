@@ -1,0 +1,27 @@
+{
+  "report_metadata": {
+    "generated_at": "2026-05-02T16:05:03.240364+00:00",
+    "source_log": "1009.jsonl",
+    "student_id": "student-1009",
+    "exam_id": "exam-1009"
+  },
+  "raw_counts": {
+    "face_absence_mismatch": 0,
+    "suspicious_movement": 0,
+    "conversation_noise": 4,
+    "forbidden_objects": 0
+  },
+  "normalised_counts": {
+    "face_absence_mismatch": 0.0,
+    "suspicious_movement": 0.0,
+    "conversation_noise": 1.0,
+    "forbidden_objects": 0.0
+  },
+  "weights": {
+    "face_absence_mismatch": 1.0,
+    "suspicious_movement": 1.0,
+    "conversation_noise": 1.0,
+    "forbidden_objects": 1.0
+  },
+  "total_risk_score": 1.0
+}
