@@ -121,6 +121,10 @@ class ProctoringOrchestrator:
                         "Gaze away from screen (detected by local model)", event
                     )
             else:
+                # "on-screen", "no-face", "initializing" — all clear the away violation.
+                # "no-face" is already scored separately by face-detection; do not
+                # double-count it here. Clearing the flag allows the next genuine
+                # "away" event to re-trigger an alert.
                 self.active_violations["eye-gaze"] = False
 
         # --- Rule: Face Detection (Missing face timer) ---
@@ -129,6 +133,7 @@ class ProctoringOrchestrator:
             threshold = self.rules_config.get("face-detection", {}).get("missing_threshold_seconds", 5)
 
             if not face_detected:
+                self.active_violations["face-detection"] = True
                 if self.missing_face_start is None:
                     self.missing_face_start = now
                 elif now - self.missing_face_start > threshold:
@@ -138,12 +143,14 @@ class ProctoringOrchestrator:
                     )
                     self.missing_face_start = now
             else:
+                self.active_violations["face-detection"] = False
                 self.missing_face_start = None
 
         # --- Rule: Face Recognition (Spoof + Impersonation) ---
         if service == "face-recognition":
             # Spoof: immediate critical alert — does not wait for any timer.
             if payload.get("is_spoof"):
+                self.active_violations["face-recognition"] = True
                 await self._emit_alert(
                     "SPOOF_DETECTED", "critical",
                     "Anti-spoofing check failed — a non-live face was presented.",
@@ -154,11 +161,14 @@ class ProctoringOrchestrator:
             # Using 'elif' ensures we don't fire an 'Unauthorized Person' alert if we 
             # already fired a 'Spoof Detected' alert for the same frame.
             elif not payload.get("is_matched", True) and payload.get("recognition_ran", False):
+                self.active_violations["face-recognition"] = True
                 await self._emit_alert(
                     "UNAUTHORIZED_PERSON", "critical",
                     "Unrecognized person detected at the workstation.",
                     event
                 )
+            elif payload.get("is_matched", True) and payload.get("recognition_ran", False):
+                self.active_violations["face-recognition"] = False
 
     async def _update_risk_score(self, event: Dict[str, Any]):
         """
@@ -166,8 +176,8 @@ class ProctoringOrchestrator:
 
         Strict Mutually Exclusive Separation:
         - face-detection ONLY scores for "missing face" scenarios (weight 15).
-        - face-recognition ONLY scores for "impersonation" scenarios (face is
-          present, but identity does not match) (weight 50).
+        - face-recognition ONLY scores for "impersonation" or "spoof" scenarios
+          (face is present, but identity does not match or a spoof was detected) (weight 50).
         This eliminates double-counting without complex time-window deduplication.
         """
         service = event.get("service")
@@ -184,10 +194,12 @@ class ProctoringOrchestrator:
             if not payload.get("face_detected", True):
                 is_suspicious = True
 
-        elif service == "face-recognition":
-            # Only score on actual recognition passes (not cached between-interval results).
-            # The "face absent" case is handled entirely by face-detection with weight 15.
-            if not payload.get("is_matched", True) and payload.get("recognition_ran", False):
+        elif service == "face-recognition" and payload.get("recognition_ran", False):
+            # Score for EITHER a spoof OR an unmatched identity — but not both at once.
+            # is_spoof takes priority (higher severity) over a plain mismatch.
+            if payload.get("is_spoof"):
+                is_suspicious = True
+            elif not payload.get("is_matched", True):
                 is_suspicious = True
 
         elif service == "speech-detection" and len(payload.get("new_violations", [])) > 0:
@@ -197,7 +209,7 @@ class ProctoringOrchestrator:
             is_suspicious = True
 
         if is_suspicious:
-            self.risk_score = min(100.0, self.risk_score + (weight * 0.1)) 
+            self.risk_score = min(100.0, self.risk_score + (weight * 0.1))
         else:
             self.risk_score *= self.risk_score_decay
 
@@ -205,6 +217,7 @@ class ProctoringOrchestrator:
             "type":      "riskScore",
             "score":     int(round(self.risk_score)),
             "trend":     "rising" if is_suspicious else "falling",
+            "service":   service,
             "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         }
         self.emit_callback(score_update)

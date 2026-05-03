@@ -10,7 +10,7 @@ All endpoints are hosted on Modal and expect a `POST` request. Most endpoints us
 
 | Field | Value |
 |-------|-------|
-| **Endpoint** | `/analysis/detect_objects` |
+| **Endpoint** | `/analysis/object-frame` |
 | **Method** | `POST` |
 | **Content-Type** | `multipart/form-data` |
 
