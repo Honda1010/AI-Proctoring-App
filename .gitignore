@@ -17,7 +17,7 @@ __pycache__/
 
 #Directories
 sessions/*.jsonl
-
+*.pdf
 
 # Runtime config (never commit real credentials or URLs)
 config.json
