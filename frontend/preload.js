@@ -44,6 +44,7 @@ const ALLOWED_INVOKE_CHANNELS = [
   'bridge:export-pdf',          // Export current page to PDF
   'bridge:enroll-reference',    // Enroll a captured reference photo for face recognition
   'bridge:get-enrollment-status', // Check whether enrollment succeeded
+  'bridge:get-ui-config',       // Return ui section of config.json (intervals etc.)
 ];
 
 contextBridge.exposeInMainWorld('bridge', {
@@ -246,5 +247,15 @@ contextBridge.exposeInMainWorld('bridge', {
    */
   getEnrollmentStatus() {
     return ipcRenderer.invoke('bridge:get-enrollment-status');
+  },
+
+  /**
+   * Return the ui section of config.json (polling intervals, etc.) to the renderer.
+   * Falls back to { ok: false } if config cannot be read.
+   *
+   * @returns {Promise<{ok: true, ui: object} | {ok: false}>}
+   */
+  getUiConfig() {
+    return ipcRenderer.invoke('bridge:get-ui-config');
   },
 });

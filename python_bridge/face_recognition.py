@@ -72,6 +72,8 @@ class FaceRecognitionService(AIService):
 
     async def stop(self):
         self.is_running = False
+        if self.client is not None:
+            await self.client.aclose()
         self.client = None
 
     # ------------------------------------------------------------------

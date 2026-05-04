@@ -2,6 +2,8 @@ import httpx
 import datetime
 import base64
 import binascii
+import json
+import os
 from typing import Dict, Any, Tuple
 
 class ModalClient:
@@ -17,37 +19,89 @@ class ModalClient:
         self._unenroll_url = unenroll_url or endpoint_url
         self._face_detect_url = face_detect_url or endpoint_url
         self._face_frame_url = face_frame_url or endpoint_url
-    
+        # Persistent HTTP client — reused across all requests to avoid the
+        # TCP + TLS handshake overhead of creating a new connection per call.
+        # Lazily initialised on the first request; closed explicitly via aclose().
+        self._http_client: httpx.AsyncClient | None = None
+
+    def _get_client(self) -> httpx.AsyncClient:
+        """Return the shared persistent HTTP client, creating it on first call."""
+        if self._http_client is None or self._http_client.is_closed:
+            self._http_client = httpx.AsyncClient(
+                timeout=self.timeout,
+                # Keep connections alive for up to 60 s of idle time.
+                limits=httpx.Limits(
+                    max_keepalive_connections=5,
+                    max_connections=10,
+                    keepalive_expiry=60,
+                ),
+            )
+        return self._http_client
+
+    async def aclose(self) -> None:
+        """Close the persistent HTTP client and release the underlying TCP connection.
+        Call this from the owning service's stop() method."""
+        if self._http_client is not None and not self._http_client.is_closed:
+            await self._http_client.aclose()
+        self._http_client = None
+
+
     async def predict(self, service_name: str, session_id: str, frame: str) -> Dict[str, Any]:
         """
         Sends a frame to the Modal endpoint and returns a DetectionEvent.
         Handles cold starts and timeouts.
         """
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await self._send_request(client, service_name, session_id, frame)
-                
-                if response.status_code == 200:
-                    return response.json()
-                elif response.status_code == 503:
-                    return self._create_error_event(
-                        service_name, session_id, "SERVICE_UNAVAILABLE", 
-                        "Modal container is warming up. Retrying..."
-                    )
-                else:
-                    return self._create_error_event(
-                        service_name, session_id, "BRIDGE_ERROR", 
-                        f"Modal returned unexpected status: {response.status_code}"
-                    )
+            client = self._get_client()
+            response = await self._send_request(client, service_name, session_id, frame)
+
+            if response.status_code == 200:
+                body = response.json()
+                # ── TEMP DIAGNOSTIC LOG ──────────────────────────────────────
+                # Logs the raw Modal JSON for object-detection to
+                # python_bridge/tmp/modal_raw.ndjson so you can inspect
+                # exactly what the server returns before any adapter runs.
+                # Safe to delete: does not affect sessions/ or any production path.
+                if service_name == "object-detection":
+                    self._log_raw_response(body)
+                # ── END TEMP LOG ─────────────────────────────────────────────
+                return body
+            elif response.status_code == 503:
+                return self._create_error_event(
+                    service_name, session_id, "SERVICE_UNAVAILABLE",
+                    "Modal container is warming up. Retrying..."
+                )
+            else:
+                return self._create_error_event(
+                    service_name, session_id, "BRIDGE_ERROR",
+                    f"Modal returned unexpected status: {response.status_code}"
+                )
         except httpx.TimeoutException:
             return self._create_error_event(
-                service_name, session_id, "TIMEOUT", 
+                service_name, session_id, "TIMEOUT",
                 "Request to Modal timed out (cold start threshold exceeded)."
             )
         except Exception as e:
             return self._create_error_event(
                 service_name, session_id, "UNKNOWN_ERROR", str(e)
             )
+
+    def _log_raw_response(self, body: Dict[str, Any]) -> None:
+        """
+        Append the raw Modal JSON response to a temp NDJSON log.
+        File: python_bridge/tmp/modal_raw.ndjson
+        Each line is a JSON object with a 'logged_at' timestamp + the full body.
+        TEMP DIAGNOSTIC ONLY — delete this method and its call once resolved.
+        """
+        try:
+            log_dir = os.path.join(os.path.dirname(__file__), "tmp")
+            os.makedirs(log_dir, exist_ok=True)
+            log_path = os.path.join(log_dir, "modal_raw.ndjson")
+            entry = {"logged_at": datetime.datetime.now(datetime.timezone.utc).isoformat(), **body}
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(entry) + "\n")
+        except Exception:
+            pass  # never crash the bridge over a debug log
 
     async def _send_request(
         self,
@@ -63,6 +117,12 @@ class ModalClient:
             files = {"file": ("frame.jpg", image_bytes, mime)}
             return await client.post(self.endpoint_url, files=files)
 
+        if "/analysis/object-frame" in endpoint_lower:
+            # YOLO single-frame endpoint — multipart field name is 'image'
+            image_bytes, mime = self._decode_frame_to_image(frame)
+            files = {"image": ("frame.jpg", image_bytes, mime)}
+            return await client.post(self.endpoint_url, files=files)
+
         if "/analysis/verify-file" in endpoint_lower:
             image_bytes, mime = self._decode_frame_to_image(frame)
             # data = {"session_id": "test_session_001"}
@@ -75,7 +135,7 @@ class ModalClient:
         raise ValueError(
             f"No matching request format for endpoint: {self.endpoint_url!r}. "
             "Verify that config endpoint_url contains a recognised Modal route "
-            "(/analysis/verify-file or /analysis/detect_objects)."
+            "(/analysis/object-frame, /analysis/detect_objects, or /analysis/verify-file)."
         )
 
     def _decode_frame_to_image(self, frame: str) -> Tuple[bytes, str]:

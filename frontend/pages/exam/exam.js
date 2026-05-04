@@ -17,21 +17,39 @@ let remainingSeconds = 0; // U1 fix: track via variable, not DOM parsing
 let dashboard = null;
 let aiIntervalId = null;
 let speechPollIntervalId = null;
-let cloudVisionIntervalId = null;
+let cloudVisionIntervalId = null;   // face-recognition polling
+let objectDetectIntervalId = null;  // object-detection polling (independent)
 let faceDetectIntervalId = null;
 let aiInFlight = false;
 let aiCanvas = null;
 let aiContext = null;
-const EYE_GAZE_STREAM_INTERVAL_MS = 250;
-const SPEECH_POLL_INTERVAL_MS = 2000;
-const CLOUD_VISION_INTERVAL_MS = 5000; // modal_Frame_Rate
-const FACE_DETECT_INTERVAL_MS = 1000;
+// Polling intervals — loaded from config.json ui.intervals at startup.
+// Defaults below are used only if config is unavailable.
+let EYE_GAZE_STREAM_INTERVAL_MS  = 250;
+let SPEECH_POLL_INTERVAL_MS       = 2000;
+let FACE_RECOGNITION_INTERVAL_MS  = 1000;  // face-recognition (Modal)
+let OBJECT_DETECT_INTERVAL_MS     = 1000;  // object-detection  (Modal, independent)
+let FACE_DETECT_INTERVAL_MS       = 60000; // local face-detect
 
 // ---------------------------------------------------------------------------
 // T012 — DOMContentLoaded: load session and initialise page
 // ---------------------------------------------------------------------------
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // Load polling intervals from config.json before starting any AI streaming.
+  // Falls back silently to the hardcoded defaults if config is unavailable.
+  try {
+    const cfgResult = await window.bridge.getUiConfig();
+    if (cfgResult?.ok && cfgResult.ui?.intervals) {
+      const iv = cfgResult.ui.intervals;
+      if (iv.eye_gaze_ms)          EYE_GAZE_STREAM_INTERVAL_MS = iv.eye_gaze_ms;
+      if (iv.speech_poll_ms)       SPEECH_POLL_INTERVAL_MS      = iv.speech_poll_ms;
+      if (iv.face_recognition_ms)  FACE_RECOGNITION_INTERVAL_MS = iv.face_recognition_ms;
+      if (iv.object_detection_ms)  OBJECT_DETECT_INTERVAL_MS    = iv.object_detection_ms;
+      if (iv.face_detect_ms)       FACE_DETECT_INTERVAL_MS      = iv.face_detect_ms;
+    }
+  } catch { /* keep defaults */ }
+
   // T026 — Guard: require completed enrollment before exam page loads
   const enrollResult = await window.bridge.getEnrollmentStatus();
   if (!enrollResult?.enrolled) {
@@ -68,7 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderQuestion(0);
   startTimer();
   initWebcam();
-  
+
   // Initialize AI Dashboard
   dashboard = new DashboardController();
   dashboard.init();
@@ -424,64 +442,71 @@ function startAiStreaming() {
   const video = document.getElementById('webcamFeed');
   if (!video) return;
 
+  // ── Shared canvas kept only for legacy eye-gaze (high-frequency, fire-and-forget) ──
   aiCanvas = document.createElement('canvas');
   aiCanvas.width = 320;
   aiCanvas.height = 240;
   aiContext = aiCanvas.getContext('2d');
 
+  // ── Helper: snapshot video into a private canvas and return a data-URL ────────────
+  // Each call creates an isolated canvas so concurrent intervals never overwrite
+  // each other's in-progress frame (root cause of the YOLO false-positive detections).
+  function captureFrame(w = 320, h = 240, quality = 0.6) {
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    c.getContext('2d').drawImage(video, 0, 0, w, h);
+    return c.toDataURL('image/jpeg', quality);
+  }
+
+  // ── Eye-gaze: shared canvas is fine here because these calls are fire-and-forget ──
   aiIntervalId = setInterval(async () => {
     if (!aiContext) return;
-    if (video.readyState < 2) return; // Not enough data yet
+    if (video.readyState < 2) return;
 
     try {
       aiContext.drawImage(video, 0, 0, aiCanvas.width, aiCanvas.height);
       const frame = aiCanvas.toDataURL('image/jpeg', 0.6);
-
-      // Fire-and-forget: do NOT await here so frames are sent at a fixed
-      // rate regardless of inference time. This ensures the GazeSession's
-      // away_start_time accumulates correctly across consecutive calls.
-      window.bridge.aiRpc('predict', { service: 'eye-gaze', frame }).catch(() => {});
+      window.bridge.aiRpc('predict', { service: 'eye-gaze', frame }).catch(() => { });
     } catch {
       // Eye-gaze may be disabled; ignore polling errors.
     }
   }, EYE_GAZE_STREAM_INTERVAL_MS);
 
-  // Cloud vision services (Modal): send frames at a lower rate to avoid extra load.
-  // These calls create detection events which get written into sessions/<attemptId>.jsonl
-  // via the Python orchestrator.
+  // ── Face-recognition: independent interval and snapshot ──────────────────────────
   cloudVisionIntervalId = setInterval(async () => {
     try {
-      if (!aiContext) return;
       if (video.readyState < 2) return;
-      aiContext.drawImage(video, 0, 0, aiCanvas.width, aiCanvas.height);
-      const frame = aiCanvas.toDataURL('image/jpeg', 0.6);
-
-      await Promise.all([
-        window.bridge.aiRpc('predict', { service: 'face-recognition', frame }),
-        window.bridge.aiRpc('predict', { service: 'object-detection', frame }),
-      ]);
+      const frame = captureFrame();
+      await window.bridge.aiRpc('predict', { service: 'face-recognition', frame });
     } catch {
-      // Services may be unconfigured/stopped; ignore transient router errors.
+      // Service may be unconfigured/stopped; ignore transient router errors.
     }
-  }, CLOUD_VISION_INTERVAL_MS);
+  }, FACE_RECOGNITION_INTERVAL_MS);
 
-  // Face Detection runs independently from Face Recognition, at a much higher frequency (1s)
-  // to ensure 'missing face' events are caught quickly without burning Modal credits on full recognition.
+  // ── Object-detection: independent interval and snapshot ───────────────────────────
+  objectDetectIntervalId = setInterval(async () => {
+    try {
+      if (video.readyState < 2) return;
+      const frame = captureFrame();
+      await window.bridge.aiRpc('predict', { service: 'object-detection', frame });
+    } catch {
+      // Service may be unconfigured/stopped; ignore transient router errors.
+    }
+  }, OBJECT_DETECT_INTERVAL_MS);
+
+  // ── Face detection: independent snapshot ─────────────────────────────────────────
   faceDetectIntervalId = setInterval(async () => {
     try {
-      if (!aiContext) return;
       if (video.readyState < 2) return;
-      aiContext.drawImage(video, 0, 0, aiCanvas.width, aiCanvas.height);
-      const frame = aiCanvas.toDataURL('image/jpeg', 0.6);
-
+      const frame = captureFrame();
       await window.bridge.aiRpc('predict', { service: 'face-detection', frame });
     } catch {
       // Services may be unconfigured/stopped; ignore transient router errors.
     }
   }, FACE_DETECT_INTERVAL_MS);
 
-  // Speech detection runs local mic capture in the Python service and
-  // this periodic predict call flushes speech violations to the UI/orchestrator.
+  // ── Speech detection: no frame needed (mic-based) ────────────────────────────────
   speechPollIntervalId = setInterval(async () => {
     try {
       await window.bridge.aiRpc('predict', { service: 'speech-detection', frame: 'MIC_POLL' });
@@ -490,6 +515,7 @@ function startAiStreaming() {
     }
   }, SPEECH_POLL_INTERVAL_MS);
 }
+
 
 function stopAiStreaming() {
   if (aiIntervalId) {
@@ -503,6 +529,10 @@ function stopAiStreaming() {
   if (cloudVisionIntervalId) {
     clearInterval(cloudVisionIntervalId);
     cloudVisionIntervalId = null;
+  }
+  if (objectDetectIntervalId) {
+    clearInterval(objectDetectIntervalId);
+    objectDetectIntervalId = null;
   }
   if (faceDetectIntervalId) {
     clearInterval(faceDetectIntervalId);

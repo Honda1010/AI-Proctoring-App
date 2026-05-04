@@ -158,6 +158,22 @@ function sendAiRpc(method, params = {}, timeoutMs = 10000) {
 ipcMain.handle('bridge:get-status', () => bridgeState);
 
 /**
+ * bridge:get-ui-config — Return the ui section of config.json to the renderer.
+ * Used by exam.js to read polling intervals without hardcoding them in JS.
+ * Returns: { ok: true, ui: object } | { ok: false }
+ */
+ipcMain.handle('bridge:get-ui-config', () => {
+  try {
+    const configPath = resolveConfigPath();
+    const data = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    return { ok: true, ui: data.ui ?? {} };
+  } catch (err) {
+    process.stderr.write(`[config] bridge:get-ui-config error: ${err.message}\n`);
+    return { ok: false };
+  }
+});
+
+/**
  * bridge:ai-rpc — Forward a JSON-RPC request to the AI router stdin.
  * Expected args: { method: string, params?: object, timeoutMs?: number }
  */

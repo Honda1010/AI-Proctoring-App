@@ -2,8 +2,14 @@
 Map Modal FastAPI JSON bodies into bridge DetectionEvent dicts.
 
 The desktop bridge validates every predict() result against ai-service-contract.json.
-Hosted Modal routes return module-specific shapes (e.g. {"face_recognition": {...}},
-OWL-ViT evidence dict) rather than top-level DetectionEvents — normalize here.
+Hosted Modal routes return module-specific shapes — normalize here.
+
+Object-detection adapters
+~~~~~~~~~~~~~~~~~~~~~~~~~
+  adapt_object_yolo_json()  — /analysis/object-frame  (YOLO, multipart field: 'image')
+                               Response: {id, timestamp, flag, propability, evidence}
+  adapt_object_modal_json() — /analysis/detect_objects (OWL-ViT, multipart field: 'file')
+                               Response: {id, timestamp, probability, evidence}
 """
 
 from __future__ import annotations
@@ -201,7 +207,7 @@ def adapt_object_modal_json(
     threshold: float = 0.3,
 ) -> Dict[str, Any]:
     """
-    Adapt a Modal /analysis/detect_objects JSON response into a bridge DetectionEvent.
+    Adapt a Modal /analysis/detect_objects (OWL-ViT) JSON response into a bridge DetectionEvent.
 
     Threshold-based decision layer
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -236,6 +242,66 @@ def adapt_object_modal_json(
     # Objects present in the evidence but probability below threshold -> log
     # the objects for forensic purposes but do NOT raise the suspicious flag.
     suspicious = len(objects) > 0 and prob >= threshold
+    payload: Dict[str, Any] = {
+        "objects": objects,
+        "count": len(objects),
+        "suspicious": suspicious,
+    }
+    return create_detection_event(prob, payload)
+
+
+def adapt_object_yolo_json(
+    body: Dict[str, Any],
+    create_detection_event: Callable[[float, Dict[str, Any]], Dict[str, Any]],
+    threshold: float = 0.3,
+) -> Dict[str, Any]:
+    """
+    Adapt a Modal /analysis/object-frame (YOLO) JSON response into a bridge DetectionEvent.
+
+    YOLO response shape
+    ~~~~~~~~~~~~~~~~~~~
+    The YOLO endpoint returns::
+
+        {
+          "id": 2,
+          "timestamp": "<ISO-8601>",
+          "flag": <bool>,        # True = cheating object detected
+          "propability": <float>, # note: typo in server code ('propability')
+          "evidence": "<str>"    # comma-separated class names, or "None"
+        }
+
+    Threshold-based decision layer
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ``flag=True`` means YOLO's built-in confidence (>=0.4 server-side) already
+    accepted the detection.  The project-side ``threshold`` adds a second gate
+    on top of YOLO's own ``propability`` (max conf across flagged boxes):
+
+      flag=True  AND  propability >= threshold  →  suspicious = True
+      flag=True  AND  propability <  threshold  →  objects logged, suspicious = False
+      flag=False                                →  suspicious = False
+
+    Args:
+        body: Raw JSON dict from the YOLO /analysis/object-frame endpoint.
+        create_detection_event: Factory from the calling AIService.
+        threshold: Project-side confidence threshold read from
+            ``config.json -> services.object-detection.probability_threshold``.
+            Default: 0.3.
+    """
+    # 'propability' is the server-side typo; fall back to 'probability' if ever fixed.
+    raw_prob = body.get("propability", body.get("probability", 0.0))
+    prob = _parse_percent_or_fraction(raw_prob)
+
+    flag: bool = bool(body.get("flag", False))
+    evidence_str: str = (body.get("evidence") or "None").strip()
+
+    # Parse comma-separated object names; treat bare "None" as empty.
+    objects: list[str] = []
+    if flag and evidence_str.lower() not in ("", "none"):
+        objects = [x.strip() for x in evidence_str.split(",") if x.strip()]
+
+    # Apply project-side threshold on top of YOLO's internal 0.4 gate.
+    suspicious = flag and len(objects) > 0 and prob >= threshold
+
     payload: Dict[str, Any] = {
         "objects": objects,
         "count": len(objects),
