@@ -231,6 +231,7 @@ class ProctoringOrchestrator:
             "message":   message,
             "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
             "sessionId": self.current_session_id,
+            "questionId": evidence.get("questionId"),
             "evidence": {
                 "service":    evidence.get("service"),
                 "confidence": evidence.get("confidence"),

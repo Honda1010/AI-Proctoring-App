@@ -467,7 +467,8 @@ function startAiStreaming() {
     try {
       aiContext.drawImage(video, 0, 0, aiCanvas.width, aiCanvas.height);
       const frame = aiCanvas.toDataURL('image/jpeg', 0.6);
-      window.bridge.aiRpc('predict', { service: 'eye-gaze', frame }).catch(() => { });
+      const questionId = examSession?.questions?.[currentIndex]?.id ?? null;
+      window.bridge.aiRpc('predict', { service: 'eye-gaze', frame, questionId }).catch(() => { });
     } catch {
       // Eye-gaze may be disabled; ignore polling errors.
     }
@@ -478,7 +479,8 @@ function startAiStreaming() {
     try {
       if (video.readyState < 2) return;
       const frame = captureFrame();
-      await window.bridge.aiRpc('predict', { service: 'face-recognition', frame });
+      const questionId = examSession?.questions?.[currentIndex]?.id ?? null;
+      await window.bridge.aiRpc('predict', { service: 'face-recognition', frame, questionId });
     } catch {
       // Service may be unconfigured/stopped; ignore transient router errors.
     }
@@ -489,7 +491,8 @@ function startAiStreaming() {
     try {
       if (video.readyState < 2) return;
       const frame = captureFrame();
-      await window.bridge.aiRpc('predict', { service: 'object-detection', frame });
+      const questionId = examSession?.questions?.[currentIndex]?.id ?? null;
+      await window.bridge.aiRpc('predict', { service: 'object-detection', frame, questionId });
     } catch {
       // Service may be unconfigured/stopped; ignore transient router errors.
     }
@@ -500,7 +503,8 @@ function startAiStreaming() {
     try {
       if (video.readyState < 2) return;
       const frame = captureFrame();
-      await window.bridge.aiRpc('predict', { service: 'face-detection', frame });
+      const questionId = examSession?.questions?.[currentIndex]?.id ?? null;
+      await window.bridge.aiRpc('predict', { service: 'face-detection', frame, questionId });
     } catch {
       // Services may be unconfigured/stopped; ignore transient router errors.
     }
@@ -509,7 +513,8 @@ function startAiStreaming() {
   // ── Speech detection: no frame needed (mic-based) ────────────────────────────────
   speechPollIntervalId = setInterval(async () => {
     try {
-      await window.bridge.aiRpc('predict', { service: 'speech-detection', frame: 'MIC_POLL' });
+      const questionId = examSession?.questions?.[currentIndex]?.id ?? null;
+      await window.bridge.aiRpc('predict', { service: 'speech-detection', frame: 'MIC_POLL', questionId });
     } catch {
       // Ignore transient router errors; status polling handles recovery.
     }

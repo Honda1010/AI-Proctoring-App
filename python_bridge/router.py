@@ -192,6 +192,12 @@ class AIRouter:
             service = self.services[service_name]
             # All services should now implement an async predict method
             event = await service.predict(frame)
+
+            # Stamp the event with the current questionId so the post-exam
+            # risk estimator can attribute violations to the right question.
+            question_id = params.get("questionId")
+            if question_id is not None and "questionId" not in event:
+                event["questionId"] = question_id
             
             # Validate event against schema
             try:

@@ -762,6 +762,52 @@ ipcMain.handle('bridge:submit-exam', async (_event, { answers }) => {
 
     if (response.ok) {
       submitResult = body;
+
+      // ── Generate per-question violation report (fire-and-forget) ──────────
+      // Runs risk_estimator.py immediately after submit so the JSONL log is
+      // complete and the report is available before the student sees the result.
+      try {
+        const sessionId       = examSession?.attemptId ? String(examSession.attemptId) : null;
+        const totalQuestions  = examSession?.questions?.length ?? 0;
+
+        if (sessionId && totalQuestions > 0) {
+          const projectRoot    = path.join(__dirname, '..');
+          const logPath        = path.join(projectRoot, 'sessions', `${sessionId}.jsonl`);
+          const estimatorPath  = path.join(projectRoot, 'python_bridge', 'risk_estimator.py');
+          const venvPython     = process.platform === 'win32'
+            ? path.join(projectRoot, '.venv', 'Scripts', 'python.exe')
+            : path.join(projectRoot, '.venv', 'bin', 'python');
+          const pythonExe      = fs.existsSync(venvPython) ? venvPython : 'python';
+
+          if (fs.existsSync(logPath)) {
+            const reportProc = spawn(pythonExe, [
+              estimatorPath,
+              logPath,
+              '--total-questions', String(totalQuestions),
+              '--student-id',      sessionId,
+              '--exam-id',         sessionId,
+            ], { stdio: ['ignore', 'pipe', 'pipe'] });
+
+            reportProc.stderr.on('data', (chunk) => {
+              process.stderr.write(`[report] ${chunk}`);
+            });
+            reportProc.on('close', (code) => {
+              if (code === 0) {
+                process.stderr.write(`[report] question report generated for session ${sessionId}\n`);
+              } else {
+                process.stderr.write(`[report] risk_estimator exited with code ${code} for session ${sessionId}\n`);
+              }
+            });
+          } else {
+            process.stderr.write(`[report] session log not found, skipping report: ${logPath}\n`);
+          }
+        }
+      } catch (reportErr) {
+        // Never block the submit response due to a report generation error
+        process.stderr.write(`[report] report generation failed: ${reportErr.message}\n`);
+      }
+      // ── End report generation ──────────────────────────────────────────────
+
       // T027 — Unenroll face recognition embedding on exam submit (fire-and-forget)
       sendAiRpc('unenrollReference', { sessionId: enrollmentState?.sessionId }).catch(() => {});
       enrollmentState = null;

@@ -1,18 +1,35 @@
 """
 Overall Risk Estimation — Post-Session Scoring Backend
 
-Reads the JSONL session logs produced by the ProctoringOrchestrator and
-computes either:
-  (a) A single normalised risk score for the whole session  (default mode)
-  (b) A per-question anomaly breakdown grouped by AI service  (--by-question)
+Implements the risk formula from the research paper:
+  "A Visual Analytics Approach to Facilitate the Proctoring of Online Exams"
+
+  risk^sq = Σ  w_t × n^sq_t        (t ∈ {f, h, c, b})
+
+Where:
+  n^sq_t  = raw occurrence count of cheating-type t for student s on question q
+             (IMPORTANT: these raw counts are stored as-is in this report;
+              min-max normalisation to (0,1) is performed LATER, across all
+              students in the exam, not within a single session log)
+  w_t     = proctor-customisable weight per category (default 1.0)
+  t maps to the 4 behaviour categories:
+    f → face_absence_mismatch   (face-detection + face-recognition)
+    h → suspicious_movement     (eye-gaze)
+    c → conversation_noise      (speech-detection)
+    b → forbidden_objects       (object-detection)
+
+This script computes either:
+  (a) A whole-session report  — raw counts + pre-normalisation weighted sum
+  (b) A per-question report   — per AI-service raw counts keyed by question
 
 Mode (a) — whole-session pipeline:
-  1. Parse every DetectionEvent and AlertEvent in the session log.
-  2. Map the 5 AI services → 4 high-level behaviour categories.
-  3. Count raw anomaly occurrences per category.
-  4. Normalise to (0, 1) via min-max normalisation.
-  5. Compute Total Risk = Σ (weight_i × normalised_i)
-  6. Write a structured JSON report.
+  1. Parse every DetectionEvent in the session log.
+  2. Map the 5 AI services → 4 behaviour categories (f, h, c, b).
+  3. Count raw anomaly occurrences n_t per category.
+  4. Compute pre-normalisation risk = Σ (w_t × n_t).
+  5. Write a structured JSON report containing raw_counts and risk_score.
+     NOTE: Normalise raw_counts across the student population before
+           comparing students or ranking risk levels.
 
 Mode (b) — per-question pipeline:
   1. Parse every DetectionEvent in the session log.
@@ -45,12 +62,13 @@ import datetime
 from typing import Dict, Any, List, Optional
 
 
-# ─── Behaviour categories and their mapping from AI services ────────────
-CATEGORY_FACE   = "face_absence_mismatch"    # face-detection + face-recognition
-CATEGORY_MOVE   = "suspicious_movement"      # eye-gaze
-CATEGORY_CONV   = "conversation_noise"       # speech-detection
-CATEGORY_OBJ    = "forbidden_objects"        # object-detection
+# ─── Behaviour categories — correspond to {f, h, c, b} in the paper ────
+CATEGORY_FACE   = "face_absence_mismatch"    # n_f  (face-detection + face-recognition)
+CATEGORY_MOVE   = "suspicious_movement"      # n_h  (eye-gaze)
+CATEGORY_CONV   = "conversation_noise"       # n_c  (speech-detection)
+CATEGORY_OBJ    = "forbidden_objects"        # n_b  (object-detection)
 
+# Order must match the paper's t ∈ {f, h, c, b}
 ALL_CATEGORIES = [CATEGORY_FACE, CATEGORY_MOVE, CATEGORY_CONV, CATEGORY_OBJ]
 
 # ─── Per-service keys used by the question-level report ─────────────────
@@ -96,35 +114,23 @@ def _is_suspicious_event(event: Dict[str, Any]) -> Optional[str]:
         if not payload.get("is_matched", True) and payload.get("recognition_ran", False):
             return CATEGORY_FACE
 
-    # --- Eye Gaze: looking away ---
-    elif service == "eye-gaze":
-        if payload.get("status") == "away":
-            return CATEGORY_MOVE
-
-    # --- Speech Detection: talking ---
-    elif service == "speech-detection":
-        if len(payload.get("new_violations", [])) > 0:
-            return CATEGORY_CONV
-
     # --- Object Detection: prohibited object ---
     elif service == "object-detection":
         if payload.get("suspicious"):
             return CATEGORY_OBJ
 
+    # Eye-gaze and Speech-detection are counted from alerts, not raw detections.
     return None
 
-
 def _is_alert_suspicious(event: Dict[str, Any]) -> Optional[str]:
-    """Map orchestrator-generated AlertEvents to a category."""
+    """Map orchestrator-generated AlertEvents to a category.
+    Only handles alerts for services that aren't already counted via raw detections.
+    """
     code = event.get("code", "")
     code_map = {
-        "NO_FACE_DETECTED":         CATEGORY_FACE,
-        "UNAUTHORIZED_PERSON":      CATEGORY_FACE,
-        "SPOOF_DETECTED":           CATEGORY_FACE,
         "GAZE_OFF_SCREEN":          CATEGORY_MOVE,
         "SPEECH_DETECTED":          CATEGORY_CONV,
         "SPEECH_CHEATING_FLAGGED":  CATEGORY_CONV,
-        "UNAUTHORIZED_OBJECT":      CATEGORY_OBJ,
     }
     return code_map.get(code)
 
@@ -152,15 +158,10 @@ def _suspicious_service_key(event: Dict[str, Any]) -> Optional[str]:
             return key
         return None
 
-    if service == "eye-gaze":
-        return key if payload.get("status") == "away" else None
-
-    if service == "speech-detection":
-        return key if len(payload.get("new_violations", [])) > 0 else None
-
     if service == "object-detection":
         return key if payload.get("suspicious") else None
 
+    # eye-gaze and speech-detection are handled via alerts now
     return None
 
 
@@ -188,11 +189,11 @@ def count_anomalies(log_path: str) -> Dict[str, int]:
                 if cat:
                     counts[cat] += 1
 
-            # # AlertEvents generated by the orchestrator
-            # elif event_type == "alert":
-            #     cat = _is_alert_suspicious(event)
-            #     if cat:
-            #         counts[cat] += 1
+            # AlertEvents generated by the orchestrator (used for speech/gaze)
+            elif event_type == "alert":
+                cat = _is_alert_suspicious(event)
+                if cat:
+                    counts[cat] += 1
 
     return counts
 
@@ -250,19 +251,30 @@ def count_anomalies_by_question(
 
     # Step 2 — Iterate events and increment the appropriate counter.
     for event in events:
-        # Only DetectionEvents (those without a top-level "type" field) are
-        # processed; riskScore / alert / lifecycle events are skipped.
-        if event.get("type") is not None:
-            continue
-        if "service" not in event:
-            continue
+        event_type = event.get("type")
+        service_key = None
+        raw_qid = None
 
-        service_key = _suspicious_service_key(event)
+        if event_type is None and "service" in event:
+            # DetectionEvent
+            service_key = _suspicious_service_key(event)
+            raw_qid = event.get("questionId")
+        elif event_type == "alert":
+            # AlertEvent
+            code = event.get("code")
+            if code == "GAZE_OFF_SCREEN":
+                service_key = "eye_gaze"
+            elif code in ["SPEECH_DETECTED", "SPEECH_CHEATING_FLAGGED"]:
+                service_key = "speech_detection"
+            
+            raw_qid = event.get("questionId")
+            if raw_qid is None:
+                raw_qid = event.get("evidence", {}).get("questionId")
+
         if service_key is None:
-            # Event is not suspicious — nothing to count.
+            # Event is not suspicious or not a tracked alert — nothing to count.
             continue
 
-        raw_qid = event.get("questionId")
 
         if raw_qid is None:
             # No question context attached — tally in the unassigned bucket.
@@ -289,6 +301,12 @@ def count_anomalies_by_question(
     if has_unassigned:
         questions["unassigned"] = unassigned
 
+    # Step 4 — Annotate each question with a convenience total.
+    for q_key, service_counts in questions.items():
+        service_counts["violation_total"] = sum(
+            v for k, v in service_counts.items() if k != "violation_total"
+        )
+
     return {
         "total_questions": total_number_of_questions,
         "questions": questions,
@@ -300,21 +318,42 @@ def build_question_report(
     total_number_of_questions: int,
     student_id: str,
     exam_id: str,
+    weights: Optional[Dict[str, float]] = None,
 ) -> Dict[str, Any]:
     """Load a JSONL session log and return a complete per-question JSON report.
 
-    The report includes report metadata followed by the question-by-question
-    breakdown produced by :func:`count_anomalies_by_question`.
+    This is the primary implementation of the paper's risk formula:
+        risk^sq = Σ_{t∈{f,h,c,b}} w_t × n^sq_t
+
+    Each question receives:
+      - Raw n^sq_t counts per AI service (not yet normalised)
+      - violation_total: sum of all raw counts for that question
+      - pre_normalisation_risk_score: weighted sum using provided weights
+
+    The session_summary reports:
+      - questions_violated / total_questions (violation rate)
+
+    NOTE: Normalise raw counts across the full student cohort before
+          comparing risk scores between students.
 
     Args:
-        log_path: Absolute path to the session JSONL file.
-        total_number_of_questions: Total number of questions in the exam.
-        student_id: Student identifier to embed in the report metadata.
-        exam_id: Exam identifier to embed in the report metadata.
+        log_path:                  Absolute path to the session JSONL file.
+        total_number_of_questions: Total questions in the exam.
+        student_id:                Student identifier for report metadata.
+        exam_id:                   Exam identifier for report metadata.
+        weights:                   Per-category weights (default 1.0 each).
 
     Returns:
         A fully populated report dict ready for ``json.dump``.
     """
+    if weights is None:
+        weights = {
+            CATEGORY_FACE: 1.0,
+            CATEGORY_MOVE: 1.0,
+            CATEGORY_CONV: 1.0,
+            CATEGORY_OBJ:  1.0,
+        }
+
     events: List[Dict[str, Any]] = []
     with open(log_path, "r", encoding="utf-8") as f:
         for line in f:
@@ -327,42 +366,79 @@ def build_question_report(
                 continue
 
     breakdown = count_anomalies_by_question(events, total_number_of_questions)
+    questions  = breakdown["questions"]
+
+    # ─ Compute pre-normalisation risk score per question ────────────────────
+    # Map service keys back to the 4 behaviour categories for the formula.
+    _SERVICE_TO_CATEGORY = {
+        "face_detection":   CATEGORY_FACE,
+        "face_recognition": CATEGORY_FACE,
+        "eye_gaze":         CATEGORY_MOVE,
+        "speech_detection": CATEGORY_CONV,
+        "object_detection": CATEGORY_OBJ,
+    }
+
+    for q_key, service_counts in questions.items():
+        cat_counts: Dict[str, int] = {cat: 0 for cat in [CATEGORY_FACE, CATEGORY_MOVE, CATEGORY_CONV, CATEGORY_OBJ]}
+        for svc_key, cnt in service_counts.items():
+            if svc_key == "violation_total":
+                continue
+            cat = _SERVICE_TO_CATEGORY.get(svc_key)
+            if cat:
+                cat_counts[cat] += cnt
+        service_counts["pre_normalisation_risk_score"] = round(
+            compute_risk_score(cat_counts, weights), 6
+        )
+
+    # ─ Session-level summary ────────────────────────────────────────
+    # Only count the declared questions (1..N), exclude 'unassigned'.
+    declared_q_keys = [f"question_{q}" for q in range(1, total_number_of_questions + 1)]
+    questions_violated = sum(
+        1 for q_key in declared_q_keys
+        if questions.get(q_key, {}).get("violation_total", 0) > 0
+    )
+    questions_clean = total_number_of_questions - questions_violated
+    violation_rate  = round(questions_violated / total_number_of_questions, 6) \
+        if total_number_of_questions > 0 else 0.0
 
     return {
         "report_metadata": {
             "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-            "source_log": os.path.basename(log_path),
-            "student_id": student_id,
-            "exam_id": exam_id,
-            "mode": "per_question",
+            "source_log":   os.path.basename(log_path),
+            "student_id":   student_id,
+            "exam_id":      exam_id,
+            "mode":         "per_question",
+            "normalisation": "pending — apply min-max across exam cohort",
+        },
+        "session_summary": {
+            "total_questions":    total_number_of_questions,
+            "questions_violated": questions_violated,
+            "questions_clean":    questions_clean,
+            # fraction of questions where at least one violation occurred
+            "violation_rate":     violation_rate,
+            "weights_used":       weights,
         },
         **breakdown,
     }
 
 
-def normalise_min_max(counts: Dict[str, int]) -> Dict[str, float]:
-    """Min-max normalise raw counts to the (0, 1) range.
-
-    When all counts are identical (including all-zero), normalisation returns
-    0.0 for every category — there is no relative difference to highlight.
-    """
-    values = list(counts.values())
-    min_v = min(values)
-    max_v = max(values)
-    spread = max_v - min_v
-
-    if spread == 0:
-        return {cat: 0.0 for cat in counts}
-
-    return {cat: (counts[cat] - min_v) / spread for cat in counts}
-
-
 def compute_risk_score(
-    normalised: Dict[str, float],
+    counts: Dict[str, int],
     weights: Dict[str, float],
 ) -> float:
-    """Weighted-sum risk formula: Total = Σ (w_i × n_i)."""
-    return sum(weights[cat] * normalised[cat] for cat in ALL_CATEGORIES)
+    """Paper formula: risk^sq = Σ_{t∈{f,h,c,b}} w_t × n^sq_t
+
+    Args:
+        counts:  Raw anomaly occurrence counts per category (n_f, n_h, n_c, n_b).
+                 These are NOT yet normalised — normalisation to (0,1) must be
+                 applied across the full student population BEFORE comparing
+                 risk scores between students.
+        weights: Proctor-customisable weight per category (default 1.0 each).
+
+    Returns:
+        Pre-normalisation weighted risk score for this session.
+    """
+    return sum(weights[cat] * counts[cat] for cat in ALL_CATEGORIES)
 
 
 def build_report(
@@ -371,10 +447,18 @@ def build_report(
     exam_id: str,
     weights: Dict[str, float],
 ) -> Dict[str, Any]:
-    """Build the full risk-estimation report dict."""
+    """Build the full risk-estimation report dict for a single student session.
+
+    Implements step 3–4 of the paper's Overall Risk Estimation pipeline.
+    The ``raw_counts`` in the output are the n^sq_t values that MUST be
+    min-max normalised across the full exam cohort before risk scores can be
+    meaningfully compared between students.
+    """
+    # n^sq_t  — raw occurrence counts for the 4 cheating categories
     raw_counts = count_anomalies(log_path)
-    normalised = normalise_min_max(raw_counts)
-    total_risk = compute_risk_score(normalised, weights)
+
+    # risk^sq = Σ (w_t × n^sq_t)  — pre-normalisation weighted sum
+    total_risk = compute_risk_score(raw_counts, weights)
 
     return {
         "report_metadata": {
@@ -382,11 +466,14 @@ def build_report(
             "source_log": os.path.basename(log_path),
             "student_id": student_id,
             "exam_id": exam_id,
+            # Reminder: normalise raw_counts across all students before ranking.
+            "normalisation": "pending — apply min-max across exam cohort",
         },
+        # Raw n^sq_t counts: {f, h, c, b} — not yet normalised
         "raw_counts": raw_counts,
-        "normalised_counts": {cat: round(v, 6) for cat, v in normalised.items()},
         "weights": weights,
-        "total_risk_score": round(total_risk, 6),
+        # Pre-normalisation score: will change once n^sq_t values are normalised
+        "pre_normalisation_risk_score": round(total_risk, 6),
     }
 
 
@@ -394,7 +481,7 @@ def build_report(
 
 def _parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Overall Risk Estimation — compute a normalised risk score from a session JSONL log.",
+        description="Overall Risk Estimation — compute a raw-count weighted risk score from a session JSONL log.",
     )
     parser.add_argument(
         "log_file",
@@ -444,40 +531,20 @@ def main(argv: Optional[List[str]] = None) -> None:
     student_id = args.student_id or session_id
     exam_id    = args.exam_id    or session_id
 
-    # ── Branch: per-question mode ─────────────────────────────────────────
-    if args.by_question:
-        if args.total_questions is None:
-            print(
-                "Error: --total-questions N is required when --by-question is set.",
-                file=sys.stderr,
-            )
-            sys.exit(1)
-        if args.total_questions < 1:
-            print(
-                "Error: --total-questions must be a positive integer.",
-                file=sys.stderr,
-            )
-            sys.exit(1)
-
-        report = build_question_report(
-            log_path, args.total_questions, student_id, exam_id
+    # ── Per-question mode is the primary (default) mode ───────────────────
+    if args.total_questions is None:
+        print(
+            "Error: --total-questions N is required.",
+            file=sys.stderr,
         )
+        sys.exit(1)
+    if args.total_questions < 1:
+        print(
+            "Error: --total-questions must be a positive integer.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
-        if args.output:
-            out_path = os.path.abspath(args.output)
-        else:
-            out_dir  = os.path.dirname(log_path)
-            out_path = os.path.join(out_dir, f"{session_id}_question_report.json")
-
-        os.makedirs(os.path.dirname(out_path), exist_ok=True)
-        with open(out_path, "w", encoding="utf-8") as f:
-            json.dump(report, f, indent=2, ensure_ascii=False)
-
-        print(f"Question report written to: {out_path}")
-        print(json.dumps(report, indent=2))
-        return
-
-    # ── Default: whole-session risk score ─────────────────────────────────
     weights = {
         CATEGORY_FACE: args.wf,
         CATEGORY_MOVE: args.wh,
@@ -485,19 +552,21 @@ def main(argv: Optional[List[str]] = None) -> None:
         CATEGORY_OBJ:  args.wb,
     }
 
-    report = build_report(log_path, student_id, exam_id, weights)
+    report = build_question_report(
+        log_path, args.total_questions, student_id, exam_id, weights
+    )
 
     if args.output:
         out_path = os.path.abspath(args.output)
     else:
         out_dir  = os.path.dirname(log_path)
-        out_path = os.path.join(out_dir, f"{session_id}_risk_report.json")
+        out_path = os.path.join(out_dir, f"{session_id}_question_report.json")
 
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
 
-    print(f"Risk report written to: {out_path}")
+    print(f"Question report written to: {out_path}")
     print(json.dumps(report, indent=2))
 
 
