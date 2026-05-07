@@ -86,7 +86,8 @@ let activeExamSession = null;
  * When a violation's code matches one of these, the audio recorder is used
  * instead of the video recorder.
  */
-const SPEECH_ALERT_CODES = new Set(['SPEECH_DETECTED', 'SPEECH_CHEATING_FLAGGED']);
+const SPEECH_ALERT_CODES = new Set(['SPEECH_DETECTED']);
+const SPEECH_NO_CLIP_CODES = new Set(['SPEECH_CHEATING_FLAGGED']);
 
 /** @type {MediaRecorder | null} */
 let audioRecorder = null;
@@ -416,6 +417,13 @@ function handleViolationEvent(alert) {
   // Speech violations → audio-only recording path
   if (SPEECH_ALERT_CODES.has(alert.code)) {
     _handleSpeechViolation(alert);
+    return;
+  }
+
+  // SPEECH_CHEATING_FLAGGED is a summary event — no clip needed (clips were
+  // already uploaded per-strike via SPEECH_DETECTED).
+  if (SPEECH_NO_CLIP_CODES.has(alert.code)) {
+    console.debug(`[clip-recorder] No clip for ${alert.code} — per-strike clips already uploaded.`);
     return;
   }
 
@@ -757,6 +765,21 @@ async function finalizeAudioClip(preChunks) {
   // setpts=PTS-STARTPTS anchors at the first ring-buffer PTS, not T=0.
   const firstAudioBlob = preChunks[0]?.blob ?? localPost[0]?.blob ?? null;
   const _audioInitBlobForHeader = audioWebmHeaderOnlyBlob ?? audioWebmInitChunk;
+
+  // Guard: if no WebM init segment was ever received (e.g. safety-net fired
+  // before the first ondataavailable chunk), the merged blob will have no
+  // codec headers and ffmpeg will fail with ENCODE_FAILED.  Send a
+  // clip_unavailable record instead so the violation is still logged.
+  if (!_audioInitBlobForHeader) {
+    console.warn('[clip-recorder] finalizeAudioClip: no audio init segment available — sending unavailable record.');
+    const fallbackAlert = localViolations[0]
+      ? { code: localViolations[0].violationType, evidence: { confidence: localViolations[0].confidence }, timestamp: localViolations[0].timestamp, message: localViolations[0].description }
+      : { code: 'SPEECH_DETECTED', evidence: { confidence: 0 }, timestamp: new Date().toISOString(), message: 'Speech detected' };
+    _handleWebcamUnavailable(fallbackAlert);
+    isAudioClipInFlight = false;
+    return;
+  }
+
   const needsAudioInit = _audioInitBlobForHeader && firstAudioBlob !== audioWebmInitChunk;
   const allBlobs = [
     ...(needsAudioInit ? [_audioInitBlobForHeader] : []),

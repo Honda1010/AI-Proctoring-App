@@ -21,14 +21,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // ── T011 / US2 — Start Exam loading state + navigation ───────────────────
-  startBtn.addEventListener('click', () => {
+  startBtn.addEventListener('click', async () => {
     if (startBtn.disabled) return;
 
     // Enter loading state
     startBtn.disabled = true;
-    btnText.textContent = 'Starting\u2026';
+    btnText.textContent = 'Starting…';
     btnSpinner.hidden = false;
     btnSpinner.setAttribute('aria-hidden', 'false');
+
+    // Activate fullscreen/kiosk lockdown before entering the exam
+    await window.bridge.startLockdown();
 
     // Navigate to the active exam page
     window.location.href = '../exam/index.html';

@@ -119,11 +119,76 @@ document.addEventListener('DOMContentLoaded', async () => {
       stopAiStreaming();
       if (typeof stopClipRecorder === 'function') stopClipRecorder();
     });
+
+    // ── Lockdown: VM / remote-desktop violation modal (spec 013) ─────────────
+    // A modal queue prevents simultaneous modals from stacking.
+    const lockdownModalQueue = [];
+    let lockdownModalActive = false;
+
+    function showNextLockdownModal() {
+      if (lockdownModalActive || lockdownModalQueue.length === 0) return;
+      const showFn = lockdownModalQueue.shift();
+      lockdownModalActive = true;
+      showFn();
+    }
+
+    function setExamInteractionDisabled(disabled) {
+      const elements = document.querySelectorAll(
+        '#choicesList input, #choicesList button, #submitExamBtn, #prevBtn, #nextBtn, #flagBtn, #jumpInput'
+      );
+      elements.forEach(el => { el.disabled = disabled; });
+    }
+
+    function enqueueVmModal(reason) {
+      lockdownModalQueue.push(() => {
+        const modal = document.getElementById('lockdown-vm-modal');
+        const reasonEl = document.getElementById('lockdown-vm-reason');
+        const dismissBtn = document.getElementById('lockdown-vm-dismiss');
+        if (!modal) { lockdownModalActive = false; showNextLockdownModal(); return; }
+        if (reasonEl) reasonEl.textContent = reason || '';
+        setExamInteractionDisabled(true);
+        modal.classList.remove('hidden');
+        dismissBtn.onclick = () => {
+          modal.classList.add('hidden');
+          setExamInteractionDisabled(false);
+          lockdownModalActive = false;
+          showNextLockdownModal();
+        };
+      });
+      showNextLockdownModal();
+    }
+
+    function enqueueCaptureModal(reason) {
+      lockdownModalQueue.push(() => {
+        const modal = document.getElementById('lockdown-capture-modal');
+        const reasonEl = document.getElementById('lockdown-capture-reason');
+        const dismissBtn = document.getElementById('lockdown-capture-dismiss');
+        if (!modal) { lockdownModalActive = false; showNextLockdownModal(); return; }
+        if (reasonEl) reasonEl.textContent = reason || '';
+        setExamInteractionDisabled(true);
+        modal.classList.remove('hidden');
+        dismissBtn.onclick = () => {
+          modal.classList.add('hidden');
+          setExamInteractionDisabled(false);
+          lockdownModalActive = false;
+          showNextLockdownModal();
+        };
+      });
+      showNextLockdownModal();
+    }
+
+    window.bridge.onLockdownVmDetected(({ reason }) => {
+      enqueueVmModal(reason);
+    });
+
+    window.bridge.onLockdownCaptureDetected(({ reason }) => {
+      enqueueCaptureModal(reason);
+    });
   } catch (err) {
     console.error('[exam] DOMContentLoaded error:', err);
     // Show error visibly so it's easy to diagnose without DevTools
     if (overlay) {
-      overlay.innerHTML = `<div style="font-family:monospace;padding:2rem;color:#c00;max-width:80vw;word-break:break-all;">
+      overlay.innerHTML = `<div class="exam-error-overlay">
         <strong>[exam] Error:</strong><br>${err?.message || String(err)}<br><br>
         <em>Stack:</em><br>${err?.stack?.replace(/\n/g, '<br>') || ''}
       </div>`;

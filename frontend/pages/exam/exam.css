@@ -386,6 +386,11 @@ body {
   display: none;
 }
 
+.modal-reason {
+  font-size: 0.85em;
+  opacity: 0.75;
+}
+
 /* Glass modal card */
 .modal-glass {
   background: color-mix(in srgb, var(--color-surface-container-lowest) 90%, transparent);
@@ -716,4 +721,12 @@ body {
 /* Utility */
 .hidden {
   display: none !important;
+}
+
+.exam-error-overlay {
+  font-family: monospace;
+  padding: 2rem;
+  color: #c00;
+  max-width: 80vw;
+  word-break: break-all;
 }

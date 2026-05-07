@@ -362,30 +362,43 @@ class ClipUploadService:
         token: str,
     ) -> None:
         """
-        Emit AiProctoringViolationEvent to the LMS backend (fire-and-forget).
+        POST one violation record to POST /api/CheatingReport/{reportId}/violations.
+        Called only when a reportId is present in metadata and the CDN upload
+        succeeded (evidenceUrl is required by the endpoint).
+        The description covers every violation captured in the clip, not just
+        the primary one.
         Failures are silently swallowed — never raise from here.
         """
-        payload = {
-            "studentId": str(metadata.get("studentId", "")),
-            "examAttemptId": str(metadata.get("examAttemptId", "")),
-            "sessionId": str(metadata.get("sessionId", "")),
-            "uploadStatus": upload_status,
-            "captureWindowStart": metadata.get("captureWindowStart", ""),
-            "captureWindowEnd": metadata.get("captureWindowEnd", ""),
-            "primaryViolationType": metadata.get("primaryViolationType", ""),
-            "primaryConfidence": float(metadata.get("primaryConfidence", 0.0)),
-            "description": metadata.get("description", ""),
-            "allViolations": metadata.get("allViolations", []),
-        }
-        if evidence_url is not None:
-            payload["evidenceUrl"] = evidence_url
-        if reason_code is not None:
-            payload["reasonCode"] = reason_code
+        report_id = metadata.get("reportId")
+        if report_id is None or not evidence_url:
+            return
 
+        all_violations: list = metadata.get("allViolations") or []
+
+        if len(all_violations) == 1:
+            full_description = (
+                all_violations[0].get("description")
+                or all_violations[0].get("violationType")
+                or metadata.get("description", "Violation detected")
+            )
+        elif len(all_violations) > 1:
+            parts = [
+                v.get("description") or v.get("violationType") or "Violation"
+                for v in all_violations
+            ]
+            full_description = "; ".join(parts)
+        else:
+            full_description = metadata.get("description", "Violation detected")
+
+        violation_payload = {
+            "evidenceUrl": evidence_url,
+            "timestamp": metadata.get("captureWindowStart", ""),
+            "description": full_description,
+        }
         try:
             requests.post(
-                f"{self._base_url}/api/Proctoring/violation-clip",
-                json=payload,
+                f"{self._base_url}/api/CheatingReport/{report_id}/violations",
+                json=violation_payload,
                 headers={"Authorization": f"Bearer {token}"},
                 timeout=15,
                 verify=False,

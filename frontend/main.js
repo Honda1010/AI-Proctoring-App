@@ -1,6 +1,6 @@
 'use strict';
 
-const { app, BrowserWindow, ipcMain, net, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, net, shell, globalShortcut } = require('electron');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
@@ -156,6 +156,157 @@ function sendAiRpc(method, params = {}, timeoutMs = 10000) {
 // IPC handlers
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Lockdown helpers (spec 013)
+// ---------------------------------------------------------------------------
+
+/**
+ * Append a LockdownAlertRecord to the session's JSONL log file.
+ * Best-effort — never throws. Consistent with clip_upload_service.py log pattern.
+ *
+ * @param {'VIRTUAL_ENVIRONMENT' | 'SCREEN_CAPTURE_DETECTED' | 'FULLSCREEN_ESCAPE_ATTEMPT'} type
+ * @param {string | null} reason
+ */
+function appendLockdownAlert(type, reason) {
+  try {
+    if (!examSession?.attemptId) return;
+    const record = JSON.stringify({
+      type,
+      timestamp: new Date().toISOString(),
+      sessionId: String(examSession.attemptId),
+      reason: reason ?? null,
+    });
+    const logPath = path.join(__dirname, '..', 'sessions', `${examSession.attemptId}.jsonl`);
+    fs.appendFileSync(logPath, record + '\n');
+  } catch (_err) {
+    // Best-effort — never propagate
+  }
+}
+
+/**
+ * Keyboard shortcuts that must be silently consumed during an active exam.
+ * Registered via globalShortcut (system-wide) AND guarded in before-input-event.
+ * OS-reserved shortcuts (Alt+Tab, Win+D, Win+L, Ctrl+Shift+Esc) are not listed
+ * here because globalShortcut.register() silently fails for them on Windows.
+ */
+const BLOCKED_SHORTCUTS = [
+  'PrintScreen',
+  'Alt+PrintScreen',
+  'F11',
+  'Escape',
+  'Ctrl+Shift+I',
+  'Ctrl+W',
+  'Ctrl+A',
+  'Ctrl+C',
+  'Ctrl+V',
+  'Ctrl+X',
+];
+
+/**
+ * Run a single environment check against the Python bridge.
+ * On success pushes lockdown IPC events to the renderer for any detected violations.
+ * Fails silently on any error (FR-017).
+ */
+async function runEnvCheck() {
+  // Guard: only run while an exam session is active
+  if (!examSession) return;
+  try {
+    const response = await net.fetch(`http://127.0.0.1:${bridgePort}/check-environment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+    if (!response.ok) return;
+    const result = await response.json();
+
+    if (!examSession) return; // session may have ended while awaiting
+
+    if (result.vm_detected || result.rdp_detected) {
+      const reason = result.vm_reason || result.rdp_reason;
+      appendLockdownAlert('VIRTUAL_ENVIRONMENT', reason);
+      mainWindow?.webContents.send('lockdown:vm-detected', { reason });
+    }
+
+    if (result.screen_capture_detected) {
+      appendLockdownAlert('SCREEN_CAPTURE_DETECTED', result.screen_capture_reason);
+      mainWindow?.webContents.send('lockdown:screen-capture-detected', {
+        reason: result.screen_capture_reason,
+      });
+    }
+  } catch (_err) {
+    // Silent failure per FR-017 — bridge unavailable is treated as non-violation
+  }
+}
+
+/**
+ * Activate all lockdown controls when an exam session becomes active.
+ * Idempotent — guarded by lockdownActive flag.
+ */
+function activateLockdown() {
+  if (lockdownActive) return;
+  lockdownActive = true;
+
+  // Window constraints
+  if (!lockdownDisabled.fullscreen) {
+    mainWindow?.setFullScreen(true);
+    mainWindow?.setKiosk(true);
+    mainWindow?.setAlwaysOnTop(true);
+    mainWindow?.setResizable(false);
+    mainWindow?.setMovable(false);
+    mainWindow?.setMinimizable(false);
+  }
+
+  // Content protection (renders window as blank in OS screenshots)
+  if (!lockdownDisabled.contentProtection) {
+    mainWindow?.setContentProtection(true);
+  }
+
+  // System-wide shortcut blocking (globalShortcut layer)
+  if (!lockdownDisabled.shortcutBlocking) {
+    for (const shortcut of BLOCKED_SHORTCUTS) {
+      try {
+        globalShortcut.register(shortcut, () => { /* silently consume */ });
+      } catch (_err) {
+        // Registration failure is silently ignored per spec assumption 5
+      }
+    }
+  }
+
+  // Environment check: immediate + periodic
+  if (!lockdownDisabled.envChecks) {
+    runEnvCheck();
+    envCheckInterval = setInterval(runEnvCheck, 60_000);
+  }
+}
+
+/**
+ * Deactivate all lockdown controls when the exam session ends.
+ * Idempotent — guarded by lockdownActive flag.
+ * Must be called on all three exam exit paths.
+ */
+function deactivateLockdown() {
+  if (!lockdownActive) return;
+  lockdownActive = false;
+
+  // Cancel periodic environment check
+  clearInterval(envCheckInterval);
+  envCheckInterval = null;
+
+  // Unregister all system-wide shortcuts
+  globalShortcut.unregisterAll();
+
+  // Restore window to normal state
+  mainWindow?.setContentProtection(false);
+  if (!lockdownDisabled.fullscreen) {
+    mainWindow?.setKiosk(false);
+    mainWindow?.setFullScreen(false);
+    mainWindow?.setAlwaysOnTop(false);
+    mainWindow?.setResizable(true);
+    mainWindow?.setMovable(true);
+    mainWindow?.setMinimizable(true);
+  }
+}
+
 ipcMain.handle('bridge:get-status', () => bridgeState);
 
 /**
@@ -253,6 +404,42 @@ let sessionMemory = null;
 let examSession = null;
 
 /**
+ * Cheating report ID created at exam start via POST /api/CheatingReport/attempt/{attemptId}.
+ * Stored so every subsequent clip upload can POST to /api/CheatingReport/{reportId}/violations.
+ * Cleared on all exam exit paths alongside examSession.
+ * @type {number | null}
+ */
+let cheatingReportId = null;
+
+/**
+ * Handle for the 60-second periodic environment check.
+ * Set on exam start via activateLockdown(), cleared on all three exit paths
+ * via deactivateLockdown().
+ * @type {ReturnType<typeof setInterval> | null}
+ */
+let envCheckInterval = null;
+
+/**
+ * True while globalShortcut registrations are active.
+ * Guards against double-registration if bridge:start-exam is called twice.
+ * @type {boolean}
+ */
+let lockdownActive = false;
+
+/**
+ * Per-feature lockdown kill-switches read from config.json at startup.
+ * Each defaults to false (controls active). Set to true in config.json to
+ * disable the corresponding control. Development / testing only.
+ */
+let lockdownDisabled = {   // kept as object so callers stay readable
+  fullscreen: false,
+  contentProtection: false,
+  shortcutBlocking: false,
+  envChecks: false,
+  closePrevention: false,
+};
+
+/**
  * Submit result returned by the LMS after the exam is submitted.
  * Stored here so the Result page can retrieve it via bridge:get-submit-result.
  * In-memory only — not persisted across app restarts.
@@ -344,7 +531,15 @@ function readConfig() {
     throw err;
   }
 
-  return { baseUrl: baseUrl.trim().replace(/\/$/, ''), pythonPort };
+  const ld = data.lockdown ?? {};
+  const lockdownDisabled = {
+    fullscreen:        ld.disable_fullscreen         === true,
+    contentProtection: ld.disable_content_protection === true,
+    shortcutBlocking:  ld.disable_shortcut_blocking  === true,
+    envChecks:         ld.disable_env_checks         === true,
+    closePrevention:   ld.disable_close_prevention   === true,
+  };
+  return { baseUrl: baseUrl.trim().replace(/\/$/, ''), pythonPort, lockdownDisabled };
 }
 
 // ---------------------------------------------------------------------------
@@ -573,6 +768,9 @@ ipcMain.handle('bridge:get-saved-session', async () => {
 ipcMain.handle('bridge:clear-session', async () => {
   await clearAllKeytarEntries();
   sessionMemory = null;
+  deactivateLockdown(); // spec 013 — release all lockdown controls on logout
+  examSession = null;
+  cheatingReportId = null;
   // T029 — Unenroll face recognition embedding on logout (fire-and-forget)
   sendAiRpc('unenrollReference', { sessionId: enrollmentState?.sessionId }).catch(() => {});
   enrollmentState = null;
@@ -691,6 +889,16 @@ ipcMain.handle('bridge:start-exam', async (_event, { quizCode }) => {
 
     if (response.ok) {
       examSession = body;
+      // Lockdown is activated later — when the student clicks "Start Exam" on the
+      // instructions page (after identity verification and model readiness).
+      // See lockdown:start IPC handler below.
+
+      // The Python bridge's /exam-access route creates the CheatingReport
+      // container and merges reportId into the session payload.
+      cheatingReportId = examSession?.reportId ?? null;
+      if (cheatingReportId !== null) {
+        process.stderr.write(`[cheating-report] reportId=${cheatingReportId} for attemptId=${examSession?.attemptId}\n`);
+      }
 
       const sessionId = examSession?.attemptId ? String(examSession.attemptId) : 'default-session';
       await Promise.all([
@@ -723,6 +931,17 @@ ipcMain.handle('bridge:start-exam', async (_event, { quizCode }) => {
       },
     };
   }
+});
+
+/**
+ * lockdown:start — Activate all lockdown controls (fullscreen, kiosk, shortcuts).
+ *
+ * Called by the Exam Instructions page when the student clicks "Start Exam",
+ * i.e. after identity verification and model readiness are complete.
+ * Idempotent — safe to call if lockdown is already active.
+ */
+ipcMain.handle('lockdown:start', () => {
+  activateLockdown();
 });
 
 /**
@@ -764,13 +983,20 @@ ipcMain.handle('bridge:submit-exam', async (_event, { answers }) => {
 
     if (response.ok) {
       submitResult = body;
+      deactivateLockdown(); // spec 013 — release all lockdown controls on submit
+
+      // Capture session metadata BEFORE clearing examSession
+      const submitSessionId     = examSession?.attemptId ? String(examSession.attemptId) : null;
+      const submitTotalQuestions = examSession?.questions?.length ?? 0;
+      examSession = null;   // spec 013 — clear exam session so window can close normally
+      cheatingReportId = null;
 
       // ── Generate per-question violation report (fire-and-forget) ──────────
       // Runs risk_estimator.py immediately after submit so the JSONL log is
       // complete and the report is available before the student sees the result.
       try {
-        const sessionId       = examSession?.attemptId ? String(examSession.attemptId) : null;
-        const totalQuestions  = examSession?.questions?.length ?? 0;
+        const sessionId       = submitSessionId;
+        const totalQuestions  = submitTotalQuestions;
 
         if (sessionId && totalQuestions > 0) {
           const projectRoot    = path.join(__dirname, '..');
@@ -819,6 +1045,9 @@ ipcMain.handle('bridge:submit-exam', async (_event, { answers }) => {
     if (body?.code === 'UNAUTHORIZED') {
       await clearAllKeytarEntries();
       sessionMemory = null;
+      deactivateLockdown(); // spec 013 — release lockdown on forced logout
+      examSession = null;
+      cheatingReportId = null;
       mainWindow?.loadFile(path.join(__dirname, 'pages/login/index.html'));
       return; // renderer IPC call never resolves — main.js navigates away
     }
@@ -917,7 +1146,9 @@ ipcMain.handle('bridge:clear-submit-result', async () => {
   // T028 — Unenroll face recognition embedding on back-to-home (fire-and-forget)
   sendAiRpc('unenrollReference', { sessionId: enrollmentState?.sessionId }).catch(() => {});
   enrollmentState = null;
+  deactivateLockdown(); // spec 013 — release all lockdown controls on back-to-home
   examSession = null;
+  cheatingReportId = null;
   mainWindow?.loadFile(path.join(__dirname, 'pages/exam-code/index.html'));
   return { ok: true };
 });
@@ -952,7 +1183,7 @@ ipcMain.handle('save-and-upload-clip', async (_event, { blobArrayBuffer, metadat
     if (blobArrayBuffer === null || blobArrayBuffer === undefined) {
       const rpcResult = await sendAiRpc('upload_clip', {
         tempFilePath: null,
-        metadata: { ...metadata },
+        metadata: { ...metadata, reportId: cheatingReportId },
       }, 60000);
 
       const result = rpcResult.ok
@@ -983,6 +1214,7 @@ ipcMain.handle('save-and-upload-clip', async (_event, { blobArrayBuffer, metadat
       metadata: {
         ...metadata,
         token: accessToken,
+        reportId: cheatingReportId,
       },
     }, 120000); // 2-minute timeout covers encode + upload + retry
 
@@ -1142,9 +1374,53 @@ app.whenReady().then(async () => {
 
   mainWindow.once('ready-to-show', () => mainWindow.show());
 
+  // ── Lockdown: prevent window close during active exam session (T008) ───────
+  mainWindow.on('close', (event) => {
+    if (examSession && !lockdownDisabled.closePrevention) {
+      event.preventDefault(); // silently block Alt+F4 and OS close gestures
+    }
+  });
+
+  // ── Lockdown: re-enter fullscreen on OS-forced exit (T009) ─────────────────
+  mainWindow.on('leave-full-screen', () => {
+    if (examSession && !lockdownDisabled.fullscreen) {
+      mainWindow.setFullScreen(true); // single best-effort attempt, no retry loop
+      appendLockdownAlert('FULLSCREEN_ESCAPE_ATTEMPT', 'fullscreen exit detected');
+    }
+  });
+
   // ── Debug: F12 opens DevTools on any page ─────────────────────────────────
   mainWindow.webContents.on('before-input-event', (_e, input) => {
-    if (input.key === 'F12' && input.type === 'keyDown') {
+    if (input.type !== 'keyDown') return;
+
+    if (examSession && !lockdownDisabled.shortcutBlocking) {
+      // Block all interceptable shortcuts during an active exam (T013)
+      const k = input.key;
+      const ctrl = input.control;
+      const shift = input.shift;
+
+      const isBlocked =
+        k === 'F12' ||
+        k === 'F11' ||
+        k === 'Escape' ||
+        k === 'PrintScreen' ||
+        (k === 'PrintScreen' && input.alt) ||  // Alt+PrintScreen
+        (ctrl && k === 'c') ||
+        (ctrl && k === 'v') ||
+        (ctrl && k === 'x') ||
+        (ctrl && k === 'a') ||
+        (ctrl && k === 'w') ||
+        (ctrl && shift && k === 'I') ||
+        (ctrl && shift && k === 'i');
+
+      if (isBlocked) {
+        _e.preventDefault();
+      }
+      return; // consume all handling during exam
+    }
+
+    // Outside exam: F12 opens DevTools normally
+    if (input.key === 'F12') {
       mainWindow.webContents.openDevTools({ mode: 'detach' });
     }
   });
@@ -1173,7 +1449,8 @@ app.whenReady().then(async () => {
     return;
   }
 
-  const { pythonPort } = config;
+  const { baseUrl: _baseUrl, pythonPort, lockdownDisabled: cfgLockdownDisabled } = config;
+  Object.assign(lockdownDisabled, cfgLockdownDisabled);
   const configPath = resolveConfigPath();
   const pingUrl = `http://127.0.0.1:${pythonPort}/ping`;
 
