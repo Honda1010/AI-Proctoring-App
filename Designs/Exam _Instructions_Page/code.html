@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lumina | Exam Instructions</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-error-container": "#93000a",
+                      "on-tertiary-fixed": "#2d1600",
+                      "on-secondary-container": "#325383",
+                      "error-container": "#ffdad6",
+                      "tertiary-fixed-dim": "#ffb873",
+                      "on-error": "#ffffff",
+                      "surface-dim": "#d9dadb",
+                      "tertiary-fixed": "#ffdcbf",
+                      "on-background": "#191c1d",
+                      "surface": "#f8f9fa",
+                      "secondary-container": "#a7c8ff",
+                      "on-tertiary-fixed-variant": "#6a3b00",
+                      "on-secondary-fixed": "#001b3c",
+                      "primary": "#006687",
+                      "tertiary-container": "#e8953c",
+                      "secondary-fixed": "#d5e3ff",
+                      "on-primary-fixed-variant": "#004d67",
+                      "on-tertiary": "#ffffff",
+                      "background": "#f8f9fa",
+                      "secondary-fixed-dim": "#a7c8ff",
+                      "on-primary-fixed": "#001e2b",
+                      "surface-bright": "#f8f9fa",
+                      "outline": "#6e797f",
+                      "primary-fixed-dim": "#73d1ff",
+                      "secondary": "#3e5f90",
+                      "inverse-surface": "#2e3132",
+                      "inverse-primary": "#73d1ff",
+                      "on-primary-container": "#004259",
+                      "surface-tint": "#006687",
+                      "on-surface": "#191c1d",
+                      "on-surface-variant": "#3e484e",
+                      "surface-container-high": "#e7e8e9",
+                      "on-secondary": "#ffffff",
+                      "primary-container": "#41b3e3",
+                      "surface-container-highest": "#e1e3e4",
+                      "on-tertiary-container": "#5c3300",
+                      "surface-container-lowest": "#ffffff",
+                      "outline-variant": "#bdc8cf",
+                      "error": "#ba1a1a",
+                      "primary-fixed": "#c1e8ff",
+                      "surface-container": "#edeeef",
+                      "surface-variant": "#e1e3e4",
+                      "on-secondary-fixed-variant": "#254776",
+                      "on-primary": "#ffffff",
+                      "tertiary": "#8c5000",
+                      "surface-container-low": "#f3f4f5",
+                      "inverse-on-surface": "#f0f1f2"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.5rem",
+                      "lg": "0.5rem",
+                      "xl": "1.5rem",
+                      "full": "9999px"
+              },
+              "fontFamily": {
+                      "headline": ["Manrope"],
+                      "display": ["Manrope"],
+                      "body": ["Inter"],
+                      "label": ["Inter"]
+              }
+            }
+          }
+        }
+      </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .bg-primary-gradient {
+            background: linear-gradient(135deg, #006687 0%, #41B3E3 100%);
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(189, 200, 207, 0.2);
+        }
+      </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary-fixed selection:text-on-primary-fixed min-h-screen flex flex-col">
+<!-- TopNavBar (Shared Component) -->
+<header class="bg-surface-container-low dark:bg-surface-container-low shadow-[0px_12px_32px_rgba(0,45,91,0.06)] fixed top-0 z-50 w-full">
+<nav class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
+<div class="font-headline text-2xl font-bold tracking-tight text-primary dark:text-primary-fixed-dim">Lumina AI Proctoring System</div>
+<!-- Hidden on mobile as per platform instructions -->
+</nav>
+</header>
+<main class="flex-grow pt-32 pb-20 px-6">
+<div class="max-w-4xl mx-auto">
+<!-- Hero Header Section -->
+<section class="mb-16 text-center">
+<h1 class="font-headline text-5xl font-extrabold tracking-tight text-on-surface mb-4">Exam Instructions &amp; Rules of Conduct</h1>
+<p class="font-body text-lg text-on-surface-variant max-w-2xl mx-auto">Please read and acknowledge the following mandatory rules before proceeding.</p>
+</section>
+<!-- Rules Grid: Asymmetric / Bento Style -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+<!-- Rule 1: Quiet Environment -->
+<div class="bg-surface-container-lowest p-8 rounded-xl shadow-[0px_12px_32px_rgba(0,45,91,0.06)] hover:bg-surface-container-low transition-all duration-300 group">
+<div class="w-12 h-12 rounded-lg bg-primary-fixed flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary" data-icon="volume_off">volume_off</span>
+</div>
+<h3 class="font-headline text-xl font-bold mb-3 text-on-surface">Quiet Environment</h3>
+<p class="text-on-surface-variant leading-relaxed">Ensure you are in a completely quiet, distraction-free location. External noises or conversations may be flagged by the system.</p>
+</div>
+<!-- Rule 2: Full-Screen Mode -->
+<div class="bg-surface-container-lowest p-8 rounded-xl shadow-[0px_12px_32px_rgba(0,45,91,0.06)] hover:bg-surface-container-low transition-all duration-300 group">
+<div class="w-12 h-12 rounded-lg bg-primary-fixed flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary" data-icon="fullscreen">fullscreen</span>
+</div>
+<h3 class="font-headline text-xl font-bold mb-3 text-on-surface">Full-Screen Mode</h3>
+<p class="text-on-surface-variant leading-relaxed">Do not exit full-screen mode at any time during the assessment. Switching tabs or windows is considered a serious violation.</p>
+</div>
+<!-- Rule 3: No Unauthorized Devices (Spans 2 columns on tablet+) -->
+<div class="md:col-span-2 bg-surface-container-low p-8 rounded-xl flex flex-col md:flex-row gap-8 items-start md:items-center">
+<div class="shrink-0 w-16 h-16 rounded-full bg-tertiary-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary text-3xl" data-icon="phonelink_erase">phonelink_erase</span>
+</div>
+<div>
+<h3 class="font-headline text-xl font-bold mb-2 text-on-surface">No Unauthorized Devices</h3>
+<p class="text-on-surface-variant leading-relaxed">The use of mobile phones, earphones, smartwatches, or any other technological aids for cheating is strictly prohibited. Your workspace must remain clear of all electronics.</p>
+</div>
+</div>
+<!-- Rule 4: Room Privacy -->
+<div class="bg-surface-container-lowest p-8 rounded-xl shadow-[0px_12px_32px_rgba(0,45,91,0.06)] hover:bg-surface-container-low transition-all duration-300 group">
+<div class="w-12 h-12 rounded-lg bg-primary-fixed flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary" data-icon="person_off">person_off</span>
+</div>
+<h3 class="font-headline text-xl font-bold mb-3 text-on-surface">Room Privacy</h3>
+<p class="text-on-surface-variant leading-relaxed">Ensure you are completely alone. No other individuals are allowed to enter the room while the exam is in progress.</p>
+</div>
+<!-- Rule 5: Final Preparations -->
+<div class="bg-surface-container-lowest p-8 rounded-xl shadow-[0px_12px_32px_rgba(0,45,91,0.06)] hover:bg-surface-container-low transition-all duration-300 group">
+<div class="w-12 h-12 rounded-lg bg-primary-fixed flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary" data-icon="sensor_door">sensor_door</span>
+</div>
+<h3 class="font-headline text-xl font-bold mb-3 text-on-surface">Final Preparations</h3>
+<p class="text-on-surface-variant leading-relaxed">Complete all personal tasks before starting. You are not permitted to leave your seat once the exam begins.</p>
+</div>
+<!-- Rule 6: Screen Focus (Prominent AI Monitoring) -->
+<div class="md:col-span-2 glass-panel p-10 rounded-xl relative overflow-hidden">
+<div class="relative z-10">
+<div class="inline-flex items-center gap-2 px-3 py-1 bg-tertiary-container/30 text-tertiary rounded-full text-xs font-bold tracking-widest uppercase mb-4">
+<span class="material-symbols-outlined text-sm" data-icon="visibility" style="font-variation-settings: 'FILL' 1;">visibility</span>
+                            AI Monitoring Active
+                        </div>
+<h3 class="font-headline text-2xl font-bold mb-4 text-on-surface">Screen Focus</h3>
+<p class="text-on-surface-variant leading-relaxed text-lg max-w-2xl">Keep your eyes focused on the screen at all times. The proctoring system continuously monitors and records suspicious head or eye movements to detect cheating behaviors.</p>
+</div>
+<div class="absolute -right-20 -bottom-20 opacity-5">
+<span class="material-symbols-outlined text-[20rem]" data-icon="visibility">visibility</span>
+</div>
+</div>
+<!-- Rule 7: No Virtual Machines -->
+<div class="bg-surface-container-lowest p-8 rounded-xl shadow-[0px_12px_32px_rgba(0,45,91,0.06)] hover:bg-surface-container-low transition-all duration-300 group">
+<div class="w-12 h-12 rounded-lg bg-primary-fixed flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary" data-icon="dvr">dvr</span>
+</div>
+<h3 class="font-headline text-xl font-bold mb-3 text-on-surface">No Virtual Machines (VM)</h3>
+<p class="text-on-surface-variant leading-relaxed">The exam must be taken on a physical native operating system. Running the exam within a Virtual Machine is strictly forbidden.</p>
+</div>
+<!-- Rule 8: No Unauthorized Keystrokes -->
+<div class="bg-surface-container-lowest p-8 rounded-xl shadow-[0px_12px_32px_rgba(0,45,91,0.06)] hover:bg-surface-container-low transition-all duration-300 group">
+<div class="w-12 h-12 rounded-lg bg-primary-fixed flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary" data-icon="keyboard_hide">keyboard_hide</span>
+</div>
+<h3 class="font-headline text-xl font-bold mb-3 text-on-surface">No Unauthorized Keystrokes</h3>
+<p class="text-on-surface-variant leading-relaxed">The use of automated keystrokes, macros, or unauthorized shortcuts is not allowed and will be flagged immediately.</p>
+</div>
+</div>
+<!-- Acknowledgment and Action -->
+<div class="bg-surface-container-lowest p-10 rounded-xl border border-outline-variant/20 text-center flex flex-col items-center">
+<label class="flex items-center gap-4 mb-10 cursor-pointer group">
+<input class="w-6 h-6 rounded border-outline-variant text-primary focus:ring-primary-fixed transition-all" type="checkbox"/>
+<span class="text-lg font-medium text-on-surface group-hover:text-primary transition-colors">I have read and agree to follow all instructions</span>
+</label>
+<button class="bg-primary-gradient text-on-primary font-headline font-bold py-5 px-16 rounded-lg text-lg shadow-xl active:scale-95 transition-all duration-200">
+                    Proceed to Verification
+                </button>
+<p class="mt-6 text-sm text-on-surface-variant italic">By clicking proceed, you consent to secure biometric monitoring for the duration of the exam.</p>
+</div>
+</div>
+</main>
+<!-- Footer (Shared Component) -->
+<footer class="bg-surface-container-low dark:bg-surface-container-low w-full py-12 mt-auto">
+<div class="flex flex-col md:flex-row justify-between items-center w-full px-8 max-w-7xl mx-auto gap-4">
+<div class="font-headline text-lg font-bold text-on-surface-variant dark:text-outline-variant">Lumina</div>
+<div class="flex flex-wrap justify-center gap-6">
+<a class="font-body text-label-sm tracking-normal text-on-surface-variant dark:text-outline hover:text-primary dark:hover:text-primary-fixed-dim hover:underline transition-all opacity-80 hover:opacity-100" href="#">Privacy Policy</a>
+<a class="font-body text-label-sm tracking-normal text-on-surface-variant dark:text-outline hover:text-primary dark:hover:text-primary-fixed-dim hover:underline transition-all opacity-80 hover:opacity-100" href="#">Terms of Service</a>
+<a class="font-body text-label-sm tracking-normal text-on-surface-variant dark:text-outline hover:text-primary dark:hover:text-primary-fixed-dim hover:underline transition-all opacity-80 hover:opacity-100" href="#">Accessibility</a>
+<a class="font-body text-label-sm tracking-normal text-on-surface-variant dark:text-outline hover:text-primary dark:hover:text-primary-fixed-dim hover:underline transition-all opacity-80 hover:opacity-100" href="#">Contact Support</a>
+</div>
+<div class="font-body text-label-sm tracking-normal text-on-surface-variant">© 2024 Lumina AI Proctoring. Secured Digital Sanctuary.</div>
+</div>
+</footer>
+</body></html>

@@ -435,3 +435,4 @@
 {"logged_at": "2026-05-07T02:53:50.391275+00:00", "id": 2, "timestamp": "2026-05-07T02:53:50.001135", "flag": true, "propability": 0.875, "evidence": "Mobile_phone"}
 {"logged_at": "2026-05-07T02:53:55.399985+00:00", "id": 2, "timestamp": "2026-05-07T02:53:55.017284", "flag": true, "propability": 0.8808, "evidence": "Mobile_phone"}
 {"logged_at": "2026-05-07T02:54:00.400822+00:00", "id": 2, "timestamp": "2026-05-07T02:54:00.017451", "flag": false, "propability": 0.0, "evidence": "None"}
+{"logged_at": "2026-05-07T05:22:04.201885+00:00", "id": 2, "timestamp": "2026-05-07T05:22:03.900670", "flag": false, "propability": 0.0, "evidence": "None"}
