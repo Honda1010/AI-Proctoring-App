@@ -1,0 +1,174 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Backend API: AiProctoringViolationEvent",
+  "description": "Payload emitted by clip_upload_service.py to the LMS backend API after a violation clip is processed. The backend stores this against the exam attempt's violation record.",
+
+  "endpoint": "POST {baseUrl}/api/Proctoring/violation-clip",
+  "authentication": "Authorization: Bearer <access_token> (from OS keychain, loaded by Python bridge auth module)",
+  "contentType": "application/json",
+
+  "requestBody": {
+    "schema": {
+      "type": "object",
+      "required": [
+        "studentId",
+        "examAttemptId",
+        "uploadStatus",
+        "captureWindowStart",
+        "captureWindowEnd",
+        "primaryViolationType",
+        "primaryConfidence",
+        "description",
+        "allViolations",
+        "sessionId"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "studentId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "examAttemptId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sessionId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "uploadStatus": {
+          "type": "string",
+          "enum": ["success", "upload_failed", "clip_unavailable"],
+          "description": "Outcome of the upload attempt."
+        },
+        "evidenceUrl": {
+          "description": "CDN-hosted URL of the uploaded clip. Omitted or null when uploadStatus != 'success'.",
+          "oneOf": [
+            { "type": "string", "format": "uri" },
+            { "type": "null" }
+          ]
+        },
+        "reasonCode": {
+          "description": "Machine-readable failure reason. Omitted or null on success.",
+          "oneOf": [
+            { "type": "string", "enum": ["WEBCAM_UNAVAILABLE", "UPLOAD_EXHAUSTED", "ENCODE_FAILED"] },
+            { "type": "null" }
+          ]
+        },
+        "captureWindowStart": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 UTC. Derived from first pre-violation buffer chunk timestamp."
+        },
+        "captureWindowEnd": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 UTC. Derived from last post-violation chunk timestamp."
+        },
+        "primaryViolationType": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Alert code of the violation that originally triggered the capture."
+        },
+        "primaryConfidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Detection confidence of the triggering violation (0.0–1.0 float)."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable summary. E.g.: 'Phone detected in frame + 2 additional violations in clip'."
+        },
+        "allViolations": {
+          "type": "array",
+          "minItems": 1,
+          "description": "All violation events captured within the clip's time window.",
+          "items": {
+            "type": "object",
+            "required": ["violationType", "confidence", "timestamp", "description"],
+            "additionalProperties": false,
+            "properties": {
+              "violationType": { "type": "string", "minLength": 1 },
+              "confidence": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "timestamp": { "type": "string", "format": "date-time" },
+              "description": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "exampleRequest": {
+    "studentId": "stu-00123",
+    "examAttemptId": "att-00456",
+    "sessionId": "1045",
+    "uploadStatus": "success",
+    "evidenceUrl": "https://cdn.lumina-ai.com/stu-00123/2026-05-05T14-32-01-000Z_UNAUTHORIZED_OBJECT.mp4",
+    "reasonCode": null,
+    "captureWindowStart": "2026-05-05T14:31:51.000Z",
+    "captureWindowEnd": "2026-05-05T14:32:11.000Z",
+    "primaryViolationType": "UNAUTHORIZED_OBJECT",
+    "primaryConfidence": 0.87,
+    "description": "Phone detected in frame + 1 additional violation in clip",
+    "allViolations": [
+      {
+        "violationType": "UNAUTHORIZED_OBJECT",
+        "confidence": 0.87,
+        "timestamp": "2026-05-05T14:32:01.000Z",
+        "description": "Suspicious object detected: phone"
+      },
+      {
+        "violationType": "GAZE_OFF_SCREEN",
+        "confidence": 0.72,
+        "timestamp": "2026-05-05T14:32:04.000Z",
+        "description": "Gaze away from screen (detected by local model)"
+      }
+    ]
+  },
+
+  "exampleFailureRequest": {
+    "studentId": "stu-00123",
+    "examAttemptId": "att-00456",
+    "sessionId": "1045",
+    "uploadStatus": "upload_failed",
+    "evidenceUrl": null,
+    "reasonCode": "UPLOAD_EXHAUSTED",
+    "captureWindowStart": "2026-05-05T14:32:01.000Z",
+    "captureWindowEnd": "2026-05-05T14:32:11.000Z",
+    "primaryViolationType": "UNAUTHORIZED_OBJECT",
+    "primaryConfidence": 0.87,
+    "description": "Phone detected in frame",
+    "allViolations": [
+      {
+        "violationType": "UNAUTHORIZED_OBJECT",
+        "confidence": 0.87,
+        "timestamp": "2026-05-05T14:32:01.000Z",
+        "description": "Suspicious object detected: phone"
+      }
+    ]
+  },
+
+  "responses": {
+    "202": {
+      "description": "Accepted. Backend has queued the violation record for persistence."
+    },
+    "400": {
+      "description": "Bad request. Invalid payload (e.g., missing required field)."
+    },
+    "401": {
+      "description": "Unauthorized. Bearer token invalid or expired."
+    },
+    "500": {
+      "description": "Internal server error. Python bridge should log and not retry the backend call."
+    }
+  },
+
+  "notes": [
+    "The endpoint path POST /api/Proctoring/violation-clip is provisional. Adjust to match the LMS API once the backend endpoint is defined.",
+    "The Python bridge must include the Authorization Bearer token from the OS keychain, following the same auth pattern as other Python bridge API calls (auth.py).",
+    "This contract does not define the backend database schema — only the API payload shape."
+  ]
+}

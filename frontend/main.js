@@ -2,6 +2,7 @@
 
 const { app, BrowserWindow, ipcMain, net, shell } = require('electron');
 const path = require('path');
+const os = require('os');
 const fs = require('fs');
 const { spawn } = require('child_process');
 const keytar = require('keytar');
@@ -158,15 +159,16 @@ function sendAiRpc(method, params = {}, timeoutMs = 10000) {
 ipcMain.handle('bridge:get-status', () => bridgeState);
 
 /**
- * bridge:get-ui-config — Return the ui section of config.json to the renderer.
- * Used by exam.js to read polling intervals without hardcoding them in JS.
+ * bridge:get-ui-config — Return the ui and clip_recording sections of config.json to the renderer.
+ * Used by exam.js to read polling intervals and clip recording parameters without
+ * hardcoding them in JS.
  * Returns: { ok: true, ui: object } | { ok: false }
  */
 ipcMain.handle('bridge:get-ui-config', () => {
   try {
     const configPath = resolveConfigPath();
     const data = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
-    return { ok: true, ui: data.ui ?? {} };
+    return { ok: true, ui: { ...(data.ui ?? {}), clip_recording: data.clip_recording ?? {} } };
   } catch (err) {
     process.stderr.write(`[config] bridge:get-ui-config error: ${err.message}\n`);
     return { ok: false };
@@ -921,6 +923,103 @@ ipcMain.handle('bridge:clear-submit-result', async () => {
 });
 
 // ---------------------------------------------------------------------------
+// Clip recording IPC handler (spec 011)
+// ---------------------------------------------------------------------------
+
+/**
+ * save-and-upload-clip — Accept a violation clip Blob from the renderer,
+ * write it to a temporary .webm file, forward it to the AI router for
+ * encoding and CDN upload, and push a clip:upload-error event to the renderer
+ * on failure.
+ *
+ * Security audit (T027):
+ *   - blobArrayBuffer contents are never logged.
+ *   - BUNNY_API_KEY and all CDN credentials are never passed in params;
+ *     they are read exclusively from environment variables inside the Python
+ *     bridge process.
+ *   - tempFilePath is never returned to the renderer.
+ *   - The access token is read from keytar/sessionMemory and included in the
+ *     params; it is used as a Bearer header by the Python bridge and never
+ *     echoed back.
+ *   - The value returned to ipcRenderer.invoke is only { ok, result: { uploadStatus, evidenceUrl, reasonCode } }.
+ *
+ * Expected args: { blobArrayBuffer: ArrayBuffer | null, metadata: ClipMetadata }
+ * Returns: { ok: true, result: { uploadStatus, evidenceUrl, reasonCode } } | { ok: false, error }
+ */
+ipcMain.handle('save-and-upload-clip', async (_event, { blobArrayBuffer, metadata } = {}) => {
+  try {
+    // Handle webcam-unavailable path (blobArrayBuffer is null)
+    if (blobArrayBuffer === null || blobArrayBuffer === undefined) {
+      const rpcResult = await sendAiRpc('upload_clip', {
+        tempFilePath: null,
+        metadata: { ...metadata },
+      }, 60000);
+
+      const result = rpcResult.ok
+        ? rpcResult.result
+        : { uploadStatus: 'upload_failed', evidenceUrl: null, reasonCode: 'ROUTER_ERROR' };
+
+      return { ok: true, result };
+    }
+
+    // Write the ArrayBuffer to a temp .webm file
+    const tmpPath = path.join(os.tmpdir(), `clip-${Date.now()}.webm`);
+    const buffer = Buffer.from(blobArrayBuffer);
+    process.stderr.write(`[clip] webm size: ${buffer.length} bytes → ${tmpPath}\n`);
+    if (buffer.length === 0) {
+      return { ok: true, result: { uploadStatus: 'upload_failed', evidenceUrl: null, reasonCode: 'EMPTY_BLOB' } };
+    }
+    fs.writeFileSync(tmpPath, buffer);
+
+    // Read the access token (same pattern as bridge:start-exam, bridge:submit-exam)
+    const accessToken =
+      sessionMemory?.accessToken ||
+      (await keytar.getPassword(KEYTAR_SERVICE, 'access-token')) ||
+      '';
+
+    // Forward to Python bridge — credentials (BUNNY_*) are never in these params
+    const rpcResult = await sendAiRpc('upload_clip', {
+      tempFilePath: tmpPath,
+      metadata: {
+        ...metadata,
+        token: accessToken,
+      },
+    }, 120000); // 2-minute timeout covers encode + upload + retry
+
+    const result = rpcResult.ok
+      ? rpcResult.result
+      : { uploadStatus: 'upload_failed', evidenceUrl: null, reasonCode: 'ROUTER_ERROR' };
+
+    // T024: Push clip:upload-error event to renderer on upload failure
+    if (result?.uploadStatus === 'upload_failed') {
+      mainWindow?.webContents.send('clip:upload-error', {
+        studentId: metadata?.studentId ?? '',
+        examAttemptId: metadata?.examAttemptId ?? '',
+        sessionId: metadata?.sessionId ?? '',
+        reasonCode: result.reasonCode ?? 'UPLOAD_EXHAUSTED',
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // Return only safe fields — no tempFilePath, no credentials
+    return {
+      ok: true,
+      result: {
+        uploadStatus: result?.uploadStatus ?? 'upload_failed',
+        evidenceUrl: result?.evidenceUrl ?? null,
+        reasonCode: result?.reasonCode ?? null,
+      },
+    };
+  } catch (err) {
+    process.stderr.write(`[clip] save-and-upload-clip error: ${err.message}\n`);
+    return {
+      ok: false,
+      error: { code: 'IPC_ERROR', message: err.message },
+    };
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Bridge startup (T011)
 // ---------------------------------------------------------------------------
 
@@ -1042,6 +1141,21 @@ app.whenReady().then(async () => {
   });
 
   mainWindow.once('ready-to-show', () => mainWindow.show());
+
+  // ── Debug: F12 opens DevTools on any page ─────────────────────────────────
+  mainWindow.webContents.on('before-input-event', (_e, input) => {
+    if (input.key === 'F12' && input.type === 'keyDown') {
+      mainWindow.webContents.openDevTools({ mode: 'detach' });
+    }
+  });
+
+  // ── Debug: auto-open DevTools when exam page loads ────────────────────────
+  mainWindow.webContents.on('did-finish-load', () => {
+    const url = mainWindow.webContents.getURL();
+    if (url.includes('exam/index.html')) {
+      mainWindow.webContents.openDevTools({ mode: 'detach' });
+    }
+  });
 
   await mainWindow.loadFile(path.join(__dirname, 'pages', 'loading', 'loading.html'));
 

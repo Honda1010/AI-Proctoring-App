@@ -59,6 +59,12 @@ except Exception as _e:
     _ObjectDetectionService = None  # type: ignore
     _service_import_errors["object-detection"] = str(_e)
 
+try:
+    from services.clip_upload_service import ClipUploadService as _ClipUploadService
+except Exception as _e:
+    _ClipUploadService = None  # type: ignore
+    _service_import_errors["clip-upload"] = str(_e)
+
 class AIRouter:
     def __init__(self, config_path: str, schema_path: str):
         self.config_path = config_path
@@ -173,6 +179,8 @@ class AIRouter:
             await self.handle_enroll_reference(request_id, params)
         elif method == "unenrollReference":
             await self.handle_unenroll_reference(request_id, params)
+        elif method == "upload_clip":
+            await self.handle_upload_clip(request_id, params)
         else:
             self.send_error(request_id, -32601, "Method not found")
 
@@ -383,6 +391,45 @@ class AIRouter:
                 self.send_error(request_id, -32001, "Contract violation")
         else:
             self.send_error(request_id, -32602, f"Service not running: {service_name}")
+
+    async def handle_upload_clip(self, request_id: Any, params: Dict[str, Any]):
+        """
+        Handle the upload_clip JSON-RPC method.
+
+        Expected params:
+            tempFilePath : str  — absolute path to the .webm temp file
+            metadata     : dict — ClipMetadata dict (includes token for backend POST)
+
+        Runs the blocking ClipUploadService in a thread-pool executor so the
+        async event loop is never blocked during ffmpeg encode or HTTP upload.
+        """
+        if _ClipUploadService is None:
+            import_err = _service_import_errors.get("clip-upload", "unknown import error")
+            self.send_error(
+                request_id, -32603,
+                f"ClipUploadService unavailable: {import_err}"
+            )
+            return
+
+        temp_file_path = params.get("tempFilePath")
+        metadata = params.get("metadata") or {}
+
+        if not temp_file_path:
+            self.send_error(request_id, -32602, "Missing tempFilePath parameter")
+            return
+
+        try:
+            service = _ClipUploadService(self.config)
+            loop = asyncio.get_event_loop()
+            result = await loop.run_in_executor(
+                None, service.upload_clip, temp_file_path, metadata
+            )
+            self.send_result(request_id, result)
+        except RuntimeError as e:
+            # Missing env vars — configuration error
+            self.send_error(request_id, -32603, f"ClipUploadService config error: {str(e)}")
+        except Exception as e:
+            self.send_error(request_id, -32603, f"upload_clip internal error: {str(e)}")
 
     def send_result(self, request_id: Any, result: Any):
         response = {

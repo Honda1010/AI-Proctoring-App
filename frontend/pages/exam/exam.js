@@ -1,5 +1,9 @@
 'use strict';
 
+// ClipRecorder functions come from clip-recorder.js (loaded as a plain <script defer>
+// before this file). They are already in the global scope — no re-declaration needed.
+// Guards inside DOMContentLoaded handle the case where clip-recorder.js failed to load.
+
 // ---------------------------------------------------------------------------
 // Module-scope state (spec 004 — Exam Page)
 // ---------------------------------------------------------------------------
@@ -36,69 +40,101 @@ let FACE_DETECT_INTERVAL_MS       = 60000; // local face-detect
 // ---------------------------------------------------------------------------
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Load polling intervals from config.json before starting any AI streaming.
-  // Falls back silently to the hardcoded defaults if config is unavailable.
+  const overlay = document.getElementById('skeletonOverlay');
   try {
-    const cfgResult = await window.bridge.getUiConfig();
-    if (cfgResult?.ok && cfgResult.ui?.intervals) {
-      const iv = cfgResult.ui.intervals;
-      if (iv.eye_gaze_ms)          EYE_GAZE_STREAM_INTERVAL_MS = iv.eye_gaze_ms;
-      if (iv.speech_poll_ms)       SPEECH_POLL_INTERVAL_MS      = iv.speech_poll_ms;
-      if (iv.face_recognition_ms)  FACE_RECOGNITION_INTERVAL_MS = iv.face_recognition_ms;
-      if (iv.object_detection_ms)  OBJECT_DETECT_INTERVAL_MS    = iv.object_detection_ms;
-      if (iv.face_detect_ms)       FACE_DETECT_INTERVAL_MS      = iv.face_detect_ms;
+    // Bind ClipRecorder lazily — if clip-recorder.js failed to load,
+    // fall back to no-ops so the exam still works.
+    if (window.ClipRecorder) {
+      // Functions are already in global scope from clip-recorder.js — no reassignment needed.
+      console.debug('[exam] ClipRecorder loaded.');
+    } else {
+      console.warn('[exam] ClipRecorder not available — clip recording disabled.');
     }
-  } catch { /* keep defaults */ }
 
-  // T026 — Guard: require completed enrollment before exam page loads
-  const enrollResult = await window.bridge.getEnrollmentStatus();
-  if (!enrollResult?.enrolled) {
-    window.location.replace('../identity-verification/index.html');
-    return;
+    // Load polling intervals from config.json before starting any AI streaming.
+    // Falls back silently to the hardcoded defaults if config is unavailable.
+    try {
+      const cfgResult = await window.bridge.getUiConfig();
+      if (cfgResult?.ok && cfgResult.ui?.intervals) {
+        const iv = cfgResult.ui.intervals;
+        if (iv.eye_gaze_ms)          EYE_GAZE_STREAM_INTERVAL_MS = iv.eye_gaze_ms;
+        if (iv.speech_poll_ms)       SPEECH_POLL_INTERVAL_MS      = iv.speech_poll_ms;
+        if (iv.face_recognition_ms)  FACE_RECOGNITION_INTERVAL_MS = iv.face_recognition_ms;
+        if (iv.object_detection_ms)  OBJECT_DETECT_INTERVAL_MS    = iv.object_detection_ms;
+        if (iv.face_detect_ms)       FACE_DETECT_INTERVAL_MS      = iv.face_detect_ms;
+      }
+    } catch { /* keep defaults */ }
+
+    // T026 — Guard: require completed enrollment before exam page loads
+    const enrollResult = await window.bridge.getEnrollmentStatus();
+    if (!enrollResult?.enrolled) {
+      window.location.replace('../identity-verification/index.html');
+      return;
+    }
+
+    const result = await window.bridge.getExamSession();
+
+    if (!result || !result.ok) {
+      window.location.replace('../login/index.html');
+      return;
+    }
+
+    examSession = result.session;
+    const questions = examSession.questions;
+
+    // C2 fix: guard for empty or missing questions array
+    if (!questions?.length) {
+      document.getElementById('examTitle').textContent = 'Error: No Questions';
+      return;
+    }
+
+    // Parse duration "HH:mm:ss"
+    const parts = (examSession.duration || '00:00:00').split(':');
+    const h = parseInt(parts[0], 10) || 0;
+    const m = parseInt(parts[1], 10) || 0;
+    const s = parseInt(parts[2], 10) || 0;
+    timerTotalSeconds = h * 3600 + m * 60 + s;
+    remainingSeconds = timerTotalSeconds;
+
+    initPage();
+    renderQuestion(0);
+    startTimer();
+    initWebcam();
+
+    // Initialize AI Dashboard
+    dashboard = new DashboardController();
+    dashboard.init();
+
+    // T019 — Route AI alert events to the clip recorder
+    window.bridge.onAiEvent((event) => {
+      if (event?.params?.type === 'alert') {
+        if (typeof handleViolationEvent === 'function') handleViolationEvent(event.params);
+      }
+    });
+
+    // T032 — release camera tracks on navigation
+    window.addEventListener('beforeunload', () => {
+      activeStream?.getTracks().forEach(t => t.stop());
+      dashboard?.destroy();
+      stopAiStreaming();
+      if (typeof stopClipRecorder === 'function') stopClipRecorder();
+    });
+  } catch (err) {
+    console.error('[exam] DOMContentLoaded error:', err);
+    // Show error visibly so it's easy to diagnose without DevTools
+    if (overlay) {
+      overlay.innerHTML = `<div style="font-family:monospace;padding:2rem;color:#c00;max-width:80vw;word-break:break-all;">
+        <strong>[exam] Error:</strong><br>${err?.message || String(err)}<br><br>
+        <em>Stack:</em><br>${err?.stack?.replace(/\n/g, '<br>') || ''}
+      </div>`;
+      // Don't hide overlay — leave it visible so the user can read the error
+      return;
+    }
+  } finally {
+    // Always hide the skeleton — no matter what happens above.
+    // (skipped on error path via return above)
+    overlay?.classList.add('hidden');
   }
-
-  const result = await window.bridge.getExamSession();
-
-  if (!result || !result.ok) {
-    window.location.replace('../login/index.html');
-    return;
-  }
-
-  examSession = result.session;
-  const questions = examSession.questions;
-
-  // C2 fix: guard for empty or missing questions array
-  if (!questions?.length) {
-    document.getElementById('examTitle').textContent = 'Error: No Questions';
-    document.getElementById('skeletonOverlay').classList.add('hidden');
-    return;
-  }
-
-  // Parse duration "HH:mm:ss"
-  const parts = (examSession.duration || '00:00:00').split(':');
-  const h = parseInt(parts[0], 10) || 0;
-  const m = parseInt(parts[1], 10) || 0;
-  const s = parseInt(parts[2], 10) || 0;
-  timerTotalSeconds = h * 3600 + m * 60 + s;
-  remainingSeconds = timerTotalSeconds;
-
-  initPage();
-  renderQuestion(0);
-  startTimer();
-  initWebcam();
-
-  // Initialize AI Dashboard
-  dashboard = new DashboardController();
-  dashboard.init();
-
-  // T032 — release camera tracks on navigation
-  window.addEventListener('beforeunload', () => {
-    activeStream?.getTracks().forEach(t => t.stop());
-    dashboard?.destroy();
-    stopAiStreaming();
-  });
-
-  document.getElementById('skeletonOverlay').classList.add('hidden');
 });
 
 // ---------------------------------------------------------------------------
@@ -398,6 +434,11 @@ async function submitExam(isAutoSubmit) {
   if (!result) return;
 
   if (result.ok) {
+    // T023 + T030 — flush any in-progress clip before navigating away
+    try {
+      if (typeof forceFinalize === 'function') await forceFinalize();
+    } catch (_) { /* non-blocking */ }
+    if (typeof stopClipRecorder === 'function') stopClipRecorder();
     window.location.href = '../result/index.html';
     return;
   }
@@ -426,6 +467,21 @@ async function initWebcam() {
     activeStream = stream;
     document.getElementById('webcamFeed').srcObject = stream;
     startAiStreaming();
+
+    // T019 — Start clip recorder, sharing the already-open AI stream.
+    // Previously clip-recorder opened its own getUserMedia, creating a second
+    // independent camera capture pipeline and a second hardware encoder session.
+    // Both sessions competed for the same encoder hardware, causing I-frame
+    // sequence interruptions (bitstream corruption at splice boundaries).
+    // Passing the stream here lets clip-recorder clone it — same single camera
+    // pipeline, no encoder contention.
+    try {
+      const cfgResult = await window.bridge.getUiConfig();
+      const clipCfg = cfgResult?.ok ? cfgResult.ui?.clip_recording ?? null : null;
+      if (typeof initClipRecorder === 'function') await initClipRecorder(clipCfg, examSession, stream);
+    } catch (clipErr) {
+      console.warn('[exam] clip recorder init failed:', clipErr.message);
+    }
   } catch {
     document.getElementById('webcamFeed').classList.add('hidden');
     document.getElementById('cameraUnavailable').classList.remove('hidden');
