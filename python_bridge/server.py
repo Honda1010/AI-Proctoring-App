@@ -23,6 +23,7 @@ from flask_cors import CORS
 
 from auth import auth_bp
 from exam import exam_bp
+from lockdown import lockdown_bp
 from config import load_config, ConfigError
 
 # ---------------------------------------------------------------------------
@@ -45,6 +46,7 @@ CORS(app)
 # Register blueprints
 app.register_blueprint(auth_bp)
 app.register_blueprint(exam_bp)
+app.register_blueprint(lockdown_bp)
 
 
 # ---------------------------------------------------------------------------

@@ -56,6 +56,7 @@ class AppConfig:
     modal: Dict[str, Any] = field(default_factory=dict)
     services: Dict[str, Any] = field(default_factory=dict)
     orchestration: Dict[str, Any] = field(default_factory=dict)
+    clip_recording: Dict[str, Any] = field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------
@@ -149,6 +150,7 @@ def load_config(config_path: str) -> AppConfig:
     modal = data.get("modal", {})
     services = data.get("services", {})
     orchestration = data.get("orchestration", {})
+    clip_recording = data.get("clip_recording", {})
 
     def require_non_empty_str(value: Any, field_name: str, code: str) -> str:
         if not isinstance(value, str) or not value.strip():
@@ -200,5 +202,6 @@ def load_config(config_path: str) -> AppConfig:
         python_port=python_port,
         modal=modal,
         services=services,
-        orchestration=orchestration
+        orchestration=orchestration,
+        clip_recording=clip_recording,
     )

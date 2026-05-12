@@ -20,8 +20,11 @@ const { contextBridge, ipcRenderer } = require('electron');
  * Adding a channel here is the only way a renderer page can receive events.
  */
 const ALLOWED_RECEIVE_CHANNELS = [
-  'bridge:status',   // BridgeStatus state updates from main process
-  'bridge:ai-event', // AI proctoring events (detections, alerts, risk scores)
+  'bridge:status',    // BridgeStatus state updates from main process
+  'bridge:ai-event',  // AI proctoring events (detections, alerts, risk scores)
+  'clip:upload-error', // Violation clip upload failure notification
+  'lockdown:vm-detected',             // VM or remote desktop detected during exam
+  'lockdown:screen-capture-detected', // Screen-capture application detected during exam
 ];
 
 /**
@@ -44,6 +47,9 @@ const ALLOWED_INVOKE_CHANNELS = [
   'bridge:export-pdf',          // Export current page to PDF
   'bridge:enroll-reference',    // Enroll a captured reference photo for face recognition
   'bridge:get-enrollment-status', // Check whether enrollment succeeded
+  'bridge:get-ui-config',         // Return ui section of config.json (intervals etc.)
+  'save-and-upload-clip',          // Save webm blob to temp file and upload via Python bridge
+  'lockdown:start',                // Activate fullscreen/kiosk lockdown (called from exam instructions)
 ];
 
 contextBridge.exposeInMainWorld('bridge', {
@@ -246,5 +252,79 @@ contextBridge.exposeInMainWorld('bridge', {
    */
   getEnrollmentStatus() {
     return ipcRenderer.invoke('bridge:get-enrollment-status');
+  },
+
+  /**
+   * Return the ui section of config.json (polling intervals, etc.) to the renderer.
+   * Falls back to { ok: false } if config cannot be read.
+   *
+   * @returns {Promise<{ok: true, ui: object} | {ok: false}>}
+   */
+  getUiConfig() {
+    return ipcRenderer.invoke('bridge:get-ui-config');
+  },
+
+  /**
+   * Send a captured violation clip (as ArrayBuffer + metadata) to the main process
+   * for temp-file write, ffmpeg encode, and Bunny CDN upload via the Python bridge.
+   *
+   * Security: no CDN credentials are passed here. The main process reads them
+   * exclusively from environment variables inside the Python bridge process.
+   *
+   * @param {{ blobArrayBuffer: ArrayBuffer | null, metadata: object }} payload
+   * @returns {Promise<{ok: true, result: object} | {ok: false, error: object}>}
+   */
+  saveAndUploadClip(payload) {
+    return ipcRenderer.invoke('save-and-upload-clip', payload);
+  },
+
+  /**
+   * Subscribe to clip upload failure events pushed from the main process.
+   * Fires when the Python bridge exhausts all upload retries.
+   *
+   * @param {(payload: {studentId: string, examAttemptId: string, sessionId: string, reasonCode: string, timestamp: string}) => void} callback
+   * @returns {() => void} unsubscribe function
+   */
+  onClipUploadError(callback) {
+    const handler = (_e, payload) => callback(payload);
+    ipcRenderer.on('clip:upload-error', handler);
+    return () => ipcRenderer.removeListener('clip:upload-error', handler);
+  },
+
+  /**
+   * Subscribe to VM or remote desktop detection events from the main process.
+   * Fired when POST /check-environment detects vm_detected or rdp_detected.
+   *
+   * @param {(payload: {reason: string}) => void} callback
+   * @returns {() => void} unsubscribe function
+   */
+  onLockdownVmDetected(callback) {
+    const handler = (_e, payload) => callback(payload);
+    ipcRenderer.on('lockdown:vm-detected', handler);
+    return () => ipcRenderer.removeListener('lockdown:vm-detected', handler);
+  },
+
+  /**
+   * Subscribe to screen-capture application detection events from the main process.
+   * Fired when POST /check-environment detects screen_capture_detected.
+   *
+   * @param {(payload: {reason: string}) => void} callback
+   * @returns {() => void} unsubscribe function
+   */
+  onLockdownCaptureDetected(callback) {
+    const handler = (_e, payload) => callback(payload);
+    ipcRenderer.on('lockdown:screen-capture-detected', handler);
+    return () => ipcRenderer.removeListener('lockdown:screen-capture-detected', handler);
+  },
+
+  /**
+   * Activate fullscreen/kiosk lockdown controls.
+   * Called from the Exam Instructions page when the student clicks "Start Exam",
+   * ensuring lockdown only applies during the actual exam (not during pre-exam phases).
+   *
+   * @returns {Promise<void>}
+   */
+  startLockdown() {
+    return ipcRenderer.invoke('lockdown:start');
   },
 });

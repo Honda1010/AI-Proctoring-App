@@ -40,6 +40,10 @@ class ProctoringOrchestrator:
             "speech-detection": False,
             "object-detection": False,
         }
+        # Guard: SPEECH_CHEATING_FLAGGED must fire exactly once per session.
+        # Once emitted it stays True for the session lifetime so subsequent
+        # predict() polls with is_cheater=True do not re-emit the alert.
+        self._speech_cheater_flagged: bool = False
 
         # Timers for time-based rules
         self.missing_face_start: Optional[float]     = None
@@ -55,6 +59,7 @@ class ProctoringOrchestrator:
 
         self.current_session_id = session_id
         self.risk_score = 0.0
+        self._speech_cheater_flagged = False
 
         # Ensure sessions directory exists
         os.makedirs(self.sessions_dir, exist_ok=True)
@@ -101,7 +106,8 @@ class ProctoringOrchestrator:
                     event
                 )
 
-            if is_cheater:
+            if is_cheater and not self._speech_cheater_flagged:
+                self._speech_cheater_flagged = True
                 await self._emit_alert(
                     "SPEECH_CHEATING_FLAGGED",
                     "critical",
@@ -231,6 +237,7 @@ class ProctoringOrchestrator:
             "message":   message,
             "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
             "sessionId": self.current_session_id,
+            "questionId": evidence.get("questionId"),
             "evidence": {
                 "service":    evidence.get("service"),
                 "confidence": evidence.get("confidence"),

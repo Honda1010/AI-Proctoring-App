@@ -1,0 +1,123 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "JSON-RPC 2.0 Method: upload_clip",
+  "description": "New method added to router.py's AIRouter. Called by Electron main process to instruct the Python bridge to encode, upload, and report a violation clip.",
+
+  "method": "upload_clip",
+  "transport": "JSON-RPC 2.0 over stdin/stdout (existing router.py channel)",
+
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "upload_clip",
+    "id": "<integer>",
+    "params": {
+      "schema": {
+        "type": "object",
+        "required": ["tempFilePath", "metadata", "studentId", "examAttemptId"],
+        "additionalProperties": false,
+        "properties": {
+          "tempFilePath": {
+            "type": "string",
+            "description": "Absolute path to the temp .webm file written by Electron main process in os.tmpdir(). Python bridge owns cleanup of this file."
+          },
+          "studentId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Extracted from metadata.studentId for convenience; used in CDN path and backend event."
+          },
+          "examAttemptId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Extracted from metadata.examAttemptId for convenience."
+          },
+          "metadata": {
+            "$ref": "#/definitions/ClipMetadata"
+          }
+        }
+      }
+    }
+  },
+
+  "response": {
+    "success": {
+      "jsonrpc": "2.0",
+      "id": "<same integer as request>",
+      "result": {
+        "schema": {
+          "type": "object",
+          "required": ["uploadStatus"],
+          "properties": {
+            "uploadStatus": {
+              "type": "string",
+              "enum": ["success", "upload_failed", "clip_unavailable"]
+            },
+            "evidenceUrl": {
+              "description": "CDN URL. Present and non-null only when uploadStatus == 'success'.",
+              "oneOf": [{ "type": "string", "format": "uri" }, { "type": "null" }]
+            },
+            "reasonCode": {
+              "description": "Machine-readable reason on failure. null on success.",
+              "oneOf": [{ "type": "string" }, { "type": "null" }]
+            }
+          }
+        }
+      }
+    },
+    "error": {
+      "jsonrpc": "2.0",
+      "id": "<same integer as request>",
+      "error": {
+        "code": "<JSON-RPC error code integer>",
+        "message": "<string>"
+      }
+    }
+  },
+
+  "sideEffects": [
+    "Writes a .mp4 temp file in os.tmpdir() via ffmpeg-python (cleaned up in try/finally).",
+    "Deletes the .webm temp file passed in tempFilePath (cleaned up in try/finally).",
+    "HTTP PUT to Bunny CDN storage using BUNNY_API_KEY from environment variables.",
+    "HTTP POST to the backend LMS API emitting an AiProctoringViolationEvent (see backend-violation-event.json)."
+  ],
+
+  "securityNotes": [
+    "BUNNY_API_KEY is read exclusively from environment variables inside clip_upload_service.py.",
+    "BUNNY_API_KEY MUST NOT appear in the JSON-RPC params, result, error, or any log output.",
+    "tempFilePath is an absolute local path — it MUST NOT be sent back to the renderer in any IPC message."
+  ],
+
+  "definitions": {
+    "ClipMetadata": {
+      "description": "Same schema as defined in ipc-save-and-upload-clip.json#/definitions/ClipMetadata. Repeated here for router.py contract completeness.",
+      "type": "object",
+      "required": [
+        "studentId", "examAttemptId", "captureWindowStart", "captureWindowEnd",
+        "primaryViolationType", "primaryConfidence", "allViolations", "description", "sessionId"
+      ],
+      "properties": {
+        "studentId": { "type": "string" },
+        "examAttemptId": { "type": "string" },
+        "sessionId": { "type": "string" },
+        "captureWindowStart": { "type": "string", "format": "date-time" },
+        "captureWindowEnd": { "type": "string", "format": "date-time" },
+        "primaryViolationType": { "type": "string" },
+        "primaryConfidence": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "description": { "type": "string" },
+        "allViolations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["violationType", "confidence", "timestamp", "description"],
+            "properties": {
+              "violationType": { "type": "string" },
+              "confidence": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "timestamp": { "type": "string", "format": "date-time" },
+              "description": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

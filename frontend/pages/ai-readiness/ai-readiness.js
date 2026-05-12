@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   continueBtn.addEventListener('click', () => {
-    window.location.href = '../exam/index.html';
+    window.location.href = '../exam-instructions/index.html';
   });
 
   unsubscribeAi = window.bridge.onAiEvent((event) => {

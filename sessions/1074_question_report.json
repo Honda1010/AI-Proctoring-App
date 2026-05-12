@@ -1,0 +1,205 @@
+{
+  "report_metadata": {
+    "generated_at": "2026-05-07T18:32:40.970607+00:00",
+    "source_log": "1074.jsonl",
+    "student_id": "1074",
+    "exam_id": "1074",
+    "mode": "per_question",
+    "normalisation": "pending — apply min-max across exam cohort"
+  },
+  "session_summary": {
+    "total_questions": 19,
+    "questions_violated": 5,
+    "questions_clean": 14,
+    "violation_rate": 0.263158,
+    "weights_used": {
+      "face_absence_mismatch": 1.0,
+      "suspicious_movement": 1.0,
+      "conversation_noise": 1.0,
+      "forbidden_objects": 1.0
+    }
+  },
+  "total_questions": 19,
+  "questions": {
+    "question_1": {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "pre_normalisation_risk_score": 0.0
+    },
+    "question_2": {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "pre_normalisation_risk_score": 0.0
+    },
+    "question_3": {
+      "face_detection": 0,
+      "face_recognition": 1,
+      "eye_gaze": 1,
+      "speech_detection": 13,
+      "object_detection": 6,
+      "violation_total": 21,
+      "pre_normalisation_risk_score": 21.0
+    },
+    "question_4": {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 2,
+      "object_detection": 0,
+      "violation_total": 2,
+      "pre_normalisation_risk_score": 2.0
+    },
+    "question_5": {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 1,
+      "object_detection": 0,
+      "violation_total": 1,
+      "pre_normalisation_risk_score": 1.0
+    },
+    "question_6": {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 1,
+      "object_detection": 0,
+      "violation_total": 1,
+      "pre_normalisation_risk_score": 1.0
+    },
+    "question_7": {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 1,
+      "object_detection": 0,
+      "violation_total": 1,
+      "pre_normalisation_risk_score": 1.0
+    },
+    "question_8": {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "pre_normalisation_risk_score": 0.0
+    },
+    "question_9": {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "pre_normalisation_risk_score": 0.0
+    },
+    "question_10": {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "pre_normalisation_risk_score": 0.0
+    },
+    "question_11": {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "pre_normalisation_risk_score": 0.0
+    },
+    "question_12": {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "pre_normalisation_risk_score": 0.0
+    },
+    "question_13": {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "pre_normalisation_risk_score": 0.0
+    },
+    "question_14": {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "pre_normalisation_risk_score": 0.0
+    },
+    "question_15": {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "pre_normalisation_risk_score": 0.0
+    },
+    "question_16": {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "pre_normalisation_risk_score": 0.0
+    },
+    "question_17": {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "pre_normalisation_risk_score": 0.0
+    },
+    "question_18": {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "pre_normalisation_risk_score": 0.0
+    },
+    "question_19": {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "pre_normalisation_risk_score": 0.0
+    },
+    "unassigned": {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 2,
+      "object_detection": 0,
+      "violation_total": 2,
+      "pre_normalisation_risk_score": 2.0
+    }
+  }
+}

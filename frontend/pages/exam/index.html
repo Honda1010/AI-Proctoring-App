@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="../../assets/components.css" />
   <link rel="stylesheet" href="./exam.css" />
   <script defer src="./DashboardController.js"></script>
+  <script defer src="./clip-recorder.js"></script>
   <script defer src="./exam.js"></script>
 </head>
 <body>
@@ -128,6 +129,32 @@
   <div class="error-banner hidden" id="errorBanner" role="alert" aria-live="assertive">
     <span id="errorBannerText"></span>
     <button class="btn btn-retry" id="retryBtn" type="button">Retry</button>
+  </div>
+
+  <!-- Lockdown: VM / remote-desktop violation modal (spec 013) -->
+  <div class="modal-backdrop hidden" id="lockdown-vm-modal"
+       role="alertdialog" aria-modal="true" aria-labelledby="lockdownVmTitle">
+    <div class="modal-glass">
+      <h2 class="modal-title" id="lockdownVmTitle">Security Violation Detected</h2>
+      <p class="modal-message">This exam cannot be taken inside a virtual machine or with remote desktop software active.</p>
+      <p class="modal-message modal-reason" id="lockdown-vm-reason"></p>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="lockdown-vm-dismiss" type="button">Acknowledge</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lockdown: screen-capture application violation modal (spec 013) -->
+  <div class="modal-backdrop hidden" id="lockdown-capture-modal"
+       role="alertdialog" aria-modal="true" aria-labelledby="lockdownCaptureTitle">
+    <div class="modal-glass">
+      <h2 class="modal-title" id="lockdownCaptureTitle">Screen Recording Detected</h2>
+      <p class="modal-message">A screen recording or capture application was detected. Please close it before continuing.</p>
+      <p class="modal-message modal-reason" id="lockdown-capture-reason"></p>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="lockdown-capture-dismiss" type="button">Acknowledge</button>
+      </div>
+    </div>
   </div>
 
 </body>

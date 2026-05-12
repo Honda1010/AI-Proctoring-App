@@ -1,5 +1,9 @@
 'use strict';
 
+// ClipRecorder functions come from clip-recorder.js (loaded as a plain <script defer>
+// before this file). They are already in the global scope — no re-declaration needed.
+// Guards inside DOMContentLoaded handle the case where clip-recorder.js failed to load.
+
 // ---------------------------------------------------------------------------
 // Module-scope state (spec 004 — Exam Page)
 // ---------------------------------------------------------------------------
@@ -17,70 +21,185 @@ let remainingSeconds = 0; // U1 fix: track via variable, not DOM parsing
 let dashboard = null;
 let aiIntervalId = null;
 let speechPollIntervalId = null;
-let cloudVisionIntervalId = null;
+let cloudVisionIntervalId = null;   // face-recognition polling
+let objectDetectIntervalId = null;  // object-detection polling (independent)
 let faceDetectIntervalId = null;
 let aiInFlight = false;
 let aiCanvas = null;
 let aiContext = null;
-const EYE_GAZE_STREAM_INTERVAL_MS = 250;
-const SPEECH_POLL_INTERVAL_MS = 2000;
-const CLOUD_VISION_INTERVAL_MS = 5000; // modal_Frame_Rate
-const FACE_DETECT_INTERVAL_MS = 1000;
+// Polling intervals — loaded from config.json ui.intervals at startup.
+// Defaults below are used only if config is unavailable.
+let EYE_GAZE_STREAM_INTERVAL_MS  = 250;
+let SPEECH_POLL_INTERVAL_MS       = 2000;
+let FACE_RECOGNITION_INTERVAL_MS  = 1000;  // face-recognition (Modal)
+let OBJECT_DETECT_INTERVAL_MS     = 1000;  // object-detection  (Modal, independent)
+let FACE_DETECT_INTERVAL_MS       = 60000; // local face-detect
 
 // ---------------------------------------------------------------------------
 // T012 — DOMContentLoaded: load session and initialise page
 // ---------------------------------------------------------------------------
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // T026 — Guard: require completed enrollment before exam page loads
-  const enrollResult = await window.bridge.getEnrollmentStatus();
-  if (!enrollResult?.enrolled) {
-    window.location.replace('../identity-verification/index.html');
-    return;
+  const overlay = document.getElementById('skeletonOverlay');
+  try {
+    // Bind ClipRecorder lazily — if clip-recorder.js failed to load,
+    // fall back to no-ops so the exam still works.
+    if (window.ClipRecorder) {
+      // Functions are already in global scope from clip-recorder.js — no reassignment needed.
+      console.debug('[exam] ClipRecorder loaded.');
+    } else {
+      console.warn('[exam] ClipRecorder not available — clip recording disabled.');
+    }
+
+    // Load polling intervals from config.json before starting any AI streaming.
+    // Falls back silently to the hardcoded defaults if config is unavailable.
+    try {
+      const cfgResult = await window.bridge.getUiConfig();
+      if (cfgResult?.ok && cfgResult.ui?.intervals) {
+        const iv = cfgResult.ui.intervals;
+        if (iv.eye_gaze_ms)          EYE_GAZE_STREAM_INTERVAL_MS = iv.eye_gaze_ms;
+        if (iv.speech_poll_ms)       SPEECH_POLL_INTERVAL_MS      = iv.speech_poll_ms;
+        if (iv.face_recognition_ms)  FACE_RECOGNITION_INTERVAL_MS = iv.face_recognition_ms;
+        if (iv.object_detection_ms)  OBJECT_DETECT_INTERVAL_MS    = iv.object_detection_ms;
+        if (iv.face_detect_ms)       FACE_DETECT_INTERVAL_MS      = iv.face_detect_ms;
+      }
+    } catch { /* keep defaults */ }
+
+    // T026 — Guard: require completed enrollment before exam page loads
+    const enrollResult = await window.bridge.getEnrollmentStatus();
+    if (!enrollResult?.enrolled) {
+      window.location.replace('../identity-verification/index.html');
+      return;
+    }
+
+    const result = await window.bridge.getExamSession();
+
+    if (!result || !result.ok) {
+      window.location.replace('../login/index.html');
+      return;
+    }
+
+    examSession = result.session;
+    const questions = examSession.questions;
+
+    // C2 fix: guard for empty or missing questions array
+    if (!questions?.length) {
+      document.getElementById('examTitle').textContent = 'Error: No Questions';
+      return;
+    }
+
+    // Parse duration "HH:mm:ss"
+    const parts = (examSession.duration || '00:00:00').split(':');
+    const h = parseInt(parts[0], 10) || 0;
+    const m = parseInt(parts[1], 10) || 0;
+    const s = parseInt(parts[2], 10) || 0;
+    timerTotalSeconds = h * 3600 + m * 60 + s;
+    remainingSeconds = timerTotalSeconds;
+
+    initPage();
+    renderQuestion(0);
+    startTimer();
+    initWebcam();
+
+    // Initialize AI Dashboard
+    dashboard = new DashboardController();
+    dashboard.init();
+
+    // T019 — Route AI alert events to the clip recorder
+    window.bridge.onAiEvent((event) => {
+      if (event?.params?.type === 'alert') {
+        if (typeof handleViolationEvent === 'function') handleViolationEvent(event.params);
+      }
+    });
+
+    // T032 — release camera tracks on navigation
+    window.addEventListener('beforeunload', () => {
+      activeStream?.getTracks().forEach(t => t.stop());
+      dashboard?.destroy();
+      stopAiStreaming();
+      if (typeof stopClipRecorder === 'function') stopClipRecorder();
+    });
+
+    // ── Lockdown: VM / remote-desktop violation modal (spec 013) ─────────────
+    // A modal queue prevents simultaneous modals from stacking.
+    const lockdownModalQueue = [];
+    let lockdownModalActive = false;
+
+    function showNextLockdownModal() {
+      if (lockdownModalActive || lockdownModalQueue.length === 0) return;
+      const showFn = lockdownModalQueue.shift();
+      lockdownModalActive = true;
+      showFn();
+    }
+
+    function setExamInteractionDisabled(disabled) {
+      const elements = document.querySelectorAll(
+        '#choicesList input, #choicesList button, #submitExamBtn, #prevBtn, #nextBtn, #flagBtn, #jumpInput'
+      );
+      elements.forEach(el => { el.disabled = disabled; });
+    }
+
+    function enqueueVmModal(reason) {
+      lockdownModalQueue.push(() => {
+        const modal = document.getElementById('lockdown-vm-modal');
+        const reasonEl = document.getElementById('lockdown-vm-reason');
+        const dismissBtn = document.getElementById('lockdown-vm-dismiss');
+        if (!modal) { lockdownModalActive = false; showNextLockdownModal(); return; }
+        if (reasonEl) reasonEl.textContent = reason || '';
+        setExamInteractionDisabled(true);
+        modal.classList.remove('hidden');
+        dismissBtn.onclick = () => {
+          modal.classList.add('hidden');
+          setExamInteractionDisabled(false);
+          lockdownModalActive = false;
+          showNextLockdownModal();
+        };
+      });
+      showNextLockdownModal();
+    }
+
+    function enqueueCaptureModal(reason) {
+      lockdownModalQueue.push(() => {
+        const modal = document.getElementById('lockdown-capture-modal');
+        const reasonEl = document.getElementById('lockdown-capture-reason');
+        const dismissBtn = document.getElementById('lockdown-capture-dismiss');
+        if (!modal) { lockdownModalActive = false; showNextLockdownModal(); return; }
+        if (reasonEl) reasonEl.textContent = reason || '';
+        setExamInteractionDisabled(true);
+        modal.classList.remove('hidden');
+        dismissBtn.onclick = () => {
+          modal.classList.add('hidden');
+          setExamInteractionDisabled(false);
+          lockdownModalActive = false;
+          showNextLockdownModal();
+        };
+      });
+      showNextLockdownModal();
+    }
+
+    window.bridge.onLockdownVmDetected(({ reason }) => {
+      enqueueVmModal(reason);
+    });
+
+    window.bridge.onLockdownCaptureDetected(({ reason }) => {
+      enqueueCaptureModal(reason);
+    });
+  } catch (err) {
+    console.error('[exam] DOMContentLoaded error:', err);
+    // Show error visibly so it's easy to diagnose without DevTools
+    if (overlay) {
+      overlay.innerHTML = `<div class="exam-error-overlay">
+        <strong>[exam] Error:</strong><br>${err?.message || String(err)}<br><br>
+        <em>Stack:</em><br>${err?.stack?.replace(/\n/g, '<br>') || ''}
+      </div>`;
+      // Don't hide overlay — leave it visible so the user can read the error
+      return;
+    }
+  } finally {
+    // Always hide the skeleton — no matter what happens above.
+    // (skipped on error path via return above)
+    overlay?.classList.add('hidden');
   }
-
-  const result = await window.bridge.getExamSession();
-
-  if (!result || !result.ok) {
-    window.location.replace('../login/index.html');
-    return;
-  }
-
-  examSession = result.session;
-  const questions = examSession.questions;
-
-  // C2 fix: guard for empty or missing questions array
-  if (!questions?.length) {
-    document.getElementById('examTitle').textContent = 'Error: No Questions';
-    document.getElementById('skeletonOverlay').classList.add('hidden');
-    return;
-  }
-
-  // Parse duration "HH:mm:ss"
-  const parts = (examSession.duration || '00:00:00').split(':');
-  const h = parseInt(parts[0], 10) || 0;
-  const m = parseInt(parts[1], 10) || 0;
-  const s = parseInt(parts[2], 10) || 0;
-  timerTotalSeconds = h * 3600 + m * 60 + s;
-  remainingSeconds = timerTotalSeconds;
-
-  initPage();
-  renderQuestion(0);
-  startTimer();
-  initWebcam();
-  
-  // Initialize AI Dashboard
-  dashboard = new DashboardController();
-  dashboard.init();
-
-  // T032 — release camera tracks on navigation
-  window.addEventListener('beforeunload', () => {
-    activeStream?.getTracks().forEach(t => t.stop());
-    dashboard?.destroy();
-    stopAiStreaming();
-  });
-
-  document.getElementById('skeletonOverlay').classList.add('hidden');
 });
 
 // ---------------------------------------------------------------------------
@@ -380,6 +499,11 @@ async function submitExam(isAutoSubmit) {
   if (!result) return;
 
   if (result.ok) {
+    // T023 + T030 — flush any in-progress clip before navigating away
+    try {
+      if (typeof forceFinalize === 'function') await forceFinalize();
+    } catch (_) { /* non-blocking */ }
+    if (typeof stopClipRecorder === 'function') stopClipRecorder();
     window.location.href = '../result/index.html';
     return;
   }
@@ -408,6 +532,21 @@ async function initWebcam() {
     activeStream = stream;
     document.getElementById('webcamFeed').srcObject = stream;
     startAiStreaming();
+
+    // T019 — Start clip recorder, sharing the already-open AI stream.
+    // Previously clip-recorder opened its own getUserMedia, creating a second
+    // independent camera capture pipeline and a second hardware encoder session.
+    // Both sessions competed for the same encoder hardware, causing I-frame
+    // sequence interruptions (bitstream corruption at splice boundaries).
+    // Passing the stream here lets clip-recorder clone it — same single camera
+    // pipeline, no encoder contention.
+    try {
+      const cfgResult = await window.bridge.getUiConfig();
+      const clipCfg = cfgResult?.ok ? cfgResult.ui?.clip_recording ?? null : null;
+      if (typeof initClipRecorder === 'function') await initClipRecorder(clipCfg, examSession, stream);
+    } catch (clipErr) {
+      console.warn('[exam] clip recorder init failed:', clipErr.message);
+    }
   } catch {
     document.getElementById('webcamFeed').classList.add('hidden');
     document.getElementById('cameraUnavailable').classList.remove('hidden');
@@ -424,72 +563,85 @@ function startAiStreaming() {
   const video = document.getElementById('webcamFeed');
   if (!video) return;
 
+  // ── Shared canvas kept only for legacy eye-gaze (high-frequency, fire-and-forget) ──
   aiCanvas = document.createElement('canvas');
   aiCanvas.width = 320;
   aiCanvas.height = 240;
   aiContext = aiCanvas.getContext('2d');
 
+  // ── Helper: snapshot video into a private canvas and return a data-URL ────────────
+  // Each call creates an isolated canvas so concurrent intervals never overwrite
+  // each other's in-progress frame (root cause of the YOLO false-positive detections).
+  function captureFrame(w = 320, h = 240, quality = 0.6) {
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    c.getContext('2d').drawImage(video, 0, 0, w, h);
+    return c.toDataURL('image/jpeg', quality);
+  }
+
+  // ── Eye-gaze: shared canvas is fine here because these calls are fire-and-forget ──
   aiIntervalId = setInterval(async () => {
     if (!aiContext) return;
-    if (video.readyState < 2) return; // Not enough data yet
+    if (video.readyState < 2) return;
 
     try {
       aiContext.drawImage(video, 0, 0, aiCanvas.width, aiCanvas.height);
       const frame = aiCanvas.toDataURL('image/jpeg', 0.6);
-
-      // Fire-and-forget: do NOT await here so frames are sent at a fixed
-      // rate regardless of inference time. This ensures the GazeSession's
-      // away_start_time accumulates correctly across consecutive calls.
-      window.bridge.aiRpc('predict', { service: 'eye-gaze', frame }).catch(() => {});
+      const questionId = examSession?.questions?.[currentIndex]?.id ?? null;
+      window.bridge.aiRpc('predict', { service: 'eye-gaze', frame, questionId }).catch(() => { });
     } catch {
       // Eye-gaze may be disabled; ignore polling errors.
     }
   }, EYE_GAZE_STREAM_INTERVAL_MS);
 
-  // Cloud vision services (Modal): send frames at a lower rate to avoid extra load.
-  // These calls create detection events which get written into sessions/<attemptId>.jsonl
-  // via the Python orchestrator.
+  // ── Face-recognition: independent interval and snapshot ──────────────────────────
   cloudVisionIntervalId = setInterval(async () => {
     try {
-      if (!aiContext) return;
       if (video.readyState < 2) return;
-      aiContext.drawImage(video, 0, 0, aiCanvas.width, aiCanvas.height);
-      const frame = aiCanvas.toDataURL('image/jpeg', 0.6);
-
-      await Promise.all([
-        window.bridge.aiRpc('predict', { service: 'face-recognition', frame }),
-        window.bridge.aiRpc('predict', { service: 'object-detection', frame }),
-      ]);
+      const frame = captureFrame();
+      const questionId = examSession?.questions?.[currentIndex]?.id ?? null;
+      await window.bridge.aiRpc('predict', { service: 'face-recognition', frame, questionId });
     } catch {
-      // Services may be unconfigured/stopped; ignore transient router errors.
+      // Service may be unconfigured/stopped; ignore transient router errors.
     }
-  }, CLOUD_VISION_INTERVAL_MS);
+  }, FACE_RECOGNITION_INTERVAL_MS);
 
-  // Face Detection runs independently from Face Recognition, at a much higher frequency (1s)
-  // to ensure 'missing face' events are caught quickly without burning Modal credits on full recognition.
+  // ── Object-detection: independent interval and snapshot ───────────────────────────
+  objectDetectIntervalId = setInterval(async () => {
+    try {
+      if (video.readyState < 2) return;
+      const frame = captureFrame();
+      const questionId = examSession?.questions?.[currentIndex]?.id ?? null;
+      await window.bridge.aiRpc('predict', { service: 'object-detection', frame, questionId });
+    } catch {
+      // Service may be unconfigured/stopped; ignore transient router errors.
+    }
+  }, OBJECT_DETECT_INTERVAL_MS);
+
+  // ── Face detection: independent snapshot ─────────────────────────────────────────
   faceDetectIntervalId = setInterval(async () => {
     try {
-      if (!aiContext) return;
       if (video.readyState < 2) return;
-      aiContext.drawImage(video, 0, 0, aiCanvas.width, aiCanvas.height);
-      const frame = aiCanvas.toDataURL('image/jpeg', 0.6);
-
-      await window.bridge.aiRpc('predict', { service: 'face-detection', frame });
+      const frame = captureFrame();
+      const questionId = examSession?.questions?.[currentIndex]?.id ?? null;
+      await window.bridge.aiRpc('predict', { service: 'face-detection', frame, questionId });
     } catch {
       // Services may be unconfigured/stopped; ignore transient router errors.
     }
   }, FACE_DETECT_INTERVAL_MS);
 
-  // Speech detection runs local mic capture in the Python service and
-  // this periodic predict call flushes speech violations to the UI/orchestrator.
+  // ── Speech detection: no frame needed (mic-based) ────────────────────────────────
   speechPollIntervalId = setInterval(async () => {
     try {
-      await window.bridge.aiRpc('predict', { service: 'speech-detection', frame: 'MIC_POLL' });
+      const questionId = examSession?.questions?.[currentIndex]?.id ?? null;
+      await window.bridge.aiRpc('predict', { service: 'speech-detection', frame: 'MIC_POLL', questionId });
     } catch {
       // Ignore transient router errors; status polling handles recovery.
     }
   }, SPEECH_POLL_INTERVAL_MS);
 }
+
 
 function stopAiStreaming() {
   if (aiIntervalId) {
@@ -503,6 +655,10 @@ function stopAiStreaming() {
   if (cloudVisionIntervalId) {
     clearInterval(cloudVisionIntervalId);
     cloudVisionIntervalId = null;
+  }
+  if (objectDetectIntervalId) {
+    clearInterval(objectDetectIntervalId);
+    objectDetectIntervalId = null;
   }
   if (faceDetectIntervalId) {
     clearInterval(faceDetectIntervalId);

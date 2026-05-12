@@ -1,0 +1,8 @@
+{
+  "vm_detected": false,
+  "vm_reason": null,
+  "rdp_detected": false,
+  "rdp_reason": null,
+  "screen_capture_detected": false,
+  "screen_capture_reason": null
+}

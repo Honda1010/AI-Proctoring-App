@@ -125,7 +125,29 @@ def exam_access():
         )
 
     if response.status_code == 200:
-        return jsonify(response.json()), 200
+        session_data = response.json()
+
+        # ── Create CheatingReport container for this attempt ────────────────
+        # POST /api/CheatingReport/attempt/{attemptId} is idempotent — safe on
+        # reconnect. We merge reportId into the session payload so the Electron
+        # main process can pass it through to every subsequent clip upload
+        # without making its own outbound call with the student token.
+        attempt_id = session_data.get("attemptId")
+        if attempt_id is not None:
+            try:
+                report_resp = requests.post(
+                    f"{base_url}/api/CheatingReport/attempt/{attempt_id}",
+                    headers={"Authorization": f"Bearer {token}"},
+                    timeout=15,
+                    verify=False,
+                )
+                if report_resp.status_code in (200, 201):
+                    report_body = report_resp.json()
+                    session_data["reportId"] = report_body.get("id")
+            except Exception:
+                pass  # non-blocking — exam proceeds even if report creation fails
+
+        return jsonify(session_data), 200
 
     error_body, error_status = map_lms_exam_error(response.status_code)
     return jsonify(error_body), error_status
