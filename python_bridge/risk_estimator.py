@@ -208,6 +208,7 @@ def _empty_service_counts() -> Dict[str, int]:
 def count_anomalies_by_question(
     events: List[Dict[str, Any]],
     total_number_of_questions: int,
+    question_ids: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """Group suspicious anomaly counts from raw event objects by question.
 
@@ -217,8 +218,7 @@ def count_anomalies_by_question(
             that identifies which question was active when the event occurred.
             Events without ``questionId`` are tallied under ``"unassigned"``.
         total_number_of_questions: The total number of questions in the exam.
-            All questions from 1 up to this value will appear in the output,
-            even if no anomalies were recorded for them.
+        question_ids: Optional list of real question IDs from the LMS.
 
     Returns:
         A dict with the structure::
@@ -240,10 +240,16 @@ def count_anomalies_by_question(
         )
 
     # Step 1 — Pre-fill every question with zeroes.
-    questions: Dict[str, Dict[str, int]] = {
-        f"question_{q}": _empty_service_counts()
-        for q in range(1, total_number_of_questions + 1)
-    }
+    if question_ids is not None and len(question_ids) > 0:
+        questions: Dict[str, Dict[str, int]] = {
+            f"question_{q}": _empty_service_counts()
+            for q in question_ids
+        }
+    else:
+        questions: Dict[str, Dict[str, int]] = {
+            f"question_{q}": _empty_service_counts()
+            for q in range(1, total_number_of_questions + 1)
+        }
 
     # Separate bucket for events that carry no questionId.
     unassigned: Dict[str, int] = _empty_service_counts()
@@ -319,6 +325,7 @@ def build_question_report(
     student_id: str,
     exam_id: str,
     weights: Optional[Dict[str, float]] = None,
+    question_ids: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """Load a JSONL session log and return a complete per-question JSON report.
 
@@ -365,7 +372,7 @@ def build_question_report(
             except json.JSONDecodeError:
                 continue
 
-    breakdown = count_anomalies_by_question(events, total_number_of_questions)
+    breakdown = count_anomalies_by_question(events, total_number_of_questions, question_ids)
     questions  = breakdown["questions"]
 
     # ─ Compute pre-normalisation risk score per question ────────────────────
@@ -378,21 +385,13 @@ def build_question_report(
         "object_detection": CATEGORY_OBJ,
     }
 
-    for q_key, service_counts in questions.items():
-        cat_counts: Dict[str, int] = {cat: 0 for cat in [CATEGORY_FACE, CATEGORY_MOVE, CATEGORY_CONV, CATEGORY_OBJ]}
-        for svc_key, cnt in service_counts.items():
-            if svc_key == "violation_total":
-                continue
-            cat = _SERVICE_TO_CATEGORY.get(svc_key)
-            if cat:
-                cat_counts[cat] += cnt
-        service_counts["pre_normalisation_risk_score"] = round(
-            compute_risk_score(cat_counts, weights), 6
-        )
-
     # ─ Session-level summary ────────────────────────────────────────
     # Only count the declared questions (1..N), exclude 'unassigned'.
-    declared_q_keys = [f"question_{q}" for q in range(1, total_number_of_questions + 1)]
+    if question_ids is not None and len(question_ids) > 0:
+        declared_q_keys = [f"question_{q}" for q in question_ids]
+    else:
+        declared_q_keys = [f"question_{q}" for q in range(1, total_number_of_questions + 1)]
+
     questions_violated = sum(
         1 for q_key in declared_q_keys
         if questions.get(q_key, {}).get("violation_total", 0) > 0
@@ -401,12 +400,24 @@ def build_question_report(
     violation_rate  = round(questions_violated / total_number_of_questions, 6) \
         if total_number_of_questions > 0 else 0.0
 
+    questions_list = []
+    for q_key, service_counts in questions.items():
+        if q_key.startswith("question_"):
+            try:
+                service_counts["question_id"] = int(q_key.split("_")[1])
+            except ValueError:
+                service_counts["question_id"] = q_key.split("_", 1)[1]
+        else:
+            service_counts["question_id"] = q_key
+        questions_list.append(service_counts)
+        
+    breakdown["questions"] = questions_list
+
     return {
         "report_metadata": {
             "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-            "source_log":   os.path.basename(log_path),
             "student_id":   student_id,
-            "exam_id":      exam_id,
+            "Attempt_Id":   exam_id,
             "mode":         "per_question",
             "normalisation": "pending — apply min-max across exam cohort",
         },
@@ -463,17 +474,14 @@ def build_report(
     return {
         "report_metadata": {
             "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-            "source_log": os.path.basename(log_path),
             "student_id": student_id,
-            "exam_id": exam_id,
+            "Attempt_Id": exam_id,
             # Reminder: normalise raw_counts across all students before ranking.
             "normalisation": "pending — apply min-max across exam cohort",
         },
         # Raw n^sq_t counts: {f, h, c, b} — not yet normalised
         "raw_counts": raw_counts,
         "weights": weights,
-        # Pre-normalisation score: will change once n^sq_t values are normalised
-        "pre_normalisation_risk_score": round(total_risk, 6),
     }
 
 
@@ -514,6 +522,11 @@ def _parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         metavar="N",
         help="Total number of questions in the exam. Required when --by-question is set.",
     )
+    parser.add_argument(
+        "--question-ids",
+        default=None,
+        help="Comma-separated list of real question IDs from the LMS.",
+    )
 
     return parser.parse_args(argv)
 
@@ -552,8 +565,10 @@ def main(argv: Optional[List[str]] = None) -> None:
         CATEGORY_OBJ:  args.wb,
     }
 
+    question_ids = args.question_ids.split(",") if args.question_ids else None
+
     report = build_question_report(
-        log_path, args.total_questions, student_id, exam_id, weights
+        log_path, args.total_questions, student_id, exam_id, weights, question_ids
     )
 
     if args.output:

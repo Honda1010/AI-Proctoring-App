@@ -988,6 +988,7 @@ ipcMain.handle('bridge:submit-exam', async (_event, { answers }) => {
       // Capture session metadata BEFORE clearing examSession
       const submitSessionId     = examSession?.attemptId ? String(examSession.attemptId) : null;
       const submitTotalQuestions = examSession?.questions?.length ?? 0;
+      const questionIds          = (examSession?.questions ?? []).map(q => q.id).join(',');
       examSession = null;   // spec 013 — clear exam session so window can close normally
       cheatingReportId = null;
 
@@ -1007,14 +1008,27 @@ ipcMain.handle('bridge:submit-exam', async (_event, { answers }) => {
             : path.join(projectRoot, '.venv', 'bin', 'python');
           const pythonExe      = fs.existsSync(venvPython) ? venvPython : 'python';
 
+          let studentIdToUse = sessionId;
+          try {
+            const sessionToUse = sessionMemory || await getSavedSession();
+            if (sessionToUse?.userProfile?.id) {
+              studentIdToUse = String(sessionToUse.userProfile.id);
+            }
+          } catch(e) {}
+
           if (fs.existsSync(logPath)) {
-            const reportProc = spawn(pythonExe, [
+            const args = [
               estimatorPath,
               logPath,
               '--total-questions', String(totalQuestions),
-              '--student-id',      sessionId,
+              '--student-id',      studentIdToUse,
               '--exam-id',         sessionId,
-            ], { stdio: ['ignore', 'pipe', 'pipe'] });
+            ];
+            if (questionIds) {
+              args.push('--question-ids', questionIds);
+            }
+
+            const reportProc = spawn(pythonExe, args, { stdio: ['ignore', 'pipe', 'pipe'] });
 
             reportProc.stderr.on('data', (chunk) => {
               process.stderr.write(`[report] ${chunk}`);
