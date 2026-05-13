@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lumina — Connection Lost</title>
+  <link rel="stylesheet" href="../../assets/design-tokens.css" />
+  <link rel="stylesheet" href="offline.css" />
+</head>
+<body>
+  <!-- Offline Page (shown when connectivity is lost) -->
+  <div id="offline-page" class="offline-page offline--neutral" aria-live="polite">
+    <div class="offline-card">
+      <div class="offline-icon" id="offline-icon" aria-hidden="true">⚠</div>
+      <h1 class="offline-heading" id="offline-heading">Connection Lost</h1>
+      <p class="offline-subtext" id="offline-subtext">
+        Your exam has been paused. Please reconnect to continue.
+      </p>
+
+      <div class="offline-stats">
+        <div class="stat-block">
+          <span class="stat-label">Time Remaining to Reconnect</span>
+          <span class="stat-value" id="budget-countdown">--:--</span>
+        </div>
+        <div class="stat-block">
+          <span class="stat-label">Questions Answered</span>
+          <span class="stat-value" id="answered-count">--</span>
+        </div>
+        <div class="stat-block">
+          <span class="stat-label">Disconnections</span>
+          <span class="stat-value" id="disconnection-count">-- / --</span>
+        </div>
+      </div>
+
+      <p class="offline-reassurance">
+        Your progress is saved locally and will not be lost.
+      </p>
+
+      <div class="offline-spinner" id="reconnect-spinner" aria-label="Waiting for reconnection"></div>
+    </div>
+  </div>
+
+  <!-- Lock Screen (shown when budget exhausted or disconnection limit exceeded) -->
+  <div id="lock-screen" class="lock-screen hidden" aria-live="assertive">
+    <div class="lock-card">
+      <div class="lock-icon" aria-hidden="true">🔒</div>
+      <h1 class="lock-heading">Exam Locked</h1>
+      <p class="lock-reason" id="lock-reason-text">
+        Your exam has been locked due to extended offline time.
+      </p>
+      <p class="lock-instruction">
+        Please reconnect to the internet. Your answered questions will be
+        submitted automatically once your connection is restored.
+      </p>
+      <div class="lock-reconnect-status">
+        <span class="reconnect-label" id="reconnect-label">Waiting for connection…</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="offline.js"></script>
+</body>
+</html>

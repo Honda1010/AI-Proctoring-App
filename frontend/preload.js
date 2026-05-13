@@ -25,6 +25,11 @@ const ALLOWED_RECEIVE_CHANNELS = [
   'clip:upload-error', // Violation clip upload failure notification
   'lockdown:vm-detected',             // VM or remote desktop detected during exam
   'lockdown:screen-capture-detected', // Screen-capture application detected during exam
+  // spec 014 — offline resilience channels
+  'offline:state-changed',    // State machine transitions: ONLINE/OFFLINE/LOCKED
+  'offline:snapshot-request', // Heartbeat request from main to renderer for snapshot data
+  'proctoring:pause',         // Pause all AI service polling (while offline)
+  'proctoring:resume',        // Resume all AI service polling (after reconnect)
 ];
 
 /**
@@ -326,5 +331,67 @@ contextBridge.exposeInMainWorld('bridge', {
    */
   startLockdown() {
     return ipcRenderer.invoke('lockdown:start');
+  },
+
+  /**
+   * Subscribe to offline state change events (ONLINE → OFFLINE → LOCKED).
+   * Payload: OfflineStateEvent (see contracts/offline-ipc.md)
+   *
+   * @param {(payload: object) => void} callback
+   * @returns {() => void} unsubscribe function
+   */
+  onOfflineStateChanged(callback) {
+    const handler = (_e, payload) => callback(payload);
+    ipcRenderer.on('offline:state-changed', handler);
+    return () => ipcRenderer.removeListener('offline:state-changed', handler);
+  },
+
+  /**
+   * Subscribe to snapshot heartbeat requests from the main process.
+   * Renderer should respond immediately with sendSnapshotData.
+   *
+   * @param {(payload: null) => void} callback
+   * @returns {() => void} unsubscribe function
+   */
+  onSnapshotRequest(callback) {
+    const handler = () => callback();
+    ipcRenderer.on('offline:snapshot-request', handler);
+    return () => ipcRenderer.removeListener('offline:snapshot-request', handler);
+  },
+
+  /**
+   * Subscribe to proctoring pause events (all AI polling must stop).
+   * Fired when the app transitions to the OFFLINE state.
+   *
+   * @param {() => void} callback
+   * @returns {() => void} unsubscribe function
+   */
+  onProctoringPause(callback) {
+    const handler = () => callback();
+    ipcRenderer.on('proctoring:pause', handler);
+    return () => ipcRenderer.removeListener('proctoring:pause', handler);
+  },
+
+  /**
+   * Subscribe to proctoring resume events (restart all AI polling).
+   * Fired when the app transitions from OFFLINE back to ONLINE.
+   *
+   * @param {() => void} callback
+   * @returns {() => void} unsubscribe function
+   */
+  onProctoringResume(callback) {
+    const handler = () => callback();
+    ipcRenderer.on('proctoring:resume', handler);
+    return () => ipcRenderer.removeListener('proctoring:resume', handler);
+  },
+
+  /**
+   * Send current exam state snapshot data to the main process for persistence.
+   * Called on every answer change and in response to onSnapshotRequest.
+   *
+   * @param {{ currentQuestionIndex: number, answers: object, frozenTimerSeconds: number }} data
+   */
+  sendSnapshotData(data) {
+    ipcRenderer.send('offline:snapshot-data', data);
   },
 });

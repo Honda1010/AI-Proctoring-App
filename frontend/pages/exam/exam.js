@@ -101,6 +101,46 @@ document.addEventListener('DOMContentLoaded', async () => {
     startTimer();
     initWebcam();
 
+    // ── spec 014: Crash / offline resume restore ───────────────────────────
+    // If the exam was restored after a crash or offline navigation, sessionStorage
+    // will have 'offlineResume' = '1' and 'offlineResumeData' = JSON.
+    try {
+      if (sessionStorage.getItem('offlineResume') === '1') {
+        const resumeRaw = sessionStorage.getItem('offlineResumeData');
+        if (resumeRaw) {
+          const resume = JSON.parse(resumeRaw);
+          // Restore answers
+          if (resume.answers && typeof resume.answers === 'object') {
+            // Map may be keyed by string — convert
+            for (const [qId, cId] of Object.entries(resume.answers)) {
+              answerMap[Number(qId)] = Number(cId);
+            }
+          }
+          // Restore question position
+          const idx = Math.max(0, Math.min(
+            resume.currentQuestionIndex ?? 0,
+            examSession.questions.length - 1
+          ));
+          currentIndex = idx;
+          renderQuestion(currentIndex);
+          // Restore frozen timer
+          if (typeof resume.frozenTimerSeconds === 'number' && resume.frozenTimerSeconds >= 0) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            remainingSeconds  = resume.frozenTimerSeconds;
+            timerTotalSeconds = resume.frozenTimerSeconds;
+            timerStartTime    = Date.now();
+            startTimer();
+          }
+          updatePillStates();
+        }
+        sessionStorage.removeItem('offlineResume');
+        // Keep offlineResumeData for heartbeat responses from this page
+      }
+    } catch (_resumeErr) {
+      console.warn('[exam] offline resume restore failed:', _resumeErr.message);
+    }
+
     // Initialize AI Dashboard
     dashboard = new DashboardController();
     dashboard.init();
@@ -183,6 +223,50 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.bridge.onLockdownCaptureDetected(({ reason }) => {
       enqueueCaptureModal(reason);
+    });
+
+    // ── spec 014: offline resilience IPC handlers ──────────────────────────
+
+    // Proctoring pause (ONLINE → OFFLINE): stop all AI polling
+    window.bridge.onProctoringPause(() => {
+      clearInterval(timerInterval); timerInterval = null;
+      stopAiStreaming();
+    });
+
+    // Proctoring resume (OFFLINE → ONLINE): restart all AI polling
+    window.bridge.onProctoringResume(() => {
+      timerTotalSeconds = remainingSeconds;
+      timerStartTime    = Date.now();
+      startTimer();
+      startAiStreaming();
+    });
+
+    // Offline state changed: navigate to offline page when OFFLINE
+    window.bridge.onOfflineStateChanged((payload) => {
+      if (payload.state === 'OFFLINE') {
+        // Send snapshot immediately before navigating away
+        const snapshotData = {
+          currentQuestionIndex: currentIndex,
+          answers:              answerMap,
+          frozenTimerSeconds:   remainingSeconds,
+        };
+        window.bridge.sendSnapshotData(snapshotData);
+        // Store resume data and offline page init payload for the offline page
+        try {
+          sessionStorage.setItem('offlineResumeData', JSON.stringify(snapshotData));
+          sessionStorage.setItem('offlineInitPayload', JSON.stringify(payload));
+        } catch (_) { /* best-effort */ }
+        window.location.href = '../offline/index.html';
+      }
+    });
+
+    // Snapshot heartbeat response: send current state to main process
+    window.bridge.onSnapshotRequest(() => {
+      window.bridge.sendSnapshotData({
+        currentQuestionIndex: currentIndex,
+        answers:              answerMap,
+        frozenTimerSeconds:   remainingSeconds,
+      });
     });
   } catch (err) {
     console.error('[exam] DOMContentLoaded error:', err);
@@ -351,6 +435,15 @@ function renderQuestion(index) {
       li.setAttribute('aria-checked', 'true');
 
       updatePillStates();
+
+      // spec 014 — persist snapshot on every answer change (FR-013)
+      if (window.bridge?.sendSnapshotData) {
+        window.bridge.sendSnapshotData({
+          currentQuestionIndex: currentIndex,
+          answers:              answerMap,
+          frozenTimerSeconds:   remainingSeconds,
+        });
+      }
     });
 
     list.appendChild(li);

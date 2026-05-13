@@ -1,0 +1,281 @@
+/* ============================================================
+   offline.css — Offline Page & Lock Screen Styles
+   Feature: 014-offline-resilience
+   Uses design tokens from ../../assets/design-tokens.css
+   ============================================================ */
+
+/* ----- Layout ----- */
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background: var(--color-surface, #0f0f13);
+  font-family: var(--font-family-base, 'Manrope', 'Inter', system-ui, sans-serif);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: background 0.8s ease;
+}
+
+/* ----- Offline Page ----- */
+.offline-page {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  box-sizing: border-box;
+  transition: background 0.6s ease, opacity 0.4s ease;
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.offline-card {
+  background: var(--color-surface-container, rgba(255, 255, 255, 0.06));
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--color-outline-variant, rgba(255, 255, 255, 0.12));
+  border-radius: 24px;
+  padding: 3rem 3.5rem;
+  max-width: 520px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+  transition: border-color 0.6s ease, box-shadow 0.6s ease;
+}
+
+/* ----- Escalation States ----- */
+/* Neutral (> 50% budget remaining) */
+.offline--neutral {
+  background: linear-gradient(135deg, #0f0f13 0%, #1a1a28 100%);
+}
+.offline--neutral .offline-card {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+}
+.offline--neutral .offline-icon { color: #8b8fa8; font-size: 3rem; }
+.offline--neutral .offline-heading { color: var(--color-on-surface, #e8e8f0); }
+.offline--neutral .stat-value { color: #8b8fa8; }
+
+/* Warning (≤ 50% budget remaining) */
+.offline--warning {
+  background: linear-gradient(135deg, #13110a 0%, #2a220a 100%);
+}
+.offline--warning .offline-card {
+  border-color: rgba(255, 180, 0, 0.3);
+  box-shadow: 0 24px 60px rgba(200, 140, 0, 0.2);
+}
+.offline--warning .offline-icon {
+  color: #f5b800;
+  font-size: 3rem;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+.offline--warning .offline-heading { color: #f5b800; }
+.offline--warning .stat-value { color: #f5b800; }
+.offline--warning .budget-countdown { animation: urgentTick 1s ease-in-out infinite; }
+
+/* Critical (≤ 20% budget remaining) */
+.offline--critical {
+  background: linear-gradient(135deg, #130a0a 0%, #2a0a0a 100%);
+  animation: criticalPulse 2s ease-in-out infinite;
+}
+.offline--critical .offline-card {
+  border-color: rgba(255, 60, 60, 0.4);
+  box-shadow: 0 24px 60px rgba(220, 30, 30, 0.25);
+}
+.offline--critical .offline-icon {
+  color: #ff4444;
+  font-size: 3rem;
+  animation: shake 0.6s ease-in-out infinite;
+}
+.offline--critical .offline-heading { color: #ff4444; }
+.offline--critical .stat-value { color: #ff4444; }
+
+/* ----- Icon & Heading ----- */
+.offline-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  display: block;
+  transition: color 0.6s ease;
+}
+
+.offline-heading {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.01em;
+  transition: color 0.6s ease;
+}
+
+.offline-subtext {
+  color: var(--color-on-surface-variant, #9a9ab0);
+  font-size: 0.95rem;
+  margin: 0 0 2rem 0;
+  line-height: 1.5;
+}
+
+/* ----- Stats Grid ----- */
+.offline-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-block {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1rem 0.75rem;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-on-surface-variant, #9a9ab0);
+  margin-bottom: 0.4rem;
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.4rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.6s ease;
+}
+
+/* ----- Reassurance Text ----- */
+.offline-reassurance {
+  color: var(--color-on-surface-variant, #9a9ab0);
+  font-size: 0.85rem;
+  margin: 0 0 1.5rem 0;
+}
+
+/* ----- Reconnecting Spinner ----- */
+.offline-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  margin: 0 auto;
+  animation: spin 1s linear infinite;
+}
+
+/* ----- Lock Screen ----- */
+.lock-screen {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #0d0505 0%, #1a0808 100%);
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.lock-screen.hidden {
+  display: none;
+}
+
+.lock-card {
+  background: rgba(180, 20, 20, 0.08);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 60, 60, 0.25);
+  border-radius: 24px;
+  padding: 3rem 3.5rem;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 24px 60px rgba(180, 0, 0, 0.3);
+}
+
+.lock-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+  display: block;
+  animation: lockBounce 0.5s ease-out;
+}
+
+.lock-heading {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #ff4444;
+  margin: 0 0 1rem 0;
+}
+
+.lock-reason {
+  color: var(--color-on-surface-variant, #9a9ab0);
+  font-size: 0.95rem;
+  margin: 0 0 1rem 0;
+  line-height: 1.5;
+}
+
+.lock-instruction {
+  color: var(--color-on-surface-variant, #9a9ab0);
+  font-size: 0.85rem;
+  margin: 0 0 2rem 0;
+  line-height: 1.6;
+}
+
+.lock-reconnect-status {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.reconnect-label {
+  color: var(--color-on-surface-variant, #9a9ab0);
+  font-size: 0.9rem;
+}
+
+/* submitted state */
+.lock-screen.submitted .lock-heading { color: #4caf50; }
+.lock-screen.submitted .lock-icon::after { content: ' ✓'; font-size: 0.6em; }
+
+/* ----- Keyframes ----- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-8px); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+
+@keyframes criticalPulse {
+  0%, 100% { background: linear-gradient(135deg, #130a0a 0%, #2a0a0a 100%); }
+  50% { background: linear-gradient(135deg, #1a0a0a 0%, #330a0a 100%); }
+}
+
+@keyframes lockBounce {
+  0% { transform: scale(0.5) translateY(-20px); opacity: 0; }
+  70% { transform: scale(1.1) translateY(4px); }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.offline-page.fading-out {
+  animation: fadeOut 0.4s ease forwards;
+}

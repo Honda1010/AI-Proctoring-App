@@ -447,6 +447,442 @@ let lockdownDisabled = {   // kept as object so callers stay readable
  */
 let submitResult = null;
 
+// ---------------------------------------------------------------------------
+// OfflineManager (spec 014 — offline resilience)
+// ---------------------------------------------------------------------------
+
+/**
+ * OfflineManager — owns the ping loop, state machine, local snapshot
+ * persistence, proctoring pause/resume signalling, auto-submit on reconnect,
+ * and session flagging.
+ *
+ * State machine: ONLINE → OFFLINE → LOCKED (terminal until auto-submit)
+ * Crash recovery: reads sessions/{attemptId}_offline_snapshot.json on startup.
+ */
+class OfflineManager {
+  constructor() {
+    /** @type {'ONLINE'|'OFFLINE'|'LOCKED'} */
+    this.state = 'ONLINE';
+
+    // Config values — populated in init()
+    this.maxOfflineMs       = 10 * 60 * 1000; // 10 min default
+    this.maxDisconnections  = 3;
+    this.pingIntervalMs     = 5_000;
+    this.flickerThresholdMs = 2_000;
+
+    // Runtime stats
+    this.cumulativeOfflineMs  = 0;
+    this.disconnectionCount   = 0;
+    this.lastDisconnectAt     = null;
+    this.lastReconnectAt      = null;
+
+    // Interval handles
+    this._pingInterval      = null;
+    this._snapshotInterval  = null;
+    this._offlineTickInterval = null;
+
+    // Flicker guard
+    this._disconnectStartTime = null;
+
+    // Auto-submit guard (prevent double-submit)
+    this._autoSubmitDone = false;
+
+    // Last known snapshot data from renderer
+    this._lastSnapshotData = null;
+  }
+
+  /**
+   * Initialise from config and start the ping loop.
+   * Call once the exam session is established.
+   * @param {object} cfg  The parsed config.json object
+   */
+  init(cfg) {
+    const or = cfg.offline_resilience ?? {};
+    this.maxOfflineMs       = (or.max_offline_minutes  ?? 10) * 60 * 1000;
+    this.maxDisconnections  =  or.max_disconnections   ?? 3;
+    this.pingIntervalMs     = (or.ping_interval_seconds ?? 5) * 1000;
+    this.flickerThresholdMs = (or.flicker_threshold_seconds ?? 2) * 1000;
+
+    // Reset runtime stats for fresh session
+    this.cumulativeOfflineMs = 0;
+    this.disconnectionCount  = 0;
+    this.lastDisconnectAt    = null;
+    this.lastReconnectAt     = null;
+    this._autoSubmitDone     = false;
+    this._lastSnapshotData   = null;
+    this._disconnectStartTime = null;
+    this.state = 'ONLINE';
+
+    this._startPingLoop();
+    this._startSnapshotHeartbeat();
+  }
+
+  /**
+   * Restore stats from a previously saved snapshot (crash recovery).
+   * Called before init() if a snapshot file is found on startup.
+   * @param {object} snapshot
+   */
+  restoreStats(snapshot) {
+    const s = snapshot.offlineStats ?? {};
+    this.cumulativeOfflineMs = s.cumulativeOfflineMs ?? 0;
+    this.disconnectionCount  = s.disconnectionCount  ?? 0;
+    this.lastDisconnectAt    = s.lastDisconnectAt    ? new Date(s.lastDisconnectAt) : null;
+    this.lastReconnectAt     = s.lastReconnectAt     ? new Date(s.lastReconnectAt) : null;
+    this._lastSnapshotData   = {
+      currentQuestionIndex: snapshot.currentQuestionIndex ?? 0,
+      answers: snapshot.answers ?? {},
+      frozenTimerSeconds: snapshot.frozenTimerSeconds ?? 0,
+    };
+  }
+
+  /** Tear down all intervals (called on exam end / logout). */
+  stop() {
+    clearInterval(this._pingInterval);
+    clearInterval(this._snapshotInterval);
+    clearInterval(this._offlineTickInterval);
+    this._pingInterval = null;
+    this._snapshotInterval = null;
+    this._offlineTickInterval = null;
+  }
+
+  // ---- private helpers ----
+
+  _startPingLoop() {
+    clearInterval(this._pingInterval);
+    this._pingInterval = setInterval(() => this._doPing(), this.pingIntervalMs);
+  }
+
+  _startSnapshotHeartbeat() {
+    clearInterval(this._snapshotInterval);
+    this._snapshotInterval = setInterval(() => {
+      // Ask renderer for current state
+      mainWindow?.webContents.send('offline:snapshot-request');
+    }, 30_000);
+  }
+
+  async _doPing() {
+    if (!examSession) return; // no active session
+
+    let reachable = false;
+    try {
+      const cfg = readConfig();
+      const response = await net.fetch(cfg.baseUrl, {
+        method: 'HEAD',
+        signal: AbortSignal.timeout(this.pingIntervalMs - 500),
+      });
+      reachable = response.status < 500;
+    } catch (_err) {
+      reachable = false;
+    }
+
+    if (reachable) {
+      this._onPingSuccess();
+    } else {
+      this._onPingFailure();
+    }
+  }
+
+  _onPingSuccess() {
+    if (this.state === 'LOCKED') {
+      // Attempt auto-submit — do not transition to ONLINE
+      this._attemptAutoSubmit();
+      return;
+    }
+
+    if (this.state === 'OFFLINE') {
+      // Accumulate elapsed offline time
+      if (this._disconnectStartTime) {
+        this.cumulativeOfflineMs += Date.now() - this._disconnectStartTime;
+        this._disconnectStartTime = null;
+      }
+      clearInterval(this._offlineTickInterval);
+      this._offlineTickInterval = null;
+      this.lastReconnectAt = new Date();
+      this._transitionTo('ONLINE', null);
+    }
+    // else already ONLINE — nothing to do
+  }
+
+  _onPingFailure() {
+    if (this.state === 'LOCKED') return; // terminal state
+
+    if (this.state === 'ONLINE') {
+      // Start timing the disconnection
+      if (!this._disconnectStartTime) {
+        this._disconnectStartTime = Date.now();
+      }
+      const elapsed = Date.now() - this._disconnectStartTime;
+      if (elapsed >= this.flickerThresholdMs) {
+        // Confirmed offline — not a flicker
+        this.disconnectionCount += 1;
+        this.lastDisconnectAt = new Date();
+
+        // Check disconnection limit BEFORE transitioning
+        if (this.disconnectionCount > this.maxDisconnections) {
+          this._transitionTo('LOCKED', 'disconnection_limit');
+          return;
+        }
+        this._transitionTo('OFFLINE', null);
+        this._startOfflineTick();
+      }
+      return;
+    }
+
+    // Already OFFLINE — keep accumulating
+  }
+
+  _startOfflineTick() {
+    clearInterval(this._offlineTickInterval);
+    this._offlineTickInterval = setInterval(() => {
+      if (!this._disconnectStartTime) return;
+      const elapsed = Date.now() - this._disconnectStartTime;
+      const total = this.cumulativeOfflineMs + elapsed;
+      if (total >= this.maxOfflineMs) {
+        this.cumulativeOfflineMs = total;
+        this._disconnectStartTime = null;
+        clearInterval(this._offlineTickInterval);
+        this._offlineTickInterval = null;
+        this._transitionTo('LOCKED', 'budget_exhausted');
+      }
+    }, 1_000);
+  }
+
+  _buildStatePayload(lockReason) {
+    const elapsed = this._disconnectStartTime ? Date.now() - this._disconnectStartTime : 0;
+    const total   = this.cumulativeOfflineMs + elapsed;
+    const budgetRemainingMs = Math.max(0, this.maxOfflineMs - total);
+    const answeredCount = this._lastSnapshotData
+      ? Object.keys(this._lastSnapshotData.answers ?? {}).length
+      : 0;
+    return {
+      state:             this.state,
+      budgetRemainingMs,
+      budgetTotalMs:     this.maxOfflineMs,
+      disconnectionCount: this.disconnectionCount,
+      maxDisconnections:  this.maxDisconnections,
+      answeredCount,
+      lockReason: lockReason ?? null,
+    };
+  }
+
+  _transitionTo(newState, lockReason) {
+    const prev = this.state;
+    this.state = newState;
+
+    if (prev === 'ONLINE' && newState === 'OFFLINE') {
+      // Exit fullscreen, pause proctoring
+      mainWindow?.setFullScreen(false);
+      mainWindow?.webContents.send('proctoring:pause');
+      // Navigate renderer to offline page
+      mainWindow?.webContents.send('offline:state-changed', this._buildStatePayload(null));
+    } else if (prev === 'OFFLINE' && newState === 'ONLINE') {
+      // Resume fullscreen and proctoring
+      mainWindow?.setFullScreen(true);
+      mainWindow?.webContents.send('proctoring:resume');
+      mainWindow?.webContents.send('offline:state-changed', this._buildStatePayload(null));
+    } else if (newState === 'LOCKED') {
+      // Save locked snapshot immediately
+      if (this._lastSnapshotData) {
+        this.saveSnapshot(this._lastSnapshotData, 'locked');
+      }
+      mainWindow?.webContents.send('offline:state-changed', this._buildStatePayload(lockReason));
+    }
+  }
+
+  /**
+   * Save the local exam snapshot synchronously.
+   * Best-effort — never throws. Called from IPC handler and heartbeat.
+   * @param {{ currentQuestionIndex: number, answers: object, frozenTimerSeconds: number }} data
+   * @param {'active'|'locked'} [lockStatus]
+   */
+  saveSnapshot(data, lockStatus) {
+    if (!examSession?.attemptId) return;
+    this._lastSnapshotData = data;
+    const status = lockStatus ?? (this.state === 'LOCKED' ? 'locked' : 'active');
+    const snapshot = {
+      attemptId:            String(examSession.attemptId),
+      studentId:            examSession.studentId ?? examSession.userId ?? null,
+      currentQuestionIndex: data.currentQuestionIndex ?? 0,
+      answers:              data.answers ?? {},
+      frozenTimerSeconds:   data.frozenTimerSeconds ?? 0,
+      lockStatus:           status,
+      savedAt:              new Date().toISOString(),
+      offlineStats: {
+        cumulativeOfflineMs:  this.cumulativeOfflineMs,
+        disconnectionCount:   this.disconnectionCount,
+        lastDisconnectAt:     this.lastDisconnectAt?.toISOString() ?? null,
+        lastReconnectAt:      this.lastReconnectAt?.toISOString()  ?? null,
+      },
+    };
+    try {
+      const snapshotPath = path.join(
+        __dirname, '..', 'sessions', `${examSession.attemptId}_offline_snapshot.json`
+      );
+      fs.writeFileSync(snapshotPath, JSON.stringify(snapshot, null, 2));
+    } catch (writeErr) {
+      // Best-effort — log to JSONL but never propagate
+      try {
+        const record = JSON.stringify({
+          type: 'SNAPSHOT_WRITE_FAILED',
+          timestamp: new Date().toISOString(),
+          sessionId: String(examSession.attemptId),
+          reason: writeErr.message,
+        });
+        const logPath = path.join(
+          __dirname, '..', 'sessions', `${examSession.attemptId}.jsonl`
+        );
+        fs.appendFileSync(logPath, record + '\n');
+      } catch (_) { /* nothing */ }
+    }
+  }
+
+  /**
+   * Delete the snapshot file after successful auto-submit.
+   * Best-effort — never throws.
+   */
+  deleteSnapshot() {
+    if (!examSession?.attemptId) return;
+    try {
+      const snapshotPath = path.join(
+        __dirname, '..', 'sessions', `${examSession.attemptId}_offline_snapshot.json`
+      );
+      if (fs.existsSync(snapshotPath)) fs.unlinkSync(snapshotPath);
+    } catch (_) { /* best-effort */ }
+  }
+
+  /**
+   * Attempt to restore a prior session from a snapshot file.
+   * Called at app startup before loading any page.
+   * Returns the snapshot object if valid and active, null otherwise.
+   * @returns {{ snapshot: object, locked: boolean } | null}
+   */
+  tryRestoreSession() {
+    // Determine attemptId from examSession (may not be set yet at startup)
+    // We scan for any existing snapshot file in sessions/
+    try {
+      const sessionsDir = path.join(__dirname, '..', 'sessions');
+      if (!fs.existsSync(sessionsDir)) return null;
+      const files = fs.readdirSync(sessionsDir)
+        .filter(f => f.endsWith('_offline_snapshot.json'));
+      if (files.length === 0) return null;
+
+      // Use the most recently modified snapshot
+      const latest = files
+        .map(f => ({ f, mtime: fs.statSync(path.join(sessionsDir, f)).mtimeMs }))
+        .sort((a, b) => b.mtime - a.mtime)[0].f;
+
+      const raw = fs.readFileSync(path.join(sessionsDir, latest), 'utf-8');
+      const snapshot = JSON.parse(raw);
+
+      if (!snapshot.attemptId) return null;
+      return { snapshot, locked: snapshot.lockStatus === 'locked' };
+    } catch (_err) {
+      process.stderr.write(`[offline] tryRestoreSession: could not read snapshot: ${_err.message}\n`);
+      return null;
+    }
+  }
+
+  /**
+   * Auto-submit all answered questions after the exam is locked and
+   * the student reconnects. Uses the existing bridge:submit-exam path.
+   * Best-effort — logs result to JSONL.
+   */
+  async _attemptAutoSubmit() {
+    if (this._autoSubmitDone) return;
+    this._autoSubmitDone = true;
+
+    try {
+      if (!this._lastSnapshotData || !examSession) return;
+
+      // Build answers array in the format expected by bridge:submit-exam
+      const answersObj = this._lastSnapshotData.answers ?? {};
+      const answers = Object.entries(answersObj).map(([questionId, choiceId]) => ({
+        questionId: Number(questionId),
+        choiceId:   typeof choiceId === 'number' ? choiceId : Number(choiceId),
+      }));
+
+      // Reuse the bridge:submit-exam IPC handler logic via a direct call
+      // to the Flask bridge using the stored session token
+      const cfg = readConfig();
+      const session = await getSavedSession();
+      const token = session?.accessToken ?? null;
+      if (!token) {
+        process.stderr.write('[offline] auto-submit: no auth token available\n');
+        return;
+      }
+
+      const response = await net.fetch(
+        `${cfg.baseUrl}/api/Exam/SubmitExam/${examSession.attemptId}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ answers }),
+        }
+      );
+
+      const logRecord = JSON.stringify({
+        type:       response.ok ? 'OFFLINE_AUTO_SUBMIT_SUCCESS' : 'OFFLINE_AUTO_SUBMIT_FAILED',
+        timestamp:  new Date().toISOString(),
+        sessionId:  String(examSession.attemptId),
+        httpStatus: response.status,
+        answeredCount: answers.length,
+      });
+      const logPath = path.join(
+        __dirname, '..', 'sessions', `${examSession.attemptId}.jsonl`
+      );
+      fs.appendFileSync(logPath, logRecord + '\n');
+
+      if (response.ok) {
+        this.deleteSnapshot();
+        // Notify renderer the submit is done
+        mainWindow?.webContents.send('offline:state-changed', {
+          state: 'SUBMITTED',
+          budgetRemainingMs: 0,
+          budgetTotalMs: this.maxOfflineMs,
+          disconnectionCount: this.disconnectionCount,
+          maxDisconnections: this.maxDisconnections,
+          answeredCount: answers.length,
+          lockReason: 'auto_submitted',
+        });
+      }
+    } catch (err) {
+      process.stderr.write(`[offline] auto-submit error: ${err.message}\n`);
+      this._autoSubmitDone = false; // allow retry on next ping
+    }
+  }
+
+  /**
+   * Append a OFFLINE_SESSION_FLAGGED record to the session JSONL log.
+   * Called when the app closes with a locked, unsubmitted session.
+   */
+  flagSessionForReview() {
+    if (!examSession?.attemptId || this._autoSubmitDone) return;
+    try {
+      const answeredCount = this._lastSnapshotData
+        ? Object.keys(this._lastSnapshotData.answers ?? {}).length
+        : 0;
+      const record = JSON.stringify({
+        type:                'OFFLINE_SESSION_FLAGGED',
+        timestamp:           new Date().toISOString(),
+        sessionId:           String(examSession.attemptId),
+        reason:              'never_reconnected',
+        cumulativeOfflineMs: this.cumulativeOfflineMs,
+        disconnectionCount:  this.disconnectionCount,
+        answeredCount,
+      });
+      const logPath = path.join(
+        __dirname, '..', 'sessions', `${examSession.attemptId}.jsonl`
+      );
+      fs.appendFileSync(logPath, record + '\n');
+    } catch (_err) {
+      // Best-effort — never propagate on quit
+    }
+  }
+}
+
+/** Singleton instance — created once; reset on exam end. */
+const offlineManager = new OfflineManager();
+
 /**
  * Enrollment state for the current exam attempt.
  * Set after a successful bridge:enroll-reference call.
@@ -769,6 +1205,7 @@ ipcMain.handle('bridge:clear-session', async () => {
   await clearAllKeytarEntries();
   sessionMemory = null;
   deactivateLockdown(); // spec 013 — release all lockdown controls on logout
+  offlineManager.stop(); // spec 014 — stop ping loop on logout
   examSession = null;
   cheatingReportId = null;
   // T029 — Unenroll face recognition embedding on logout (fire-and-forget)
@@ -776,10 +1213,16 @@ ipcMain.handle('bridge:clear-session', async () => {
   enrollmentState = null;
   return { ok: true };
 });
+/**
+ * offline:snapshot-data — Receive current exam state from the renderer
+ * and persist it to disk as a crash-recovery snapshot.
+ * Also triggered as a heartbeat response every 30 seconds.
+ * Payload: { currentQuestionIndex, answers, frozenTimerSeconds }
+ */
+ipcMain.on('offline:snapshot-data', (_event, data) => {
+  offlineManager.saveSnapshot(data, 'active');
+});
 
-// ---------------------------------------------------------------------------
-// Identity Verification IPC handlers (spec 010)
-// ---------------------------------------------------------------------------
 
 /**
  * bridge:enroll-reference — Enroll a captured reference photo for face recognition.
@@ -910,6 +1353,16 @@ ipcMain.handle('bridge:start-exam', async (_event, { quizCode }) => {
         sendAiRpc('startService', { service: 'face-detection', sessionId }),
         sendAiRpc('startService', { service: 'object-detection', sessionId }),
       ]);
+
+      // Initialise offline resilience for this session (spec 014)
+      try {
+        const cfgData = JSON.parse(fs.readFileSync(resolveConfigPath(), 'utf-8'));
+        offlineManager.init(cfgData);
+        // Write initial snapshot for crash recovery baseline
+        offlineManager.saveSnapshot({ currentQuestionIndex: 0, answers: {}, frozenTimerSeconds: 0 }, 'active');
+      } catch (_cfgErr) {
+        process.stderr.write(`[offline] init failed: ${_cfgErr.message}\n`);
+      }
 
       return { ok: true, data: examSession };
     }
@@ -1518,4 +1971,9 @@ app.on('window-all-closed', () => {
 app.on('before-quit', () => {
   bridgeState = 'stopping';
   if (pythonProcess) pythonProcess.kill();
+  // T029/T030 — flag locked sessions that never reconnected
+  if (offlineManager.state === 'LOCKED') {
+    offlineManager.flagSessionForReview();
+  }
+  offlineManager.stop();
 });
