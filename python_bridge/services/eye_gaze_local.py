@@ -32,6 +32,10 @@ class LocalEyeGazeService(AIService):
         self._last_status = None
         self._session_id = session_id
         self._process_frames_batch = None
+        # Tracks whether the current question allows looking down (writing mode).
+        # Updated by the router via set_question_mode() whenever the student
+        # navigates to a new question that carries IsAllowableToLookDown.
+        self._is_writing: bool = False
 
         # Load the bridge-local port of localMain.py.
         self._load_error: str | None = None  # FIX: store import failure for start()-time emission
@@ -43,6 +47,20 @@ class LocalEyeGazeService(AIService):
             # yet running and the callback (loop.call_soon_threadsafe) will silently
             # drop the notification. Store the message and emit it in start() instead.
             self._load_error = f"Failed to load local eye-gaze model: {exc}"
+
+    def set_question_mode(self, is_allowable_to_look_down: bool) -> None:
+        """Switch gaze-detection mode based on the current question's flag.
+
+        Call this whenever the student navigates to a new question, passing
+        the ``IsAllowableToLookDown`` value from the LMS API response.
+
+        Parameters
+        ----------
+        is_allowable_to_look_down : bool
+            ``True``  → writing mode  (looking down to write is ignored).
+            ``False`` → normal mode   (looking down is flagged quickly).
+        """
+        self._is_writing = bool(is_allowable_to_look_down)
 
     async def start(self):
         """Start the background capture and inference thread."""
@@ -111,7 +129,12 @@ class LocalEyeGazeService(AIService):
             try:
                 # localMain prints timing info; redirect to stderr so router stdout stays JSON-only.
                 with redirect_stdout(sys.stderr):
-                    results = self._process_frames_batch(self._session_id, [frame_b64], fps=max(1, int(self.fps)))
+                    results = self._process_frames_batch(
+                        self._session_id,
+                        [frame_b64],
+                        fps=max(1, int(self.fps)),
+                        is_writing=self._is_writing,
+                    )
             except Exception as exc:
                 self._emit_hardware_error(f"Eye-gaze inference error: {exc}")
                 return self.create_detection_event(0.0, {"status": "initializing"})
@@ -120,6 +143,8 @@ class LocalEyeGazeService(AIService):
             raw_flag = str(verdict.get("flag", "INITIALIZING"))
             probability = float(verdict.get("probability", 0.0))
             evidence = str(verdict.get("evidence", raw_flag))
+            suspicion = verdict.get("suspicion", {})
+            diag = verdict.get("gaze_diagnostics", {})
 
             status_map = {
                 "ON_SCREEN": "on-screen",
@@ -132,12 +157,14 @@ class LocalEyeGazeService(AIService):
             self._last_status = status
 
             return self.create_detection_event(1.0 - min(max(probability, 0.0), 1.0), {
-                "gaze_x": 0.5,
-                "gaze_y": 0.5,
+                "gaze_x": diag.get("gaze_h", 0.5),
+                "gaze_y": diag.get("gaze_v", 0.5),
                 "status": status,
                 "raw_flag": raw_flag,
                 "probability": probability,
                 "evidence": evidence,
+                "suspicion": suspicion,
+                "gaze_diagnostics": diag,
             })
 
         return self.create_detection_event(1.0, {"status": self._last_status or "initializing"})

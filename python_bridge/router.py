@@ -198,6 +198,18 @@ class AIRouter:
 
         try:
             service = self.services[service_name]
+
+            # Forward isAllowableToLookDown to the eye-gaze service so the
+            # GazeSession switches between writing/normal mode per question.
+            # DB column: IsAllowableToLookDown — handle both JSON casing variants.
+            if service_name == "eye-gaze" and hasattr(service, "set_question_mode"):
+                is_allowed = (
+                    params.get("isAllowableToLookDown")
+                    or params.get("IsAllowableToLookDown")
+                    or False
+                )
+                service.set_question_mode(bool(is_allowed))
+
             # All services should now implement an async predict method
             event = await service.predict(frame)
 
