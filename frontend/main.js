@@ -465,20 +465,20 @@ class OfflineManager {
     this.state = 'ONLINE';
 
     // Config values — populated in init()
-    this.maxOfflineMs       = 10 * 60 * 1000; // 10 min default
-    this.maxDisconnections  = 3;
-    this.pingIntervalMs     = 5_000;
+    this.maxOfflineMs = 10 * 60 * 1000; // 10 min default
+    this.maxDisconnections = 3;
+    this.pingIntervalMs = 5_000;
     this.flickerThresholdMs = 2_000;
 
     // Runtime stats
-    this.cumulativeOfflineMs  = 0;
-    this.disconnectionCount   = 0;
-    this.lastDisconnectAt     = null;
-    this.lastReconnectAt      = null;
+    this.cumulativeOfflineMs = 0;
+    this.disconnectionCount = 0;
+    this.lastDisconnectAt = null;
+    this.lastReconnectAt = null;
 
     // Interval handles
-    this._pingInterval      = null;
-    this._snapshotInterval  = null;
+    this._pingInterval = null;
+    this._snapshotInterval = null;
     this._offlineTickInterval = null;
 
     // Flicker guard
@@ -498,18 +498,18 @@ class OfflineManager {
    */
   init(cfg) {
     const or = cfg.offline_resilience ?? {};
-    this.maxOfflineMs       = (or.max_offline_minutes  ?? 10) * 60 * 1000;
-    this.maxDisconnections  =  or.max_disconnections   ?? 3;
-    this.pingIntervalMs     = (or.ping_interval_seconds ?? 5) * 1000;
+    this.maxOfflineMs = (or.max_offline_minutes ?? 10) * 60 * 1000;
+    this.maxDisconnections = or.max_disconnections ?? 3;
+    this.pingIntervalMs = (or.ping_interval_seconds ?? 5) * 1000;
     this.flickerThresholdMs = (or.flicker_threshold_seconds ?? 2) * 1000;
 
     // Reset runtime stats for fresh session
     this.cumulativeOfflineMs = 0;
-    this.disconnectionCount  = 0;
-    this.lastDisconnectAt    = null;
-    this.lastReconnectAt     = null;
-    this._autoSubmitDone     = false;
-    this._lastSnapshotData   = null;
+    this.disconnectionCount = 0;
+    this.lastDisconnectAt = null;
+    this.lastReconnectAt = null;
+    this._autoSubmitDone = false;
+    this._lastSnapshotData = null;
     this._disconnectStartTime = null;
     this.state = 'ONLINE';
 
@@ -525,10 +525,10 @@ class OfflineManager {
   restoreStats(snapshot) {
     const s = snapshot.offlineStats ?? {};
     this.cumulativeOfflineMs = s.cumulativeOfflineMs ?? 0;
-    this.disconnectionCount  = s.disconnectionCount  ?? 0;
-    this.lastDisconnectAt    = s.lastDisconnectAt    ? new Date(s.lastDisconnectAt) : null;
-    this.lastReconnectAt     = s.lastReconnectAt     ? new Date(s.lastReconnectAt) : null;
-    this._lastSnapshotData   = {
+    this.disconnectionCount = s.disconnectionCount ?? 0;
+    this.lastDisconnectAt = s.lastDisconnectAt ? new Date(s.lastDisconnectAt) : null;
+    this.lastReconnectAt = s.lastReconnectAt ? new Date(s.lastReconnectAt) : null;
+    this._lastSnapshotData = {
       currentQuestionIndex: snapshot.currentQuestionIndex ?? 0,
       answers: snapshot.answers ?? {},
       frozenTimerSeconds: snapshot.frozenTimerSeconds ?? 0,
@@ -649,17 +649,17 @@ class OfflineManager {
 
   _buildStatePayload(lockReason) {
     const elapsed = this._disconnectStartTime ? Date.now() - this._disconnectStartTime : 0;
-    const total   = this.cumulativeOfflineMs + elapsed;
+    const total = this.cumulativeOfflineMs + elapsed;
     const budgetRemainingMs = Math.max(0, this.maxOfflineMs - total);
     const answeredCount = this._lastSnapshotData
       ? Object.keys(this._lastSnapshotData.answers ?? {}).length
       : 0;
     return {
-      state:             this.state,
+      state: this.state,
       budgetRemainingMs,
-      budgetTotalMs:     this.maxOfflineMs,
+      budgetTotalMs: this.maxOfflineMs,
       disconnectionCount: this.disconnectionCount,
-      maxDisconnections:  this.maxDisconnections,
+      maxDisconnections: this.maxDisconnections,
       answeredCount,
       lockReason: lockReason ?? null,
     };
@@ -710,18 +710,18 @@ class OfflineManager {
     this._lastSnapshotData = data;
     const status = lockStatus ?? (this.state === 'LOCKED' ? 'locked' : 'active');
     const snapshot = {
-      attemptId:            String(examSession.attemptId),
-      studentId:            examSession.studentId ?? examSession.userId ?? null,
+      attemptId: String(examSession.attemptId),
+      studentId: examSession.studentId ?? examSession.userId ?? null,
       currentQuestionIndex: data.currentQuestionIndex ?? 0,
-      answers:              data.answers ?? {},
-      frozenTimerSeconds:   data.frozenTimerSeconds ?? 0,
-      lockStatus:           status,
-      savedAt:              new Date().toISOString(),
+      answers: data.answers ?? {},
+      frozenTimerSeconds: data.frozenTimerSeconds ?? 0,
+      lockStatus: status,
+      savedAt: new Date().toISOString(),
       offlineStats: {
-        cumulativeOfflineMs:  this.cumulativeOfflineMs,
-        disconnectionCount:   this.disconnectionCount,
-        lastDisconnectAt:     this.lastDisconnectAt?.toISOString() ?? null,
-        lastReconnectAt:      this.lastReconnectAt?.toISOString()  ?? null,
+        cumulativeOfflineMs: this.cumulativeOfflineMs,
+        disconnectionCount: this.disconnectionCount,
+        lastDisconnectAt: this.lastDisconnectAt?.toISOString() ?? null,
+        lastReconnectAt: this.lastReconnectAt?.toISOString() ?? null,
       },
     };
     try {
@@ -808,7 +808,7 @@ class OfflineManager {
       const answersObj = this._lastSnapshotData.answers ?? {};
       const answers = Object.entries(answersObj).map(([questionId, choiceId]) => ({
         questionId: Number(questionId),
-        choiceId:   typeof choiceId === 'number' ? choiceId : Number(choiceId),
+        choiceId: typeof choiceId === 'number' ? choiceId : Number(choiceId),
       }));
 
       // Reuse the bridge:submit-exam IPC handler logic via a direct call
@@ -831,9 +831,9 @@ class OfflineManager {
       );
 
       const logRecord = JSON.stringify({
-        type:       response.ok ? 'OFFLINE_AUTO_SUBMIT_SUCCESS' : 'OFFLINE_AUTO_SUBMIT_FAILED',
-        timestamp:  new Date().toISOString(),
-        sessionId:  String(examSession.attemptId),
+        type: response.ok ? 'OFFLINE_AUTO_SUBMIT_SUCCESS' : 'OFFLINE_AUTO_SUBMIT_FAILED',
+        timestamp: new Date().toISOString(),
+        sessionId: String(examSession.attemptId),
         httpStatus: response.status,
         answeredCount: answers.length,
       });
@@ -872,12 +872,12 @@ class OfflineManager {
         ? Object.keys(this._lastSnapshotData.answers ?? {}).length
         : 0;
       const record = JSON.stringify({
-        type:                'OFFLINE_SESSION_FLAGGED',
-        timestamp:           new Date().toISOString(),
-        sessionId:           String(examSession.attemptId),
-        reason:              'never_reconnected',
+        type: 'OFFLINE_SESSION_FLAGGED',
+        timestamp: new Date().toISOString(),
+        sessionId: String(examSession.attemptId),
+        reason: 'never_reconnected',
         cumulativeOfflineMs: this.cumulativeOfflineMs,
-        disconnectionCount:  this.disconnectionCount,
+        disconnectionCount: this.disconnectionCount,
         answeredCount,
       });
       const logPath = path.join(
@@ -979,11 +979,11 @@ function readConfig() {
 
   const ld = data.lockdown ?? {};
   const lockdownDisabled = {
-    fullscreen:        ld.disable_fullscreen         === true,
+    fullscreen: ld.disable_fullscreen === true,
     contentProtection: ld.disable_content_protection === true,
-    shortcutBlocking:  ld.disable_shortcut_blocking  === true,
-    envChecks:         ld.disable_env_checks         === true,
-    closePrevention:   ld.disable_close_prevention   === true,
+    shortcutBlocking: ld.disable_shortcut_blocking === true,
+    envChecks: ld.disable_env_checks === true,
+    closePrevention: ld.disable_close_prevention === true,
   };
   return { baseUrl: baseUrl.trim().replace(/\/$/, ''), pythonPort, lockdownDisabled };
 }
@@ -1052,12 +1052,12 @@ async function storeSession(data, remember) {
 
   // Persist to OS keychain
   const entries = {
-    'access-token':   data.token,
-    'refresh-token':  data.refreshToken,
-    'token-expiry':   tokenExpiry,
+    'access-token': data.token,
+    'refresh-token': data.refreshToken,
+    'token-expiry': tokenExpiry,
     'refresh-expiry': data.refreshTokenExpiration,
-    'user-profile':   userProfile,
-    'remember-flag':  '1',
+    'user-profile': userProfile,
+    'remember-flag': '1',
   };
 
   for (const [key, value] of Object.entries(entries)) {
@@ -1092,10 +1092,10 @@ async function getSavedSession() {
       return null;
     }
 
-    const accessToken   = await keytar.getPassword(KEYTAR_SERVICE, 'access-token');
-    const refreshToken  = await keytar.getPassword(KEYTAR_SERVICE, 'refresh-token');
-    const tokenExpiry   = await keytar.getPassword(KEYTAR_SERVICE, 'token-expiry');
-    const profileRaw    = await keytar.getPassword(KEYTAR_SERVICE, 'user-profile');
+    const accessToken = await keytar.getPassword(KEYTAR_SERVICE, 'access-token');
+    const refreshToken = await keytar.getPassword(KEYTAR_SERVICE, 'refresh-token');
+    const tokenExpiry = await keytar.getPassword(KEYTAR_SERVICE, 'token-expiry');
+    const profileRaw = await keytar.getPassword(KEYTAR_SERVICE, 'user-profile');
 
     if (!accessToken || !refreshToken || !tokenExpiry || !profileRaw) {
       await clearAllKeytarEntries();
@@ -1219,7 +1219,7 @@ ipcMain.handle('bridge:clear-session', async () => {
   examSession = null;
   cheatingReportId = null;
   // T029 — Unenroll face recognition embedding on logout (fire-and-forget)
-  sendAiRpc('unenrollReference', { sessionId: enrollmentState?.sessionId }).catch(() => {});
+  sendAiRpc('unenrollReference', { sessionId: enrollmentState?.sessionId }).catch(() => { });
   enrollmentState = null;
   return { ok: true };
 });
@@ -1451,11 +1451,11 @@ ipcMain.handle('bridge:submit-exam', async (_event, { answers }) => {
       // Stop local AI services (eye-gaze, speech-detection) so they do not
       // continue monitoring after the student has submitted the exam.
       // Fire-and-forget — never block the submit response.
-      sendAiRpc('stopService', { service: 'eye-gaze' }).catch(() => {});
-      sendAiRpc('stopService', { service: 'speech-detection' }).catch(() => {});
+      sendAiRpc('stopService', { service: 'eye-gaze' }).catch(() => { });
+      sendAiRpc('stopService', { service: 'speech-detection' }).catch(() => { });
 
       // Capture session metadata BEFORE clearing examSession
-      const submitSessionId     = examSession?.attemptId ? String(examSession.attemptId) : null;
+      const submitSessionId = examSession?.attemptId ? String(examSession.attemptId) : null;
       const submitTotalQuestions = examSession?.questions?.length ?? 0;
       // Filter out any undefined/null ids so the estimator receives only real LMS IDs.
       // If no valid ids can be found, warn loudly — the estimator will fall back to
@@ -1477,17 +1477,17 @@ ipcMain.handle('bridge:submit-exam', async (_event, { answers }) => {
       // Runs risk_estimator.py immediately after submit so the JSONL log is
       // complete and the report is available before the student sees the result.
       try {
-        const sessionId       = submitSessionId;
-        const totalQuestions  = submitTotalQuestions;
+        const sessionId = submitSessionId;
+        const totalQuestions = submitTotalQuestions;
 
         if (sessionId && totalQuestions > 0) {
-          const projectRoot    = path.join(__dirname, '..');
-          const logPath        = path.join(projectRoot, 'sessions', `${sessionId}.jsonl`);
-          const estimatorPath  = path.join(projectRoot, 'python_bridge', 'risk_estimator.py');
-          const venvPython     = process.platform === 'win32'
+          const projectRoot = path.join(__dirname, '..');
+          const logPath = path.join(projectRoot, 'sessions', `${sessionId}.jsonl`);
+          const estimatorPath = path.join(projectRoot, 'python_bridge', 'risk_estimator.py');
+          const venvPython = process.platform === 'win32'
             ? path.join(projectRoot, '.venv', 'Scripts', 'python.exe')
             : path.join(projectRoot, '.venv', 'bin', 'python');
-          const pythonExe      = fs.existsSync(venvPython) ? venvPython : 'python';
+          const pythonExe = fs.existsSync(venvPython) ? venvPython : 'python';
 
           let studentIdToUse = sessionId;
           try {
@@ -1495,16 +1495,15 @@ ipcMain.handle('bridge:submit-exam', async (_event, { answers }) => {
             if (sessionToUse?.userProfile?.id) {
               studentIdToUse = String(sessionToUse.userProfile.id);
             }
-          } catch(e) {}
+          } catch (e) { }
 
           if (fs.existsSync(logPath)) {
             const args = [
               estimatorPath,
               logPath,
-              '--by-question',                       // always request per-question mode explicitly
               '--total-questions', String(totalQuestions),
-              '--student-id',      studentIdToUse,
-              '--exam-id',         sessionId,
+              '--student-id', studentIdToUse,
+              '--exam-id', sessionId,
             ];
             if (questionIds) {
               args.push('--question-ids', questionIds);
@@ -1521,8 +1520,8 @@ ipcMain.handle('bridge:submit-exam', async (_event, { answers }) => {
 
                 // ── POST question report to LMS /api/risk-analysis ────────────
                 try {
-                  const outDir        = path.join(projectRoot, 'sessions');
-                  const reportPath    = path.join(outDir, `${sessionId}_question_report.json`);
+                  const outDir = path.join(projectRoot, 'sessions');
+                  const reportPath = path.join(outDir, `${sessionId}_question_report.json`);
 
                   if (!fs.existsSync(reportPath)) {
                     process.stderr.write(`[risk-analysis] report file not found, skipping POST: ${reportPath}\n`);
@@ -1541,16 +1540,16 @@ ipcMain.handle('bridge:submit-exam', async (_event, { answers }) => {
                     return;
                   }
 
-                  const endpoint  = `${baseUrl}/api/risk-analysis`;
-                  const delays    = [1000, 3000, 9000]; // exponential back-off for 5xx
-                  let lastStatus  = null;
+                  const endpoint = `${baseUrl}/api/risk-analysis`;
+                  const delays = [1000, 3000, 9000]; // exponential back-off for 5xx
+                  let lastStatus = null;
 
                   for (let attempt = 0; attempt <= delays.length; attempt++) {
                     try {
                       const riskRes = await net.fetch(endpoint, {
-                        method:  'POST',
+                        method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body:    JSON.stringify(reportPayload),
+                        body: JSON.stringify(reportPayload),
                         // Electron net.fetch does not support a timeout option directly;
                         // 10-second guard via AbortSignal is handled by the OS stack.
                       });
@@ -1620,7 +1619,7 @@ ipcMain.handle('bridge:submit-exam', async (_event, { answers }) => {
       // ── End report generation ──────────────────────────────────────────────
 
       // T027 — Unenroll face recognition embedding on exam submit (fire-and-forget)
-      sendAiRpc('unenrollReference', { sessionId: enrollmentState?.sessionId }).catch(() => {});
+      sendAiRpc('unenrollReference', { sessionId: enrollmentState?.sessionId }).catch(() => { });
       enrollmentState = null;
       return { ok: true, data: submitResult };
     }
@@ -1727,7 +1726,7 @@ ipcMain.handle('bridge:get-result', async () => {
 ipcMain.handle('bridge:clear-submit-result', async () => {
   submitResult = null;
   // T028 — Unenroll face recognition embedding on back-to-home (fire-and-forget)
-  sendAiRpc('unenrollReference', { sessionId: enrollmentState?.sessionId }).catch(() => {});
+  sendAiRpc('unenrollReference', { sessionId: enrollmentState?.sessionId }).catch(() => { });
   enrollmentState = null;
   deactivateLockdown(); // spec 013 — release all lockdown controls on back-to-home
   examSession = null;
@@ -1870,7 +1869,7 @@ function pollBridgeReady(url, retries = 20, intervalMs = 500) {
           resolve(false);
         }
         // Drain the response body to avoid hanging connections
-        response.on('data', () => {});
+        response.on('data', () => { });
       });
 
       request.on('error', () => {

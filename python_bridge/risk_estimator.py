@@ -402,15 +402,19 @@ def build_question_report(
 
     questions_list = []
     for q_key, service_counts in questions.items():
+        # Resolve the LMS question ID from the dict key
         if q_key.startswith("question_"):
             try:
-                service_counts["question_id"] = int(q_key.split("_")[1])
+                qid = int(q_key.split("_")[1])
             except ValueError:
-                service_counts["question_id"] = q_key.split("_", 1)[1]
+                qid = q_key.split("_", 1)[1]
         else:
-            service_counts["question_id"] = q_key
-        questions_list.append(service_counts)
-        
+            qid = q_key
+        # Build an ordered dict so question_id appears first (matches API schema)
+        ordered = {"question_id": qid}
+        ordered.update(service_counts)
+        questions_list.append(ordered)
+
     breakdown["questions"] = questions_list
 
     return {
@@ -429,7 +433,10 @@ def build_question_report(
             "violation_rate":     violation_rate,
             "weights_used":       weights,
         },
-        **breakdown,
+        # Extract only the questions list — NOT the whole breakdown dict.
+        # Spreading **breakdown would also leak 'total_questions' as a
+        # top-level key, which the LMS schema does not accept.
+        "questions": breakdown["questions"],
     }
 
 
@@ -510,11 +517,8 @@ def _parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     parser.add_argument("--wb", type=float, default=1.0, help="Weight for forbidden objects (default 1.0).")
 
     # ── Per-question mode ─────────────────────────────────────────────────
-    parser.add_argument(
-        "--by-question",
-        action="store_true",
-        help="Generate a per-question anomaly breakdown instead of a whole-session risk score.",
-    )
+    # NOTE: per-question is the only mode — --by-question was removed because
+    # main() always calls build_question_report(). The flag no longer exists.
     parser.add_argument(
         "--total-questions",
         type=int,
