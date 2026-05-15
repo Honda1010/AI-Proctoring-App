@@ -1448,10 +1448,28 @@ ipcMain.handle('bridge:submit-exam', async (_event, { answers }) => {
       submitResult = body;
       deactivateLockdown(); // spec 013 — release all lockdown controls on submit
 
+      // Stop local AI services (eye-gaze, speech-detection) so they do not
+      // continue monitoring after the student has submitted the exam.
+      // Fire-and-forget — never block the submit response.
+      sendAiRpc('stopService', { service: 'eye-gaze' }).catch(() => {});
+      sendAiRpc('stopService', { service: 'speech-detection' }).catch(() => {});
+
       // Capture session metadata BEFORE clearing examSession
       const submitSessionId     = examSession?.attemptId ? String(examSession.attemptId) : null;
       const submitTotalQuestions = examSession?.questions?.length ?? 0;
-      const questionIds          = (examSession?.questions ?? []).map(q => q.id).join(',');
+      // Filter out any undefined/null ids so the estimator receives only real LMS IDs.
+      // If no valid ids can be found, warn loudly — the estimator will fall back to
+      // sequential indices (1, 2, 3 …) which causes incorrect cohort grouping on the backend.
+      const rawQuestionIds = (examSession?.questions ?? [])
+        .map(q => q.id)
+        .filter(id => id != null && id !== '');
+      if (rawQuestionIds.length === 0 && (examSession?.questions?.length ?? 0) > 0) {
+        process.stderr.write(
+          '[report] WARNING: examSession.questions is present but no valid .id fields found — ' +
+          'estimator will use sequential indices. Cohort grouping on the LMS will be incorrect.\n'
+        );
+      }
+      const questionIds = rawQuestionIds.join(',');
       examSession = null;   // spec 013 — clear exam session so window can close normally
       cheatingReportId = null;
 
@@ -1483,6 +1501,7 @@ ipcMain.handle('bridge:submit-exam', async (_event, { answers }) => {
             const args = [
               estimatorPath,
               logPath,
+              '--by-question',                       // always request per-question mode explicitly
               '--total-questions', String(totalQuestions),
               '--student-id',      studentIdToUse,
               '--exam-id',         sessionId,
@@ -1496,9 +1515,96 @@ ipcMain.handle('bridge:submit-exam', async (_event, { answers }) => {
             reportProc.stderr.on('data', (chunk) => {
               process.stderr.write(`[report] ${chunk}`);
             });
-            reportProc.on('close', (code) => {
+            reportProc.on('close', async (code) => {
               if (code === 0) {
                 process.stderr.write(`[report] question report generated for session ${sessionId}\n`);
+
+                // ── POST question report to LMS /api/risk-analysis ────────────
+                try {
+                  const outDir        = path.join(projectRoot, 'sessions');
+                  const reportPath    = path.join(outDir, `${sessionId}_question_report.json`);
+
+                  if (!fs.existsSync(reportPath)) {
+                    process.stderr.write(`[risk-analysis] report file not found, skipping POST: ${reportPath}\n`);
+                    return;
+                  }
+
+                  const reportPayload = JSON.parse(fs.readFileSync(reportPath, 'utf-8'));
+
+                  // Read baseUrl from config.json (already validated at startup)
+                  let baseUrl = '';
+                  try {
+                    const cfg = readConfig();
+                    baseUrl = cfg.baseUrl;
+                  } catch (cfgErr) {
+                    process.stderr.write(`[risk-analysis] could not read baseUrl: ${cfgErr.message}\n`);
+                    return;
+                  }
+
+                  const endpoint  = `${baseUrl}/api/risk-analysis`;
+                  const delays    = [1000, 3000, 9000]; // exponential back-off for 5xx
+                  let lastStatus  = null;
+
+                  for (let attempt = 0; attempt <= delays.length; attempt++) {
+                    try {
+                      const riskRes = await net.fetch(endpoint, {
+                        method:  'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body:    JSON.stringify(reportPayload),
+                        // Electron net.fetch does not support a timeout option directly;
+                        // 10-second guard via AbortSignal is handled by the OS stack.
+                      });
+
+                      lastStatus = riskRes.status;
+
+                      if (riskRes.status === 202) {
+                        const ack = await riskRes.json().catch(() => ({}));
+                        process.stderr.write(
+                          `[risk-analysis] 202 Accepted — risk job enqueued for attemptId=${ack.attemptId ?? sessionId}\n`
+                        );
+                        return; // success — no further retries needed
+                      }
+
+                      if (riskRes.status === 400) {
+                        const body = await riskRes.json().catch(() => ({}));
+                        process.stderr.write(
+                          `[risk-analysis] 400 Bad Request — ${body.message ?? 'check Attempt_Id format'}. Not retrying.\n`
+                        );
+                        return; // payload error — retrying won't help
+                      }
+
+                      if (riskRes.status === 404) {
+                        const body = await riskRes.json().catch(() => ({}));
+                        process.stderr.write(
+                          `[risk-analysis] 404 Not Found — ${body.message ?? 'no CheatingReport for this attempt'}. Not retrying.\n`
+                        );
+                        return; // missing CheatingReport — retrying won't help
+                      }
+
+                      // 5xx or unexpected — retry with back-off
+                      process.stderr.write(
+                        `[risk-analysis] HTTP ${riskRes.status} on attempt ${attempt + 1}/${delays.length + 1} for session ${sessionId}\n`
+                      );
+                    } catch (fetchErr) {
+                      process.stderr.write(
+                        `[risk-analysis] fetch error on attempt ${attempt + 1}: ${fetchErr.message}\n`
+                      );
+                    }
+
+                    // Wait before next retry (skip delay after last attempt)
+                    if (attempt < delays.length) {
+                      await new Promise(resolve => setTimeout(resolve, delays[attempt]));
+                    }
+                  }
+
+                  process.stderr.write(
+                    `[risk-analysis] all retries exhausted (last status=${lastStatus}) for session ${sessionId}\n`
+                  );
+                } catch (postErr) {
+                  process.stderr.write(`[risk-analysis] unexpected error: ${postErr.message}\n`);
+                }
+                // ── End risk-analysis POST ────────────────────────────────────
+
               } else {
                 process.stderr.write(`[report] risk_estimator exited with code ${code} for session ${sessionId}\n`);
               }

@@ -681,8 +681,24 @@ function startAiStreaming() {
     try {
       aiContext.drawImage(video, 0, 0, aiCanvas.width, aiCanvas.height);
       const frame = aiCanvas.toDataURL('image/jpeg', 0.6);
-      const questionId = examSession?.questions?.[currentIndex]?.id ?? null;
-      window.bridge.aiRpc('predict', { service: 'eye-gaze', frame, questionId }).catch(() => { });
+      const currentQuestion = examSession?.questions?.[currentIndex];
+      const questionId = currentQuestion?.id ?? null;
+      // DB column: IsAllowableToLookDown — API sends PascalCase (C# default).
+      const isAllowableToLookDown = currentQuestion?.IsAllowableToLookDown
+                                 ?? currentQuestion?.isAllowableToLookDown
+                                 ?? false;
+
+      // ── DEBUG: log question object once per unique question ─────────────
+      if (!window._gazeDebugQuestions) window._gazeDebugQuestions = new Set();
+      if (questionId !== null && !window._gazeDebugQuestions.has(questionId)) {
+        window._gazeDebugQuestions.add(questionId);
+        console.log(`[gaze-debug] Q${questionId} keys:`, currentQuestion ? Object.keys(currentQuestion) : 'null');
+        console.log(`[gaze-debug] Q${questionId} IsAllowableToLookDown:`, currentQuestion?.IsAllowableToLookDown);
+        console.log(`[gaze-debug] Q${questionId} resolved isAllowableToLookDown:`, isAllowableToLookDown);
+      }
+      // ── END DEBUG ────────────────────────────────────────────────────────
+
+      window.bridge.aiRpc('predict', { service: 'eye-gaze', frame, questionId, isAllowableToLookDown }).catch(() => { });
     } catch {
       // Eye-gaze may be disabled; ignore polling errors.
     }
