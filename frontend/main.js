@@ -671,13 +671,23 @@ class OfflineManager {
 
     if (prev === 'ONLINE' && newState === 'OFFLINE') {
       // Exit fullscreen, pause proctoring
-      mainWindow?.setFullScreen(false);
+      if (!lockdownDisabled.fullscreen) {
+        mainWindow?.setKiosk(false);
+        mainWindow?.setFullScreen(false);
+        mainWindow?.setAlwaysOnTop(false);
+        mainWindow?.setMinimizable(true);
+      }
       mainWindow?.webContents.send('proctoring:pause');
       // Navigate renderer to offline page
       mainWindow?.webContents.send('offline:state-changed', this._buildStatePayload(null));
     } else if (prev === 'OFFLINE' && newState === 'ONLINE') {
       // Resume fullscreen and proctoring
-      mainWindow?.setFullScreen(true);
+      if (!lockdownDisabled.fullscreen) {
+        mainWindow?.setFullScreen(true);
+        mainWindow?.setKiosk(true);
+        mainWindow?.setAlwaysOnTop(true);
+        mainWindow?.setMinimizable(false);
+      }
       mainWindow?.webContents.send('proctoring:resume');
       mainWindow?.webContents.send('offline:state-changed', this._buildStatePayload(null));
     } else if (newState === 'LOCKED') {
@@ -1850,7 +1860,11 @@ app.whenReady().then(async () => {
 
   // ── Lockdown: re-enter fullscreen on OS-forced exit (T009) ─────────────────
   mainWindow.on('leave-full-screen', () => {
-    if (examSession && !lockdownDisabled.fullscreen) {
+    // Do NOT re-enter fullscreen while the student is disconnected (spec 014).
+    // The offline transition intentionally exits fullscreen so the student is
+    // not trapped; fighting it back on would lock them out of the OS entirely.
+    const offlineActive = offlineManager.state === 'OFFLINE' || offlineManager.state === 'LOCKED';
+    if (examSession && !lockdownDisabled.fullscreen && !offlineActive) {
       mainWindow.setFullScreen(true); // single best-effort attempt, no retry loop
       appendLockdownAlert('FULLSCREEN_ESCAPE_ATTEMPT', 'fullscreen exit detected');
     }

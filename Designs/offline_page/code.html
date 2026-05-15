@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lumina AI - Connection Lost</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed": "#ffdcbf",
+                    "surface-bright": "#f8f9fa",
+                    "primary": "#006687",
+                    "surface-container-lowest": "#ffffff",
+                    "outline": "#6e797f",
+                    "on-surface-variant": "#3e484e",
+                    "primary-container": "#41b3e3",
+                    "on-secondary-fixed-variant": "#254776",
+                    "on-background": "#191c1d",
+                    "error-container": "#ffdad6",
+                    "secondary-fixed": "#d5e3ff",
+                    "tertiary-fixed-dim": "#ffb873",
+                    "primary-fixed-dim": "#73d1ff",
+                    "surface": "#f8f9fa",
+                    "on-tertiary-fixed": "#2d1600",
+                    "on-secondary": "#ffffff",
+                    "background": "#f8f9fa",
+                    "on-tertiary-container": "#5c3300",
+                    "on-error-container": "#93000a",
+                    "tertiary": "#8c5000",
+                    "on-primary-fixed": "#001e2b",
+                    "on-secondary-fixed": "#001b3c",
+                    "secondary": "#3e5f90",
+                    "inverse-on-surface": "#f0f1f2",
+                    "on-tertiary": "#ffffff",
+                    "secondary-container": "#a7c8ff",
+                    "error": "#ba1a1a",
+                    "on-primary-container": "#004259",
+                    "surface-container-high": "#e7e8e9",
+                    "outline-variant": "#bdc8cf",
+                    "secondary-fixed-dim": "#a7c8ff",
+                    "surface-container": "#edeeef",
+                    "on-tertiary-fixed-variant": "#6a3b00",
+                    "surface-container-low": "#f3f4f5",
+                    "surface-tint": "#006687",
+                    "surface-container-highest": "#e1e3e4",
+                    "on-secondary-container": "#325383",
+                    "on-primary-fixed-variant": "#004d67",
+                    "inverse-primary": "#73d1ff",
+                    "surface-variant": "#e1e3e4",
+                    "on-surface": "#191c1d",
+                    "inverse-surface": "#2e3132",
+                    "surface-dim": "#d9dadb",
+                    "on-error": "#ffffff",
+                    "primary-fixed": "#c1e8ff",
+                    "tertiary-container": "#e8953c"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.5rem",
+                    "lg": "0.5rem",
+                    "xl": "1.5rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "display": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(189, 200, 207, 0.15);
+        }
+        .main-gradient {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e7e8e9 100%);
+        }
+    </style>
+</head>
+<body class="main-gradient min-h-screen flex flex-col font-body text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top Navigation Bar -->
+<header class="bg-surface top-0 z-50 flex justify-between items-center w-full px-6 py-4 max-w-full">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 1;">security</span>
+<span class="font-headline font-bold text-primary text-xl tracking-tight">Lumina AI Proctoring System</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-2 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200 cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">help</span>
+<span class="text-label-md font-medium">Support</span>
+</button>
+<div class="h-8 w-[1px] bg-outline-variant opacity-20"></div>
+<div class="flex items-center gap-2 px-3 py-2 rounded-lg text-on-surface-variant">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="text-label-md font-semibold">Student ID: 88421</span>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-grow flex items-center justify-center p-6">
+<div class="max-w-2xl w-full">
+<!-- Central Alert Card -->
+<div class="glass-panel rounded-xl shadow-2xl p-12 text-center relative overflow-hidden">
+<!-- Background visual element for depth -->
+<div class="absolute -top-24 -right-24 w-64 h-64 bg-primary-container/10 rounded-full blur-3xl"></div>
+<div class="absolute -bottom-24 -left-24 w-64 h-64 bg-tertiary-container/5 rounded-full blur-3xl"></div>
+<div class="relative z-10 flex flex-col items-center">
+<!-- Warning Icon -->
+<div class="mb-8 p-4 bg-primary-container/10 rounded-full inline-flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-6xl" style="font-variation-settings: 'FILL' 0;">signal_disconnected</span>
+</div>
+<!-- Main Text -->
+<h1 class="font-headline text-3xl font-extrabold text-on-surface mb-4 tracking-tight">Connection Lost</h1>
+<p class="text-on-surface-variant text-lg max-w-md mx-auto mb-10 leading-relaxed">
+                        Your exam has been paused. Please reconnect to your internet network to continue.
+                    </p>
+<!-- Stats Row: Bento Grid Style -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full mb-12">
+<!-- Time to Reconnect -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm transition-all hover:shadow-md">
+<span class="text-label-md font-bold uppercase tracking-wider text-on-surface-variant block mb-3">Time Remaining</span>
+<div class="text-2xl font-headline font-extrabold text-primary">08:48</div>
+</div>
+<!-- Questions Answered -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm transition-all hover:shadow-md">
+<span class="text-label-md font-bold uppercase tracking-wider text-on-surface-variant block mb-3">Answered</span>
+<div class="text-2xl font-headline font-extrabold text-on-surface">24/50</div>
+</div>
+<!-- Disconnections -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm transition-all hover:shadow-md">
+<span class="text-label-md font-bold uppercase tracking-wider text-on-surface-variant block mb-3">Attempts</span>
+<div class="text-2xl font-headline font-extrabold text-tertiary">1/3</div>
+</div>
+</div>
+<!-- Footer Note -->
+<div class="flex flex-col items-center gap-6">
+<div class="flex items-center gap-3 bg-surface-container-low px-4 py-2 rounded-full">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">cloud_done</span>
+<span class="text-label-md text-on-surface-variant font-medium">Your progress is saved locally and will not be lost.</span>
+</div>
+<!-- Pulse Loader for reconnection attempts -->
+<div class="flex flex-col items-center gap-3 mt-4">
+<div class="relative flex h-3 w-3">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+</div>
+<span class="text-label-md font-bold text-primary uppercase tracking-widest">Searching for connection...</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Contextual Help / Status -->
+<div class="mt-12 flex justify-center gap-8">
+<div class="flex items-center gap-2 text-on-surface-variant/60">
+<span class="material-symbols-outlined text-lg">router</span>
+<span class="text-label-md">Check Router</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant/60">
+<span class="material-symbols-outlined text-lg">wifi_tethering</span>
+<span class="text-label-md">Check Hotspot</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant/60">
+<span class="material-symbols-outlined text-lg">verified_user</span>
+<span class="text-label-md">AI Secure Mode</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Visual Background Enhancements -->
+<div class="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none opacity-40">
+<div class="absolute top-[10%] left-[5%] w-96 h-96 bg-primary-container/20 rounded-full blur-[120px]"></div>
+<div class="absolute bottom-[10%] right-[5%] w-96 h-96 bg-secondary-container/20 rounded-full blur-[120px]"></div>
+</div>
+<!-- Footer Copyright -->
+<footer class="p-8 text-center text-on-surface-variant/40 text-label-md">
+        © 2024 Lumina AI Education Technologies. All rights reserved.
+    </footer>
+</body></html>

@@ -1,0 +1,204 @@
+{
+  "report_metadata": {
+    "generated_at": "2026-05-15T22:53:15.056118+00:00",
+    "student_id": "8041cde6-4e1c-487a-8481-3bf9aada7ab5",
+    "Attempt_Id": "3087",
+    "mode": "per_question",
+    "normalisation": "pending — apply min-max across exam cohort"
+  },
+  "session_summary": {
+    "total_questions": 20,
+    "questions_violated": 1,
+    "questions_clean": 19,
+    "violation_rate": 0.05,
+    "weights_used": {
+      "face_absence_mismatch": 1.0,
+      "suspicious_movement": 1.0,
+      "conversation_noise": 1.0,
+      "forbidden_objects": 1.0
+    }
+  },
+  "total_questions": 20,
+  "questions": [
+    {
+      "face_detection": 0,
+      "face_recognition": 1,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 16,
+      "violation_total": 17,
+      "question_id": 1
+    },
+    {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "question_id": 2
+    },
+    {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "question_id": 3
+    },
+    {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "question_id": 4
+    },
+    {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "question_id": 5
+    },
+    {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "question_id": 6
+    },
+    {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "question_id": 7
+    },
+    {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "question_id": 8
+    },
+    {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "question_id": 9
+    },
+    {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "question_id": 10
+    },
+    {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "question_id": 11
+    },
+    {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "question_id": 12
+    },
+    {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "question_id": 13
+    },
+    {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "question_id": 14
+    },
+    {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "question_id": 15
+    },
+    {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "question_id": 16
+    },
+    {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "question_id": 17
+    },
+    {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "question_id": 18
+    },
+    {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "question_id": 19
+    },
+    {
+      "face_detection": 0,
+      "face_recognition": 0,
+      "eye_gaze": 0,
+      "speech_detection": 0,
+      "object_detection": 0,
+      "violation_total": 0,
+      "question_id": 20
+    }
+  ]
+}
