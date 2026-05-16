@@ -181,6 +181,8 @@ class AIRouter:
             await self.handle_unenroll_reference(request_id, params)
         elif method == "upload_clip":
             await self.handle_upload_clip(request_id, params)
+        elif method == "recalibrate":
+            await self.handle_recalibrate(request_id, params)
         else:
             self.send_error(request_id, -32601, "Method not found")
 
@@ -198,6 +200,18 @@ class AIRouter:
 
         try:
             service = self.services[service_name]
+
+            # Forward isAllowableToLookDown to the eye-gaze service so the
+            # GazeSession switches between writing/normal mode per question.
+            # DB column: IsAllowableToLookDown — handle both JSON casing variants.
+            if service_name == "eye-gaze" and hasattr(service, "set_question_mode"):
+                is_allowed = (
+                    params.get("isAllowableToLookDown")
+                    or params.get("IsAllowableToLookDown")
+                    or False
+                )
+                service.set_question_mode(bool(is_allowed))
+
             # All services should now implement an async predict method
             event = await service.predict(frame)
 
@@ -430,6 +444,23 @@ class AIRouter:
             self.send_error(request_id, -32603, f"ClipUploadService config error: {str(e)}")
         except Exception as e:
             self.send_error(request_id, -32603, f"upload_clip internal error: {str(e)}")
+
+    async def handle_recalibrate(self, request_id: Any, params: Dict[str, Any]):
+        """Handle the recalibrate JSON-RPC method.
+
+        Resets the eye-gaze calibration state so the student can retry
+        without restarting the entire service.
+        """
+        service = self.services.get("eye-gaze")
+        if service is None:
+            self.send_error(request_id, -32602, "Eye-gaze service not running")
+            return
+
+        try:
+            result = await service.recalibrate()
+            self.send_result(request_id, result)
+        except Exception as e:
+            self.send_error(request_id, -32603, f"Recalibration error: {str(e)}")
 
     def send_result(self, request_id: Any, result: Any):
         response = {

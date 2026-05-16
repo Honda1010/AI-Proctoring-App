@@ -12,13 +12,17 @@ let speechTimer = null;
 let statusTimer = null;
 let eyeReady = false;
 let speechReady = false;
+let eyeCalibrationFailed = false;
 let inFlight = false;
+let recalibrating = false;
 let unsubscribeAi = null;
 
 const eyeStatusEl = document.getElementById('eyeStatus');
 const speechStatusEl = document.getElementById('speechStatus');
 const hintTextEl = document.getElementById('hintText');
+const calibrationFailHintEl = document.getElementById('calibrationFailHint');
 const continueBtn = document.getElementById('continueBtn');
+const recalibrateBtn = document.getElementById('recalibrateBtn');
 const webcamFeed = document.getElementById('webcamFeed');
 const cameraUnavailable = document.getElementById('cameraUnavailable');
 
@@ -33,6 +37,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.location.href = '../exam-instructions/index.html';
   });
 
+  recalibrateBtn.addEventListener('click', handleRecalibrate);
+
   unsubscribeAi = window.bridge.onAiEvent((event) => {
     const data = event?.params || event;
     const msgType = event?.type || event?.method;
@@ -43,7 +49,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // stayed on 'Calibrating' forever.
     if (msgType === 'serviceError' && data?.service === 'eye-gaze') {
       eyeReady = false;
+      eyeCalibrationFailed = false;
       setPill(eyeStatusEl, 'error', 'Unavailable');
+      showCalibrationFailure(false);
       updateGate();
       return;
     }
@@ -52,9 +60,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (data?.service !== 'eye-gaze') return;
 
     const status = data?.payload?.status || 'initializing';
-    if (status !== 'initializing') {
+
+    if (status === 'calibration-failed') {
+      eyeReady = false;
+      eyeCalibrationFailed = true;
+      setPill(eyeStatusEl, 'failed', 'Calibration Failed');
+      showCalibrationFailure(true);
+    } else if (status !== 'initializing') {
       eyeReady = true;
+      eyeCalibrationFailed = false;
       setPill(eyeStatusEl, 'ready', 'Ready');
+      showCalibrationFailure(false);
     } else {
       setPill(eyeStatusEl, 'pending', 'Calibrating');
     }
@@ -106,17 +122,56 @@ function stopReadinessLoops() {
 }
 
 async function runEyeCalibrationTick() {
-  if (inFlight || !ctx || !webcamFeed || webcamFeed.readyState < 2) return;
+  // Don't send frames while calibration has failed — wait for recalibration
+  if (inFlight || eyeCalibrationFailed || !ctx || !webcamFeed || webcamFeed.readyState < 2) return;
   inFlight = true;
   try {
     ctx.drawImage(webcamFeed, 0, 0, canvas.width, canvas.height);
     const frame = canvas.toDataURL('image/jpeg', 0.6);
     await window.bridge.aiRpc('predict', { service: 'eye-gaze', frame }, { timeoutMs: 5000 });
   } catch {
-    setPill(eyeStatusEl, 'pending', 'Calibrating');
+    if (!eyeCalibrationFailed) {
+      setPill(eyeStatusEl, 'pending', 'Calibrating');
+    }
   } finally {
     inFlight = false;
     updateGate();
+  }
+}
+
+async function handleRecalibrate() {
+  if (recalibrating) return;
+  recalibrating = true;
+  recalibrateBtn.disabled = true;
+  recalibrateBtn.textContent = 'Recalibrating...';
+
+  try {
+    const res = await window.bridge.aiRpc('recalibrate', {}, { timeoutMs: 5000 });
+    if (res?.ok !== false) {
+      // Reset UI to calibrating state
+      eyeCalibrationFailed = false;
+      eyeReady = false;
+      setPill(eyeStatusEl, 'pending', 'Calibrating');
+      showCalibrationFailure(false);
+    }
+  } catch {
+    // If RPC fails, keep the failure state — user can try again
+  } finally {
+    recalibrating = false;
+    recalibrateBtn.disabled = false;
+    recalibrateBtn.textContent = 'Recalibrate';
+    updateGate();
+  }
+}
+
+function showCalibrationFailure(show) {
+  if (show) {
+    calibrationFailHintEl.classList.remove('hidden');
+    recalibrateBtn.classList.remove('hidden');
+    hintTextEl.textContent = 'Eye gaze calibration failed. Please recalibrate to continue.';
+  } else {
+    calibrationFailHintEl.classList.add('hidden');
+    recalibrateBtn.classList.add('hidden');
   }
 }
 
@@ -163,7 +218,7 @@ async function syncStatusTick() {
       // a previous detection event may have already completed calibration and set
       // it. The status poll only fires every 1 s, so clobbering 'ready' would
       // cause a 1-second flicker even when calibration succeeded.
-      if (!eyeReady) {
+      if (!eyeReady && !eyeCalibrationFailed) {
         const label = eyeStatus === 'unavailable' ? 'Unavailable' : 'Not Running';
         setPill(eyeStatusEl, 'error', label);
       }
@@ -186,9 +241,14 @@ async function syncStatusTick() {
 function updateGate() {
   const allReady = eyeReady && speechReady;
   continueBtn.disabled = !allReady;
-  hintTextEl.textContent = allReady
-    ? 'All checks complete. You can continue to the exam.'
-    : 'Preparing models. Keep looking at the screen for eye calibration.';
+
+  if (eyeCalibrationFailed) {
+    hintTextEl.textContent = 'Eye gaze calibration failed. Please recalibrate to continue.';
+  } else if (allReady) {
+    hintTextEl.textContent = 'All checks complete. You can continue to the exam.';
+  } else {
+    hintTextEl.textContent = 'Preparing models. Keep looking at the screen for eye calibration.';
+  }
 }
 
 function setPill(el, kind, text) {

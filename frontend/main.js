@@ -985,10 +985,28 @@ ipcMain.handle('bridge:submit-exam', async (_event, { answers }) => {
       submitResult = body;
       deactivateLockdown(); // spec 013 — release all lockdown controls on submit
 
+      // Stop local AI services (eye-gaze, speech-detection) so they do not
+      // continue monitoring after the student has submitted the exam.
+      // Fire-and-forget — never block the submit response.
+      sendAiRpc('stopService', { service: 'eye-gaze' }).catch(() => {});
+      sendAiRpc('stopService', { service: 'speech-detection' }).catch(() => {});
+
       // Capture session metadata BEFORE clearing examSession
       const submitSessionId     = examSession?.attemptId ? String(examSession.attemptId) : null;
       const submitTotalQuestions = examSession?.questions?.length ?? 0;
-      const questionIds          = (examSession?.questions ?? []).map(q => q.id).join(',');
+      // Filter out any undefined/null ids so the estimator receives only real LMS IDs.
+      // If no valid ids can be found, warn loudly — the estimator will fall back to
+      // sequential indices (1, 2, 3 …) which causes incorrect cohort grouping on the backend.
+      const rawQuestionIds = (examSession?.questions ?? [])
+        .map(q => q.id)
+        .filter(id => id != null && id !== '');
+      if (rawQuestionIds.length === 0 && (examSession?.questions?.length ?? 0) > 0) {
+        process.stderr.write(
+          '[report] WARNING: examSession.questions is present but no valid .id fields found — ' +
+          'estimator will use sequential indices. Cohort grouping on the LMS will be incorrect.\n'
+        );
+      }
+      const questionIds = rawQuestionIds.join(',');
       examSession = null;   // spec 013 — clear exam session so window can close normally
       cheatingReportId = null;
 
@@ -1020,6 +1038,7 @@ ipcMain.handle('bridge:submit-exam', async (_event, { answers }) => {
             const args = [
               estimatorPath,
               logPath,
+              '--by-question',                       // always request per-question mode explicitly
               '--total-questions', String(totalQuestions),
               '--student-id',      studentIdToUse,
               '--exam-id',         sessionId,
