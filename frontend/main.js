@@ -669,6 +669,22 @@ class OfflineManager {
     const prev = this.state;
     this.state = newState;
 
+    // Log the transition to the session JSONL file
+    try {
+      if (examSession?.attemptId) {
+        const logPath = path.join(__dirname, '..', 'sessions', `${examSession.attemptId}.jsonl`);
+        const record = JSON.stringify({
+          type: newState === 'OFFLINE' ? 'NETWORK_DISCONNECTED' : (newState === 'ONLINE' ? 'NETWORK_RECONNECTED' : 'NETWORK_LOCKED'),
+          timestamp: new Date().toISOString(),
+          sessionId: String(examSession.attemptId),
+          cumulativeOfflineMs: this.cumulativeOfflineMs,
+          disconnectionCount: this.disconnectionCount,
+          lockReason: lockReason ?? null,
+        });
+        fs.appendFileSync(logPath, record + '\n');
+      }
+    } catch (_) { /* best effort */ }
+
     if (prev === 'ONLINE' && newState === 'OFFLINE') {
       // Exit fullscreen, pause proctoring
       if (!lockdownDisabled.fullscreen) {
