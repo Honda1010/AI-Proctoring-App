@@ -1,0 +1,50 @@
+/* ==========================================================================
+   Step Progress Bar — shared across all pre-exam pages
+   Import this file AFTER components.css in any page that shows the bar.
+   Usage: add <div class="step-progress" data-steps="5" data-current="N"> in HTML,
+   where N is 1-based current step number.
+   ========================================================================== */
+
+/* ── Wrapper ───────────────────────────────────────────────────────────── */
+.step-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.75rem 0 0.25rem;
+  width: 100%;
+}
+
+/* ── Individual pill ───────────────────────────────────────────────────── */
+.step-pill {
+  height: 0.25rem;
+  width: 2.5rem;
+  border-radius: 9999px;
+  background-color: color-mix(in srgb, var(--color-outline-variant) 40%, transparent);
+  transition: background-color 0.25s ease, width 0.25s ease;
+  flex-shrink: 0;
+}
+
+/* Completed steps (before current) — solid but thinner */
+.step-pill.step-pill--done {
+  background-color: color-mix(in srgb, var(--color-primary) 55%, transparent);
+}
+
+/* Current / active step — wide + full primary colour */
+.step-pill.step-pill--active {
+  width: 3.5rem;
+  background-color: var(--color-primary);
+}
+
+/* ── Label row (optional step counter below pills) ─────────────────────── */
+.step-progress-label {
+  display: flex;
+  justify-content: center;
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: var(--letter-spacing-label);
+  text-transform: uppercase;
+  color: var(--color-on-surface-variant);
+  padding-bottom: 0.25rem;
+}

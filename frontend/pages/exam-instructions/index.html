@@ -8,6 +8,7 @@
   <title>Exam Instructions — Lumina AI</title>
   <link rel="stylesheet" href="../../assets/design-tokens.css" />
   <link rel="stylesheet" href="../../assets/components.css" />
+  <link rel="stylesheet" href="../../assets/step-progress.css" />
   <link rel="stylesheet" href="exam-instructions.css" />
 </head>
 <body class="ei-body">
@@ -25,6 +26,19 @@
 
       <!-- Hero section -->
       <section class="ei-hero">
+        <!-- Step progress — step 5 of 5 -->
+        <nav class="step-progress"
+             role="progressbar"
+             aria-label="Step 5 of 5: Exam Instructions"
+             aria-valuenow="5"
+             aria-valuemin="1"
+             aria-valuemax="5">
+          <span class="step-pill step-pill--done"  title="Step 1: Login"></span>
+          <span class="step-pill step-pill--done"  title="Step 2: Exam Code"></span>
+          <span class="step-pill step-pill--done"  title="Step 3: Identity Verification"></span>
+          <span class="step-pill step-pill--done"  title="Step 4: AI Readiness"></span>
+          <span class="step-pill step-pill--active" title="Step 5: Exam Instructions"></span>
+        </nav>
         <h1 class="ei-hero-title">Exam Instructions &amp; Rules of Conduct</h1>
         <p class="ei-hero-subtitle">Please read and acknowledge the following mandatory rules before proceeding.</p>
       </section>

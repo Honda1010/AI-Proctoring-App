@@ -59,8 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
   logoutBtn     = document.getElementById('logoutBtn');
   studentNameEl = document.getElementById('studentName');
 
-  // FR-009: reveal student name asynchronously — form is usable immediately.
-  // The "Loading…" placeholder (set in HTML) remains until this resolves.
+  // FR-009: reveal student name asynchronously
   window.bridge.getSavedSession()
     .then((result) => {
       if (result?.ok && result.session?.userProfile?.firstName) {
@@ -69,9 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
         studentNameEl.textContent = 'Student';
       }
     })
-    .catch(() => {
-      studentNameEl.textContent = 'Student';
-    });
+    .catch(() => { studentNameEl.textContent = 'Student'; });
 
   // FR-010: logout clears session and returns to Login page
   logoutBtn.addEventListener('click', async () => {
@@ -79,11 +76,19 @@ document.addEventListener('DOMContentLoaded', () => {
     window.location.href = '../login/index.html';
   });
 
-  // FR-007: error clears on next keystroke
-  examCodeInput.addEventListener('input', clearError);
+  // Auto-uppercase every character as the user types (FR-002)
+  examCodeInput.addEventListener('input', () => {
+    const pos = examCodeInput.selectionStart;
+    examCodeInput.value = examCodeInput.value.toUpperCase();
+    examCodeInput.setSelectionRange(pos, pos);
+    clearError();
+  });
 
   // Form submission
   examForm.addEventListener('submit', handleSubmit);
+
+  // Auto-focus the field on load
+  examCodeInput.focus();
 });
 
 // ---------------------------------------------------------------------------
@@ -138,12 +143,12 @@ async function handleSubmit(event) {
   event.preventDefault();
   clearError();
 
-  // FR-002: trim whitespace before any check
-  const quizCode = examCodeInput.value.trim();
+  // FR-002: strip spaces/dashes, trim, uppercase
+  const quizCode = examCodeInput.value.trim().replace(/[\s-]/g, '').toUpperCase();
 
-  // FR-003: reject empty submission
-  if (!quizCode) {
-    errorMessage.textContent = 'Please enter your exam code.';
+  // FR-003: reject submissions with fewer than 8 characters
+  if (quizCode.length < 8) {
+    errorMessage.textContent = 'Please enter all 8 characters of your exam code.';
     examCodeInput.focus();
     return;
   }

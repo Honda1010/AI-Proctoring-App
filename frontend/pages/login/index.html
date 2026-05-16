@@ -8,6 +8,7 @@
     content="default-src 'self'; style-src 'self'; script-src 'self'; font-src 'self' data:;" />
   <title>Login — Lumina AI</title>
   <link rel="stylesheet" href="../../assets/components.css" />
+  <link rel="stylesheet" href="../../assets/step-progress.css" />
   <link rel="stylesheet" href="./login.css" />
 </head>
 
@@ -115,13 +116,19 @@
 
     </div><!-- /login-card -->
 
-    <!-- Step progress pills (step 1 of 3) -->
-    <div class="progress-pills" role="progressbar" aria-label="Step 1 of 3" aria-valuenow="1" aria-valuemin="1"
-      aria-valuemax="3">
-      <div class="progress-pill active"></div>
-      <div class="progress-pill"></div>
-      <div class="progress-pill"></div>
-    </div>
+    <!-- Step progress — step 1 of 5 (Login → Exam Code → Identity → AI Readiness → Instructions) -->
+    <nav class="step-progress"
+         role="progressbar"
+         aria-label="Step 1 of 5: Login"
+         aria-valuenow="1"
+         aria-valuemin="1"
+         aria-valuemax="5">
+      <span class="step-pill step-pill--active" title="Step 1: Login"></span>
+      <span class="step-pill" title="Step 2: Exam Code"></span>
+      <span class="step-pill" title="Step 3: Identity Verification"></span>
+      <span class="step-pill" title="Step 4: AI Readiness"></span>
+      <span class="step-pill" title="Step 5: Exam Instructions"></span>
+    </nav>
 
   </main>
 

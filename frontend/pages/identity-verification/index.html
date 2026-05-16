@@ -7,6 +7,7 @@
         content="default-src 'self'; style-src 'self'; script-src 'self'; font-src 'self' data:;" />
   <title>Identity Verification — Lumina AI</title>
   <link rel="stylesheet" href="../../assets/components.css" />
+  <link rel="stylesheet" href="../../assets/step-progress.css" />
   <link rel="stylesheet" href="identity-verification.css" />
 </head>
 <body class="iv-page">
@@ -31,6 +32,19 @@
 
       <!-- Icon + headline -->
       <div class="iv-card-header">
+        <!-- Step progress — step 3 of 5 -->
+        <nav class="step-progress"
+             role="progressbar"
+             aria-label="Step 3 of 5: Identity Verification"
+             aria-valuenow="3"
+             aria-valuemin="1"
+             aria-valuemax="5">
+          <span class="step-pill step-pill--done"  title="Step 1: Login"></span>
+          <span class="step-pill step-pill--done"  title="Step 2: Exam Code"></span>
+          <span class="step-pill step-pill--active" title="Step 3: Identity Verification"></span>
+          <span class="step-pill" title="Step 4: AI Readiness"></span>
+          <span class="step-pill" title="Step 5: Exam Instructions"></span>
+        </nav>
         <div class="iv-avatar">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <circle cx="12" cy="8" r="4" fill="currentColor" opacity="0.25"/>
@@ -86,7 +100,7 @@
 
       <!-- Action buttons -->
       <div class="iv-actions">
-        <button id="captureBtn" class="btn-primary iv-btn-capture" type="button">
+        <button id="captureBtn" class="btn-primary iv-btn-capture iv-btn-full" type="button">
           <svg class="iv-btn-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <circle cx="12" cy="12" r="3.5" stroke="currentColor" stroke-width="1.5"/>
             <path d="M9 3H7a4 4 0 0 0-4 4v1M15 3h2a4 4 0 0 1 4 4v1M3 15v2a4 4 0 0 0 4 4h1M21 15v2a4 4 0 0 1-4 4h-1"
@@ -103,7 +117,7 @@
           Retake Photo
         </button>
 
-        <button id="confirmBtn" class="btn-primary iv-btn-confirm hidden" type="button">
+        <button id="confirmBtn" class="btn-primary iv-btn-confirm iv-btn-full hidden" type="button">
           Confirm &amp; Continue
         </button>
       </div>

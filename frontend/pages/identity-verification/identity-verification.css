@@ -379,6 +379,12 @@
   cursor: not-allowed;
 }
 
+/* Confirm & Continue — same full-width + padding as Retake to match dimensions */
+.iv-btn-full {
+  width: 100%;
+  padding: 0.875rem 1.5rem;
+}
+
 /* ---------------------------------------------------------------------------
    Quality indicators (three columns)
    --------------------------------------------------------------------------- */

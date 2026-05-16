@@ -248,7 +248,7 @@ class ClipUploadService:
                         + (ff_err.decode(errors='replace') if ff_err else '')
                     )
 
-                filename = f"{student_id}/{url_safe_ts}_{primary_type}.mp4"
+                filename = f"Cheating_Reports/{student_id}/{url_safe_ts}_{primary_type}.mp4"
                 upload_url = f"{self._storage_url}/{filename}"
 
                 def _do_put():

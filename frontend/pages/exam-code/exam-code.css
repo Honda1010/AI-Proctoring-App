@@ -145,7 +145,67 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-on-surface-variant);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/* ==========================================================================
+   Single code field — unified input that takes characters one by one.
+   Matches the reference design: one rounded field, centred spaced text,
+   key icon on the right.
+   ========================================================================== */
+
+.code-field-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.code-field {
+  width: 100%;
+  padding: 1rem 3rem 1rem 1.25rem;  /* right padding leaves room for icon */
+  background: var(--color-surface-container-low);
+  border: 1.5px solid var(--color-outline-variant);
+  border-radius: var(--radius-button);
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--color-on-surface);
+  outline: none;
+  caret-color: var(--color-primary);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+}
+
+.code-field::placeholder {
+  color: var(--color-outline-variant);
+  letter-spacing: 0.15em;
+  font-weight: 400;
+}
+
+.code-field:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+.code-field:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Key icon badge positioned at the right edge of the field */
+.code-field-icon {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-outline-variant);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .input-wrapper {
