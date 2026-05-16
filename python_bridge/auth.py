@@ -26,7 +26,7 @@ auth_bp = Blueprint("auth", __name__)
 # ---------------------------------------------------------------------------
 # Error mapping
 # ---------------------------------------------------------------------------
-
+#
 def map_lms_error(status_code: int, error_message: str) -> dict:
     """
     Map a raw LMS error to a typed, sanitised BridgeLoginError dict.
