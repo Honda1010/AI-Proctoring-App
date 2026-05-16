@@ -196,6 +196,64 @@
 }
 
 /* ==========================================================================
+   Password Visibility Toggle
+   ========================================================================== */
+
+/* Wrapper makes the button position relative to the input */
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Hides whichever eye icon is not currently active.
+   Uses a class (not an inline style) so it is CSP-compliant under style-src 'self'. */
+.pw-icon--hidden {
+  display: none;
+}
+
+.password-wrapper .input-field {
+  /* Reserve space for the toggle button so text never slides under it */
+  padding-right: 2.75rem;
+  width: 100%;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  background: transparent;
+  color: var(--color-on-surface-variant);
+  cursor: pointer;
+  border-radius: var(--radius-sm, 4px);
+  padding: 0;
+  transition: color 0.15s ease, opacity 0.15s ease;
+  /* Sits above the input visually */
+  z-index: 1;
+}
+
+.password-toggle:hover {
+  color: var(--color-primary);
+}
+
+.password-toggle:active {
+  opacity: 0.7;
+}
+
+/* Keep focus outline accessible but unobtrusive */
+.password-toggle:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
    Inline Error Message
    ========================================================================== */
 

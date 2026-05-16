@@ -104,7 +104,8 @@ function setLoading(isLoading) {
   examCodeInput.disabled = isLoading;
   btnText.textContent    = isLoading ? 'Checking\u2026' : 'JOIN EXAM';
   btnArrow.hidden        = isLoading;
-  btnSpinner.hidden      = !isLoading;
+  // Toggle CSP-safe hidden class — the `hidden` attribute is blocked by style-src 'self'
+  btnSpinner.classList.toggle('btn-spinner--hidden', !isLoading);
   btnSpinner.setAttribute('aria-hidden', String(!isLoading));
 }
 

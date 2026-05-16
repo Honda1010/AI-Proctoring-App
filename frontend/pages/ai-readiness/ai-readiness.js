@@ -185,10 +185,17 @@ async function syncStatusTick() {
 
 function updateGate() {
   const allReady = eyeReady && speechReady;
+  const wasDisabled = continueBtn.disabled;
   continueBtn.disabled = !allReady;
   hintTextEl.textContent = allReady
     ? 'All checks complete. You can continue to the exam.'
     : 'Preparing models. Keep looking at the screen for eye calibration.';
+
+  // Auto-navigate once calibration succeeds — give the student 800 ms to see
+  // the "All checks complete" message before proceeding automatically.
+  if (allReady && wasDisabled) {
+    setTimeout(() => continueBtn.click(), 800);
+  }
 }
 
 function setPill(el, kind, text) {

@@ -20,16 +20,19 @@
 // DOM References
 // ---------------------------------------------------------------------------
 
-const loginForm       = document.getElementById('login-form');
-const emailInput      = document.getElementById('email-input');
-const passwordInput   = document.getElementById('password-input');
+const loginForm        = document.getElementById('login-form');
+const emailInput       = document.getElementById('email-input');
+const passwordInput    = document.getElementById('password-input');
+const passwordToggle   = document.getElementById('password-toggle');
+const iconEyeOpen      = document.getElementById('icon-eye-open');
+const iconEyeOff       = document.getElementById('icon-eye-off');
 const rememberCheckbox = document.getElementById('remember-checkbox');
-const loginBtn        = document.getElementById('login-btn');
-const loginBtnText    = document.getElementById('login-btn-text');
-const loginSpinner    = document.getElementById('login-spinner');
-const loginError      = document.getElementById('login-error');
-const forgotLink      = document.getElementById('forgot-link');
-const fabInfo         = document.getElementById('fab-info');
+const loginBtn         = document.getElementById('login-btn');
+const loginBtnText     = document.getElementById('login-btn-text');
+const loginSpinner     = document.getElementById('login-spinner');
+const loginError       = document.getElementById('login-error');
+const forgotLink       = document.getElementById('forgot-link');
+const fabInfo          = document.getElementById('fab-info');
 
 // ---------------------------------------------------------------------------
 // Error Message Map
@@ -69,10 +72,31 @@ function setLoading(isLoading) {
   loginBtn.disabled         = isLoading;
   emailInput.disabled       = isLoading;
   passwordInput.disabled    = isLoading;
+  passwordToggle.disabled   = isLoading;
   rememberCheckbox.disabled = isLoading;
   loginBtnText.hidden       = isLoading;
   loginSpinner.hidden       = !isLoading;
   loginSpinner.setAttribute('aria-hidden', String(!isLoading));
+}
+
+// ---------------------------------------------------------------------------
+// Password visibility toggle
+// ---------------------------------------------------------------------------
+
+/**
+ * Toggle the password field between masked (type=password) and visible (type=text).
+ * Swaps the eye / eye-off SVG icons and updates the button's aria-label.
+ */
+function togglePasswordVisibility() {
+  const isHidden = passwordInput.type === 'password';
+  passwordInput.type = isHidden ? 'text' : 'password';
+  // Toggle the CSP-safe class — matches the .pw-icon--hidden rule in login.css
+  iconEyeOpen.classList.toggle('pw-icon--hidden', isHidden);   // hide when visible
+  iconEyeOff.classList.toggle('pw-icon--hidden', !isHidden);   // show when visible
+  passwordToggle.setAttribute(
+    'aria-label',
+    isHidden ? 'Hide password' : 'Show password'
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -195,6 +219,9 @@ forgotLink.addEventListener('click', (e) => {
   e.preventDefault();
   // Placeholder — no-op until forgot-password URL is configured
 });
+
+// Password visibility toggle
+passwordToggle.addEventListener('click', togglePasswordVisibility);
 
 // FAB info button
 fabInfo.addEventListener('click', () => {

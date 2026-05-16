@@ -249,6 +249,13 @@
   flex-shrink: 0;
 }
 
+/* CSP-safe way to hide the spinner on initial load.
+   Using a class instead of the `hidden` attribute because style-src 'self'
+   blocks inline style overrides, causing the spinner to show on page load. */
+.btn-spinner--hidden {
+  display: none;
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
