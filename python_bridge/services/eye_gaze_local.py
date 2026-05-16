@@ -62,6 +62,19 @@ class LocalEyeGazeService(AIService):
         """
         self._is_writing = bool(is_allowable_to_look_down)
 
+    async def recalibrate(self) -> dict:
+        """Reset calibration state so the gaze session can re-collect baselines.
+
+        Returns
+        -------
+        dict  with ``ok`` (bool) and ``message`` (str).
+        """
+        try:
+            from service.localMain import recalibrate_session  # type: ignore
+            return recalibrate_session(self._session_id)
+        except Exception as exc:
+            return {"ok": False, "message": f"Recalibration error: {exc}"}
+
     async def start(self):
         """Start the background capture and inference thread."""
         if self.is_running:
@@ -152,6 +165,7 @@ class LocalEyeGazeService(AIService):
                 "AWAY_LONG": "away",
                 "NO_FACE": "no-face",
                 "INITIALIZING": "initializing",
+                "CALIBRATION_FAILED": "calibration-failed",
             }
             status = status_map.get(raw_flag, "initializing")
             self._last_status = status

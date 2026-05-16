@@ -32,8 +32,13 @@
       </div>
 
       <p id="hintText" class="hint">Please look at the screen and keep your face visible.</p>
+      <p id="calibrationFailHint" class="calibration-fail-hint hidden">
+        Calibration could not detect your face consistently.
+        Please ensure your face is clearly visible and well-lit, then try again.
+      </p>
 
       <div class="actions">
+        <button id="recalibrateBtn" class="btn-secondary hidden">Recalibrate</button>
         <button id="continueBtn" class="btn-primary" disabled>Continue to Exam</button>
       </div>
     </section>

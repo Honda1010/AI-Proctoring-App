@@ -53,6 +53,10 @@ WRITING_PATTERN_AVG_EPISODE_MAX_SECONDS = 5.0
 # ── tolerance cap ─────────────────────────────
 TOLERANCE_Y_MAX = 0.08
 
+# ── calibration failure ───────────────────────
+CALIBRATION_TIMEOUT_SECONDS = 30.0
+CALIBRATION_MIN_FACE_RATIO = 0.50
+
 
 class SuspicionLevel(str, Enum):
     LOW = "LOW"
@@ -97,6 +101,22 @@ class SessionManager:
 
 
 manager = SessionManager()
+
+
+def recalibrate_session(session_id: str) -> dict:
+    """Reset calibration state for the given session so it can re-calibrate.
+
+    Returns
+    -------
+    dict  with ``ok`` (bool) and ``message`` (str).
+    """
+    session = manager.session
+    if session is None:
+        return {"ok": False, "message": "No active session"}
+    if session.session_id != session_id:
+        return {"ok": False, "message": f"Session mismatch: expected {session.session_id}"}
+    session.recalibrate()
+    return {"ok": True, "message": "Calibration reset — collecting new baseline"}
 
 
 def process_frames_batch(
@@ -211,7 +231,13 @@ class GazeSession:
         self.baseline_pitch: float | None = None
 
         self.initialized: bool = False
+        self.calibration_failed: bool = False
         self.attention_state: str = "INITIALIZING"
+
+        # ── calibration progress tracking ─────────────────────────────
+        self._calibration_start_time: float | None = None
+        self._calibration_total_frames: int = 0
+        self._calibration_no_face_frames: int = 0
 
         self.away_start_time_horizontal: float | None = None
         self.away_start_time_vertical_write: float | None = None
@@ -255,6 +281,35 @@ class GazeSession:
             self._question_type = qtype
             self.away_start_time_vertical_write = None
             self.away_start_time_vertical_lap = None
+
+    # ── recalibration ─────────────────────────────────────────────────
+    def recalibrate(self) -> None:
+        """Reset all calibration state so the session can re-collect baselines."""
+        self.envelope_x.clear()
+        self.envelope_y.clear()
+        self.pitch_envelope.clear()
+        self.gaze_history_x.clear()
+        self.gaze_history_y.clear()
+
+        self.baseline_center_x = None
+        self.baseline_std_x = None
+        self.baseline_center_y = None
+        self.baseline_std_y = None
+        self.baseline_pitch = None
+
+        self.initialized = False
+        self.calibration_failed = False
+        self.attention_state = "INITIALIZING"
+
+        self._calibration_start_time = None
+        self._calibration_total_frames = 0
+        self._calibration_no_face_frames = 0
+
+        self.away_start_time_horizontal = None
+        self.away_start_time_vertical_write = None
+        self.away_start_time_vertical_lap = None
+
+        logger.info(f"[GazeSession] Recalibration started for session {self.session_id}")
 
     # ── classify gaze ─────────────────────────────────────────────────
     def _classify_gaze(
@@ -332,8 +387,54 @@ class GazeSession:
         dt = (current_time - self._last_process_time) if self._last_process_time else 1.0 / 30.0
         self._last_process_time = current_time
 
+        # ── calibration-failed guard ──────────────────────────────────
+        if self.calibration_failed:
+            self.behavior_history.append(BehaviorEvent(current_time, "CALIBRATION_FAILED", "UNKNOWN"))
+            suspicion = self._compute_behavioral_suspicion(current_time)
+            fail_diag = {
+                **_empty_diag,
+                "calibration_failed": True,
+                "calibration_face_ratio": (
+                    (self._calibration_total_frames - self._calibration_no_face_frames)
+                    / max(1, self._calibration_total_frames)
+                ),
+            }
+            return self._build_event(
+                "CALIBRATION_FAILED", 0.0, "CALIBRATION_FAILED", current_time, suspicion
+            ), fail_diag
+
         # ── no face ───────────────────────────────────────────────────
         if not face_present:
+            # Track no-face during calibration for timeout logic
+            if not self.initialized:
+                self._calibration_total_frames += 1
+                self._calibration_no_face_frames += 1
+                if self._calibration_start_time is None:
+                    self._calibration_start_time = current_time
+                # Check for calibration timeout
+                elapsed_cal = current_time - self._calibration_start_time
+                if elapsed_cal >= CALIBRATION_TIMEOUT_SECONDS:
+                    face_ratio = (
+                        (self._calibration_total_frames - self._calibration_no_face_frames)
+                        / max(1, self._calibration_total_frames)
+                    )
+                    if face_ratio < CALIBRATION_MIN_FACE_RATIO:
+                        self.calibration_failed = True
+                        self.attention_state = "CALIBRATION_FAILED"
+                        logger.warning(
+                            f"[GazeSession] Calibration FAILED — "
+                            f"face ratio {face_ratio:.1%} < {CALIBRATION_MIN_FACE_RATIO:.0%} "
+                            f"after {elapsed_cal:.1f}s"
+                        )
+                        self.behavior_history.append(
+                            BehaviorEvent(current_time, "CALIBRATION_FAILED", "UNKNOWN")
+                        )
+                        suspicion = self._compute_behavioral_suspicion(current_time)
+                        return self._build_event(
+                            "CALIBRATION_FAILED", 0.0, "CALIBRATION_FAILED",
+                            current_time, suspicion,
+                        ), {**_empty_diag, "calibration_failed": True, "calibration_face_ratio": face_ratio}
+
             if self._continuous_down_start is not None:
                 dur = current_time - self._continuous_down_start
                 if dur >= SUSTAINED_DOWN_MIN_SECONDS:
@@ -357,13 +458,43 @@ class GazeSession:
 
         # ── calibrating ───────────────────────────────────────────────
         if not self.initialized:
+            if self._calibration_start_time is None:
+                self._calibration_start_time = current_time
+            self._calibration_total_frames += 1
+
             self.envelope_x.append(h_ratio)
             self.envelope_y.append(v_ratio)
             if pitch_deg != 0.0:
                 self.pitch_envelope.append(pitch_deg)
             if len(self.envelope_x) >= ENVELOPE_WINDOW and len(self.envelope_y) >= ENVELOPE_WINDOW:
                 self.initialized = True
+                self.calibration_failed = False
                 logger.info(f"[GazeSession] Calibration complete — {ENVELOPE_WINDOW} frames")
+
+            # Check for calibration timeout (face present but envelope not full)
+            if not self.initialized:
+                elapsed_cal = current_time - self._calibration_start_time
+                if elapsed_cal >= CALIBRATION_TIMEOUT_SECONDS:
+                    face_ratio = (
+                        (self._calibration_total_frames - self._calibration_no_face_frames)
+                        / max(1, self._calibration_total_frames)
+                    )
+                    if face_ratio < CALIBRATION_MIN_FACE_RATIO:
+                        self.calibration_failed = True
+                        self.attention_state = "CALIBRATION_FAILED"
+                        logger.warning(
+                            f"[GazeSession] Calibration FAILED — "
+                            f"face ratio {face_ratio:.1%} < {CALIBRATION_MIN_FACE_RATIO:.0%} "
+                            f"after {elapsed_cal:.1f}s"
+                        )
+                        self.behavior_history.append(
+                            BehaviorEvent(current_time, "CALIBRATION_FAILED", "UNKNOWN")
+                        )
+                        suspicion = self._compute_behavioral_suspicion(current_time)
+                        return self._build_event(
+                            "CALIBRATION_FAILED", 0.0, "CALIBRATION_FAILED",
+                            current_time, suspicion,
+                        ), {**_empty_diag, "calibration_failed": True, "calibration_face_ratio": face_ratio}
 
             self.behavior_history.append(BehaviorEvent(current_time, "INITIALIZING", "CENTER"))
             suspicion = self._compute_behavioral_suspicion(current_time)
@@ -371,6 +502,8 @@ class GazeSession:
                 **_empty_diag,
                 "raw_v": v_ratio, "avg_y": v_ratio, "pitch_deg": pitch_deg,
                 "baseline_pitch": self.baseline_pitch, "active_pitch_threshold": None,
+                "calibration_progress": len(self.envelope_x),
+                "calibration_target": ENVELOPE_WINDOW,
             }
             return self._build_event("INITIALIZING", 0.0, "CALIBRATING", current_time, suspicion), cal_diag
 
