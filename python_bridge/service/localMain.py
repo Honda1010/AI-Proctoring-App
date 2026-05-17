@@ -6,7 +6,6 @@ import threading
 import time
 from collections import deque
 from datetime import datetime
-from enum import Enum
 
 import cv2
 import numpy as np
@@ -19,54 +18,17 @@ except ImportError:  # pragma: no cover
 logger = logging.getLogger(__name__)
 
 # ── calibration ───────────────────────────────
-SMOOTHING_BUFFER_SIZE = 3
-ENVELOPE_WINDOW = 90
+SMOOTHING_BUFFER_SIZE = 5
+ENVELOPE_WINDOW       = 90
 
-# ── away timers — horizontal ──────────────────
-AWAY_SHORT_SECONDS_HORIZONTAL = 3.0
-AWAY_LONG_SECONDS_HORIZONTAL = 5.0
+# ── away timers ───────────────────────────────
+AWAY_SHORT_SECONDS = 3.0
+AWAY_LONG_SECONDS  = 5.0
 
-# ── away timers — down (writing posture) ──────
-AWAY_SHORT_SECONDS_DOWN_WRITE = 5.0
-AWAY_LONG_SECONDS_DOWN_WRITE = 7.0
-
-# ── away timers — down (lap / extreme) ────────
-AWAY_SHORT_SECONDS_DOWN_LAP = 3.0
-AWAY_LONG_SECONDS_DOWN_LAP = 5.0
-
-# ── pitch thresholds ──────────────────────────
-PITCH_LAP_THRESHOLD_WRITING = 24.0
-PITCH_LAP_THRESHOLD_NORMAL  = 18.0
-
-# ── long-term behavioral analysis ────────────
-BEHAVIOR_WINDOW_SECONDS = 60.0
-BEHAVIOR_MIN_EVENTS = 10
-SUSTAINED_DOWN_MIN_SECONDS = 5.0
-SUSTAINED_HORIZONTAL_MIN_SECONDS = 3.0
-SUSTAINED_DOWN_SUSPICIOUS_RATIO = 0.30
-SUSTAINED_HORIZONTAL_SUSPICIOUS_RATIO = 0.15
-NO_FACE_SUSPICIOUS_RATIO = 0.15
-
-# ── writing-pattern threshold ─────────────────
-WRITING_PATTERN_AVG_EPISODE_MAX_SECONDS = 5.0
-
-# ── tolerance cap ─────────────────────────────
-TOLERANCE_Y_MAX = 0.08
-
-
-class SuspicionLevel(str, Enum):
-    LOW = "LOW"
-    MEDIUM = "MEDIUM"
-    HIGH = "HIGH"
-
-
-class BehaviorEvent:
-    __slots__ = ("timestamp", "state", "direction")
-
-    def __init__(self, timestamp: float, state: str, direction: str):
-        self.timestamp = timestamp
-        self.state = state
-        self.direction = direction
+# ── pitch threshold ───────────────────────────
+# Offset from each person's calibrated neutral pitch.
+# pitch > baseline + PITCH_DOWN_THRESHOLD → looking DOWN.
+PITCH_DOWN_THRESHOLD = 18.0
 
 
 # ─────────────────────────────────────────────
@@ -103,7 +65,7 @@ def process_frames_batch(
     session_id: str,
     frames_b64: list[str],
     fps: int = 30,
-    is_writing: bool = False,
+    is_writing: bool = False,   # kept for API compatibility; has no effect
 ) -> list[dict]:
     """Process a batch of base64-encoded frames for gaze detection.
 
@@ -112,18 +74,12 @@ def process_frames_batch(
     session_id  : Unique ID for the exam attempt.
     frames_b64  : List of base64-encoded JPEG/PNG frames.
     fps         : Frame rate used to assign per-frame timestamps.
-    is_writing  : Pass ``True`` when the current question's
-                  ``IsAllowableToLookDown`` flag is ``True`` so the session
-                  switches to writing mode (looking down is not penalised).
+    is_writing  : Ignored — writing mode is not supported in this layer.
     """
     frame_interval = 1.0 / fps
     session = manager.get_or_create(session_id)
 
     with manager.lock:
-        # Sync question-type mode before processing the batch so that the
-        # correct timers and pitch thresholds apply for every frame.
-        session.set_question_type(is_writing=is_writing)
-
         start = time.time()
         results = []
         batch_start_time = time.time()
@@ -140,40 +96,21 @@ def process_frames_batch(
                 frame = None
 
             if frame is None:
-                h, v, face = 0.0, 0.0, False
-                pitch_deg = 0.0
+                evt = session.process_gaze_frame(None, timestamp=frame_timestamp)
             else:
                 t0 = time.time()
-                h, v, face = session.detector.get_gaze_ratio(frame)
-                pitch_deg = getattr(session.detector, "last_pitch_deg", 0.0)
+                evt = session.process_gaze_frame(frame, timestamp=frame_timestamp)
                 t1 = time.time()
+                diag = evt.get("gaze_diagnostics", {})
                 print(
                     f"  Frame {index:02d} | "
                     f"mediapipe={t1 - t0:.3f}s | "
-                    f"face={face} | h={h:.3f} v={v:.3f} pitch={pitch_deg:.1f}°"
+                    f"face={diag.get('face_present', '?')} | "
+                    f"h={diag.get('h_ratio', 0.0):.3f} "
+                    f"pitch={diag.get('pitch_deg', 0.0):.1f}°"
                 )
 
-            verdict, v_diag = session.process_gaze_result(
-                h, v, face, pitch_deg=pitch_deg, timestamp=frame_timestamp
-            )
-            # Embed diagnostics directly into the verdict so callers get
-            # direction, avg_x/y, pitch data, and zone info without a
-            # separate return value.
-            verdict["gaze_diagnostics"] = {
-                "direction":              session.last_direction,
-                "gaze_h":                 round(h, 4),
-                "gaze_v":                 round(v, 4),
-                "avg_x":                  round(v_diag.get("avg_x", h), 4),
-                "avg_y":                  round(v_diag.get("avg_y", v), 4),
-                "pitch_deg":              round(pitch_deg, 2),
-                "pitch_zone":             v_diag.get("pitch_zone", "LEVEL"),
-                "looking_down":           v_diag.get("looking_down", False),
-                "v_outside":              v_diag.get("v_outside", False),
-                "baseline_pitch":         round(v_diag.get("baseline_pitch") or 0.0, 2),
-                "active_pitch_threshold": round(v_diag.get("active_pitch_threshold") or 0.0, 2),
-                "question_type":          session.question_type,
-            }
-            results.append(verdict)
+            results.append(evt)
 
         elapsed = time.time() - start
         print(
@@ -185,447 +122,215 @@ def process_frames_batch(
 
 
 # ─────────────────────────────────────────────
-# GazeSession
+# GazeSession  — mirrors src/Server/localMain.py exactly
 # ─────────────────────────────────────────────
 class GazeSession:
-    QUESTION_TYPE_NORMAL  = "normal"
-    QUESTION_TYPE_WRITING = "writing"
-
-    def __init__(self, session_id: str, question_type: str = "normal"):
+    def __init__(self, session_id: str = "default"):
         self.session_id = session_id
-        self.detector = GazeDetector()
+        self._detector  = GazeDetector()
 
-        self._question_type: str = question_type
+        # ── horizontal gaze calibration ───────────────────────────────
+        self._gaze_history_x    = deque(maxlen=SMOOTHING_BUFFER_SIZE)
+        self._envelope_x        = deque(maxlen=ENVELOPE_WINDOW)
+        self._baseline_center_x: float | None = None
+        self._baseline_std_x:    float | None = None
 
-        self.gaze_history_x: deque[float] = deque(maxlen=SMOOTHING_BUFFER_SIZE)
-        self.envelope_x: deque[float] = deque(maxlen=ENVELOPE_WINDOW)
-        self.baseline_center_x: float | None = None
-        self.baseline_std_x: float | None = None
+        # ── head-pitch calibration ─────────────────────────────────────
+        self._pitch_envelope = deque(maxlen=ENVELOPE_WINDOW)
+        self._baseline_pitch: float | None = None
 
-        self.gaze_history_y: deque[float] = deque(maxlen=SMOOTHING_BUFFER_SIZE)
-        self.envelope_y: deque[float] = deque(maxlen=ENVELOPE_WINDOW)
-        self.baseline_center_y: float | None = None
-        self.baseline_std_y: float | None = None
+        self._initialized     = False
+        self._attention_state = "INITIALIZING"
+        self._away_start_time: float | None = None
+        self._event_id        = 0
 
-        self.pitch_envelope: deque[float] = deque(maxlen=ENVELOPE_WINDOW)
-        self.baseline_pitch: float | None = None
+        logger.info(f"[GazeSession] Initialized: {session_id}")
 
-        self.initialized: bool = False
-        self.attention_state: str = "INITIALIZING"
+    # ── recalibration ─────────────────────────────────────────────────
+    def recalibrate(self) -> None:
+        """Reset all calibration state so the next ENVELOPE_WINDOW face-visible
+        frames re-run calibration from scratch."""
+        self._gaze_history_x.clear()
+        self._envelope_x.clear()
+        self._baseline_center_x = None
+        self._baseline_std_x    = None
+        self._pitch_envelope.clear()
+        self._baseline_pitch    = None
+        self._initialized       = False
+        self._attention_state   = "INITIALIZING"
+        self._away_start_time   = None
+        self._event_id          = 0
+        logger.info(f"[GazeSession] Recalibration triggered: {self.session_id}")
 
-        self.away_start_time_horizontal: float | None = None
-        self.away_start_time_vertical_write: float | None = None
-        self.away_start_time_vertical_lap: float | None = None
-
-        self.last_direction: str = "CENTER"
-        self.behavior_history: deque[BehaviorEvent] = deque(maxlen=10000)
-
-        self._continuous_down_start: float | None = None
-        self._continuous_horizontal_start: float | None = None
-        self._total_sustained_down_seconds: float = 0.0
-        self._total_sustained_horizontal_seconds: float = 0.0
-        self._total_no_face_seconds: float = 0.0
-        self._session_start_time: float = time.time()
-        self._last_process_time: float | None = None
-        self.model_id: int = 0
-
-        logger.info(
-            f"[GazeSession] Initialized: {session_id} | question_type={self._question_type}"
-        )
-
-    # ── question-type API ─────────────────────────────────────────────
-    @property
-    def question_type(self) -> str:
-        return self._question_type
-
-    def set_question_type(self, is_writing: bool) -> None:
-        """Switch MCQ mode when the backend sends a new question.
-
-        Parameters
-        ----------
-        is_writing : bool
-            False → normal MCQ  (looking down is flagged quickly).
-            True  → writing MCQ (looking down to write is ignored).
-        """
-        qtype = self.QUESTION_TYPE_WRITING if is_writing else self.QUESTION_TYPE_NORMAL
-        if qtype != self._question_type:
-            logger.info(
-                f"[GazeSession] question_type: {self._question_type!r} → {qtype!r}"
-            )
-            self._question_type = qtype
-            self.away_start_time_vertical_write = None
-            self.away_start_time_vertical_lap = None
-
-    # ── classify gaze ─────────────────────────────────────────────────
-    def _classify_gaze(
-        self, avg_x: float, avg_y: float, pitch_deg: float,
-        pitch_lap_threshold: float = PITCH_LAP_THRESHOLD_WRITING,
-    ) -> tuple[str, str, dict]:
-        h_deviation = avg_x - self.baseline_center_x
-        v_deviation = avg_y - self.baseline_center_y
-        h_abs = abs(h_deviation)
-        v_abs = abs(v_deviation)
-
-        tolerance_x = max(0.07, self.baseline_std_x * 3.5)
-        tolerance_y = min(TOLERANCE_Y_MAX, max(0.04, self.baseline_std_y * 2.0))
-
-        h_outside = h_abs > tolerance_x
-        looking_down = v_deviation > 0
-        v_outside = v_abs > tolerance_y and looking_down
-
-        if h_outside and v_outside:
-            axis_outside = "BOTH"
-        elif h_outside:
-            axis_outside = "HORIZONTAL"
-        elif v_outside:
-            axis_outside = "VERTICAL"
-        else:
-            axis_outside = "NONE"
-
-        if axis_outside == "NONE":
-            direction = "CENTER"
-        elif axis_outside == "HORIZONTAL":
-            direction = "LEFT_RIGHT"
-        elif axis_outside == "VERTICAL":
-            direction = "DOWN_LAP" if pitch_deg > pitch_lap_threshold else "DOWN"
-        else:
-            h_norm = h_abs / tolerance_x
-            v_norm = v_abs / tolerance_y
-            if h_norm >= v_norm:
-                direction = "LEFT_RIGHT"
-            else:
-                direction = "DOWN_LAP" if pitch_deg > pitch_lap_threshold else "DOWN"
-
-        pitch_zone = (
-            "LAP" if pitch_deg > pitch_lap_threshold
-            else "WRITING" if pitch_deg < pitch_lap_threshold * 0.9
-            else "LEVEL"
-        )
-
-        diag = {
-            "v_deviation": v_deviation, "tolerance_y": tolerance_y,
-            "looking_down": looking_down, "v_outside": v_outside,
-            "h_deviation": h_deviation, "tolerance_x": tolerance_x,
-            "pitch_zone": pitch_zone,
-        }
-        return direction, axis_outside, diag
-
-    # ── main processing ───────────────────────────────────────────────
-    def process_gaze_result(
+    # ── main entry ────────────────────────────────────────────────────
+    def process_gaze_frame(
         self,
-        h_ratio: float,
-        v_ratio: float,
-        face_present: bool,
-        pitch_deg: float = 0.0,
+        frame,
         timestamp: float | None = None,
-    ) -> tuple[dict, dict]:
-        _empty_diag: dict = {
-            "raw_v": 0.0, "avg_y": 0.0, "v_deviation": 0.0,
-            "tolerance_y": 0.0, "looking_down": False, "v_outside": False,
-            "baseline_center_y": None, "baseline_std_y": None,
-            "pitch_deg": 0.0, "pitch_zone": "LEVEL",
-            "baseline_pitch": self.baseline_pitch,
-            "active_pitch_threshold": None,
-        }
+    ) -> dict:
+        """Process a single BGR frame (or ``None`` for a decode failure).
 
+        Returns a self-contained event dict with gaze diagnostics embedded.
+        """
         current_time = timestamp if timestamp is not None else time.time()
-        dt = (current_time - self._last_process_time) if self._last_process_time else 1.0 / 30.0
-        self._last_process_time = current_time
+
+        # ── decode failure / null frame ───────────────────────────────
+        if frame is None:
+            self._attention_state = "NO_FACE"
+            self._away_start_time = None
+            return self._build_event(
+                "NO_FACE", 1.0, "NO_FACE",
+                timestamp=current_time,
+                face_present=False,
+                h_ratio=0.0, avg_x=0.0,
+                pitch_deg=0.0,
+                h_deviation=0.0, tolerance_x=0.0,
+                looking_down=False,
+                direction="NO_FACE",
+                baseline_center_x=self._baseline_center_x,
+                baseline_std_x=self._baseline_std_x,
+                baseline_pitch=self._baseline_pitch,
+                active_threshold=None,
+            )
+
+        h_ratio, _v_ratio, face_present = self._detector.get_gaze_ratio(frame)
+        # Cap pitch to ±25° so extreme head-tilt never inflates the down score.
+        pitch_deg = float(min(self._detector.last_pitch_deg, 25.0))
 
         # ── no face ───────────────────────────────────────────────────
         if not face_present:
-            if self._continuous_down_start is not None:
-                dur = current_time - self._continuous_down_start
-                if dur >= SUSTAINED_DOWN_MIN_SECONDS:
-                    self._total_sustained_down_seconds += dur
-            if self._continuous_horizontal_start is not None:
-                dur = current_time - self._continuous_horizontal_start
-                if dur >= SUSTAINED_HORIZONTAL_MIN_SECONDS:
-                    self._total_sustained_horizontal_seconds += dur
+            self._attention_state = "NO_FACE"
+            self._away_start_time = None
+            return self._build_event(
+                "NO_FACE", 1.0, "NO_FACE",
+                timestamp=current_time,
+                face_present=False,
+                h_ratio=h_ratio, avg_x=h_ratio,
+                pitch_deg=pitch_deg,
+                h_deviation=0.0, tolerance_x=0.0,
+                looking_down=False,
+                direction="NO_FACE",
+                baseline_center_x=self._baseline_center_x,
+                baseline_std_x=self._baseline_std_x,
+                baseline_pitch=self._baseline_pitch,
+                active_threshold=None,
+            )
 
-            self.attention_state = "NO_FACE"
-            self.away_start_time_horizontal = None
-            self.away_start_time_vertical_write = None
-            self.away_start_time_vertical_lap = None
-            self._continuous_down_start = None
-            self._continuous_horizontal_start = None
-            self._total_no_face_seconds += dt
-
-            self.behavior_history.append(BehaviorEvent(current_time, "NO_FACE", "UNKNOWN"))
-            suspicion = self._compute_behavioral_suspicion(current_time)
-            return self._build_event("NO_FACE", 1.0, "NO_FACE", current_time, suspicion), _empty_diag
-
-        # ── calibrating ───────────────────────────────────────────────
-        if not self.initialized:
-            self.envelope_x.append(h_ratio)
-            self.envelope_y.append(v_ratio)
+        # ── calibration — face must be visible to count ────────────────
+        if not self._initialized:
+            self._envelope_x.append(h_ratio)
             if pitch_deg != 0.0:
-                self.pitch_envelope.append(pitch_deg)
-            if len(self.envelope_x) >= ENVELOPE_WINDOW and len(self.envelope_y) >= ENVELOPE_WINDOW:
-                self.initialized = True
+                self._pitch_envelope.append(pitch_deg)
+
+            n = len(self._envelope_x)
+            if n >= ENVELOPE_WINDOW:
+                self._initialized = True
                 logger.info(f"[GazeSession] Calibration complete — {ENVELOPE_WINDOW} frames")
+            elif n % 15 == 0 and n > 0:
+                logger.info(f"[GazeSession] Calibrating... {n}/{ENVELOPE_WINDOW}")
 
-            self.behavior_history.append(BehaviorEvent(current_time, "INITIALIZING", "CENTER"))
-            suspicion = self._compute_behavioral_suspicion(current_time)
-            cal_diag = {
-                **_empty_diag,
-                "raw_v": v_ratio, "avg_y": v_ratio, "pitch_deg": pitch_deg,
-                "baseline_pitch": self.baseline_pitch, "active_pitch_threshold": None,
-            }
-            return self._build_event("INITIALIZING", 0.0, "CALIBRATING", current_time, suspicion), cal_diag
+            return self._build_event(
+                "INITIALIZING", 0.0, "CALIBRATING",
+                timestamp=current_time,
+                face_present=True,
+                h_ratio=h_ratio, avg_x=h_ratio,
+                pitch_deg=pitch_deg,
+                h_deviation=0.0, tolerance_x=0.0,
+                looking_down=False,
+                direction="CALIBRATING",
+                baseline_center_x=self._baseline_center_x,
+                baseline_std_x=self._baseline_std_x,
+                baseline_pitch=self._baseline_pitch,
+                active_threshold=None,
+            )
 
-        # ── baselines (set once after calibration) ────────────────────
-        if self.baseline_center_x is None:
-            self.baseline_center_x = float(np.median(self.envelope_x))
-            self.baseline_std_x = float(np.std(self.envelope_x))
-        if self.baseline_center_y is None:
-            self.baseline_center_y = float(np.median(self.envelope_y))
-            self.baseline_std_y = float(np.std(self.envelope_y))
-        if self.baseline_pitch is None:
-            if len(self.pitch_envelope) >= max(10, ENVELOPE_WINDOW // 3):
-                self.baseline_pitch = float(np.max(self.pitch_envelope))
+        # ── compute baselines once ─────────────────────────────────────
+        if self._baseline_center_x is None:
+            self._baseline_center_x = float(np.median(self._envelope_x))
+            self._baseline_std_x    = float(np.std(self._envelope_x))
+            logger.info(
+                f"[GazeSession] H baseline — center={self._baseline_center_x:.3f} "
+                f"std={self._baseline_std_x:.3f}"
+            )
+
+        if self._baseline_pitch is None:
+            if len(self._pitch_envelope) >= max(10, ENVELOPE_WINDOW // 3):
+                self._baseline_pitch = float(np.max(self._pitch_envelope))
                 logger.info(
-                    f"[GazeSession] Pitch baseline — neutral={self.baseline_pitch:.1f}° | "
-                    f"effective normal={self.baseline_pitch + PITCH_LAP_THRESHOLD_NORMAL:.1f}° | "
-                    f"effective writing={self.baseline_pitch + PITCH_LAP_THRESHOLD_WRITING:.1f}°"
+                    f"[GazeSession] Pitch baseline={self._baseline_pitch:.1f}° | "
+                    f"down threshold={self._baseline_pitch + PITCH_DOWN_THRESHOLD:.1f}°"
                 )
             else:
-                self.baseline_pitch = 0.0
+                self._baseline_pitch = 0.0
                 logger.warning("[GazeSession] Pitch baseline: insufficient samples, defaulting to 0°")
 
         # ── smooth ────────────────────────────────────────────────────
-        self.gaze_history_x.append(h_ratio)
-        self.gaze_history_y.append(v_ratio)
-        avg_x = sum(self.gaze_history_x) / len(self.gaze_history_x)
-        avg_y = sum(self.gaze_history_y) / len(self.gaze_history_y)
+        self._gaze_history_x.append(h_ratio)
+        avg_x = sum(self._gaze_history_x) / len(self._gaze_history_x)
 
-        # ── classify (pitch-aware) ────────────────────────────────────
-        _pitch_offset = (
-            PITCH_LAP_THRESHOLD_WRITING
-            if self._question_type == self.QUESTION_TYPE_WRITING
-            else PITCH_LAP_THRESHOLD_NORMAL
-        )
-        _neutral = self.baseline_pitch if self.baseline_pitch is not None else 0.0
-        active_pitch_threshold = _neutral + _pitch_offset
-        direction, axis_outside, _diag = self._classify_gaze(
-            avg_x, avg_y, pitch_deg, pitch_lap_threshold=active_pitch_threshold
-        )
+        # ── horizontal check ──────────────────────────────────────────
+        tolerance_x = max(0.10, self._baseline_std_x * 4.0)
+        h_deviation = avg_x - self._baseline_center_x
+        h_outside   = abs(h_deviation) > tolerance_x
 
-        # ── question-type override ────────────────────────────────────
-        if direction == "DOWN" and self._question_type == self.QUESTION_TYPE_WRITING:
-            direction = "CENTER"
-            axis_outside = "NONE"
+        # ── down check (pitch threshold) ──────────────────────────────
+        active_threshold = self._baseline_pitch + PITCH_DOWN_THRESHOLD
+        looking_down     = pitch_deg > active_threshold
 
-        v_diag = {
-            "raw_v": v_ratio, "avg_x": avg_x, "avg_y": avg_y,
-            "v_deviation": _diag["v_deviation"], "tolerance_y": _diag["tolerance_y"],
-            "looking_down": _diag["looking_down"], "v_outside": _diag["v_outside"],
-            "baseline_center_y": self.baseline_center_y, "baseline_std_y": self.baseline_std_y,
-            "pitch_deg": pitch_deg, "pitch_zone": _diag["pitch_zone"],
-            "baseline_pitch": self.baseline_pitch,
-            "active_pitch_threshold": active_pitch_threshold,
-        }
+        inside_safe_zone = (not h_outside) and (not looking_down)
 
-        if direction != self.last_direction:
-            logger.info(
-                f"[GazeSession] Direction: {self.last_direction} → {direction} | "
-                f"avg_x={avg_x:.3f} avg_y={avg_y:.3f} pitch={pitch_deg:.1f}°"
-            )
-            self.last_direction = direction
-
-        self.behavior_history.append(BehaviorEvent(current_time, self.attention_state, direction))
-
-        is_down = direction in ("DOWN", "DOWN_LAP")
-        inside_safe_zone = axis_outside == "NONE"
-        self._update_sustained_trackers(direction, current_time, inside_safe_zone, is_down)
-
-        # ── away-timer logic ──────────────────────────────────────────
-        if inside_safe_zone:
-            self.attention_state = "ON_SCREEN"
-            self.away_start_time_horizontal = None
-            self.away_start_time_vertical_write = None
-            self.away_start_time_vertical_lap = None
+        # ── direction ─────────────────────────────────────────────────
+        if h_outside and looking_down:
+            direction = "BOTH"
+        elif h_outside:
+            direction = "LEFT" if h_deviation < 0 else "RIGHT"
+        elif looking_down:
+            direction = "DOWN"
         else:
-            if direction == "LEFT_RIGHT":
-                if self.away_start_time_horizontal is None:
-                    self.away_start_time_horizontal = current_time
-                self.away_start_time_vertical_write = None
-                self.away_start_time_vertical_lap = None
-                elapsed = current_time - self.away_start_time_horizontal
-                self.attention_state = (
-                    "AWAY_LONG" if elapsed >= AWAY_LONG_SECONDS_HORIZONTAL
-                    else "AWAY_SHORT" if elapsed >= AWAY_SHORT_SECONDS_HORIZONTAL
-                    else "ON_SCREEN"
-                )
+            direction = "CENTER"
 
-            elif direction == "DOWN":
-                if self.away_start_time_vertical_write is None:
-                    self.away_start_time_vertical_write = current_time
-                self.away_start_time_horizontal = None
-                self.away_start_time_vertical_lap = None
-                elapsed = current_time - self.away_start_time_vertical_write
-                self.attention_state = (
-                    "AWAY_LONG" if elapsed >= AWAY_LONG_SECONDS_DOWN_WRITE
-                    else "AWAY_SHORT" if elapsed >= AWAY_SHORT_SECONDS_DOWN_WRITE
-                    else "ON_SCREEN"
-                )
+        # ── away timers ───────────────────────────────────────────────
+        if inside_safe_zone:
+            self._attention_state = "ON_SCREEN"
+            self._away_start_time = None
+        else:
+            if self._away_start_time is None:
+                self._away_start_time = current_time
 
-            elif direction == "DOWN_LAP":
-                if self.away_start_time_vertical_lap is None:
-                    self.away_start_time_vertical_lap = current_time
-                self.away_start_time_horizontal = None
-                self.away_start_time_vertical_write = None
-                elapsed = current_time - self.away_start_time_vertical_lap
-                self.attention_state = (
-                    "AWAY_LONG" if elapsed >= AWAY_LONG_SECONDS_DOWN_LAP
-                    else "AWAY_SHORT" if elapsed >= AWAY_SHORT_SECONDS_DOWN_LAP
-                    else "ON_SCREEN"
-                )
+            elapsed = current_time - self._away_start_time
+
+            if elapsed >= AWAY_LONG_SECONDS:
+                self._attention_state = "AWAY_LONG"
+            elif elapsed >= AWAY_SHORT_SECONDS:
+                self._attention_state = "AWAY_SHORT"
             else:
-                self.attention_state = "ON_SCREEN"
+                self._attention_state = "ON_SCREEN"
 
-        probability = {"ON_SCREEN": 0.0, "AWAY_SHORT": 0.5}.get(self.attention_state, 1.0)
-        suspicion = self._compute_behavioral_suspicion(current_time)
+        if self._attention_state == "AWAY_SHORT":
+            logger.warning(f"[GazeSession] AWAY_SHORT | dir={direction}")
+        elif self._attention_state == "AWAY_LONG":
+            logger.warning(f"[GazeSession] AWAY_LONG  | dir={direction}")
+
+        probability = {"ON_SCREEN": 0.0, "AWAY_SHORT": 0.5}.get(
+            self._attention_state, 1.0
+        )
 
         return self._build_event(
-            self.attention_state, probability, self.attention_state, current_time, suspicion
-        ), v_diag
-
-    # ── sustained-gaze trackers ───────────────────────────────────────
-    def _update_sustained_trackers(
-        self, direction: str, current_time: float, inside_safe_zone: bool, is_down: bool
-    ) -> None:
-        if inside_safe_zone:
-            if self._continuous_down_start is not None:
-                dur = current_time - self._continuous_down_start
-                if dur >= SUSTAINED_DOWN_MIN_SECONDS:
-                    self._total_sustained_down_seconds += dur
-                self._continuous_down_start = None
-            if self._continuous_horizontal_start is not None:
-                dur = current_time - self._continuous_horizontal_start
-                if dur >= SUSTAINED_HORIZONTAL_MIN_SECONDS:
-                    self._total_sustained_horizontal_seconds += dur
-                self._continuous_horizontal_start = None
-        else:
-            if is_down:
-                if self._continuous_down_start is None:
-                    self._continuous_down_start = current_time
-                if self._continuous_horizontal_start is not None:
-                    dur = current_time - self._continuous_horizontal_start
-                    if dur >= SUSTAINED_HORIZONTAL_MIN_SECONDS:
-                        self._total_sustained_horizontal_seconds += dur
-                    self._continuous_horizontal_start = None
-            elif direction == "LEFT_RIGHT":
-                if self._continuous_horizontal_start is None:
-                    self._continuous_horizontal_start = current_time
-                if self._continuous_down_start is not None:
-                    dur = current_time - self._continuous_down_start
-                    if dur >= SUSTAINED_DOWN_MIN_SECONDS:
-                        self._total_sustained_down_seconds += dur
-                    self._continuous_down_start = None
-
-    # ── behavioural suspicion ─────────────────────────────────────────
-    def _compute_behavioral_suspicion(self, current_time: float) -> dict:
-        window_start = current_time - BEHAVIOR_WINDOW_SECONDS
-        recent: list[BehaviorEvent] = []
-        for e in reversed(self.behavior_history):
-            if e.timestamp >= window_start:
-                recent.append(e)
-            else:
-                break
-        recent.reverse()
-
-        if len(recent) < BEHAVIOR_MIN_EVENTS:
-            return {
-                "level": SuspicionLevel.LOW, "score": 0.0,
-                "down_ratio": 0.0, "down_lap_ratio": 0.0,
-                "horizontal_ratio": 0.0, "no_face_ratio": 0.0,
-                "transitions": 0, "detail": "insufficient data",
-            }
-
-        total = len(recent)
-        down_write_count  = sum(1 for e in recent if e.direction == "DOWN")
-        down_lap_count    = sum(1 for e in recent if e.direction == "DOWN_LAP")
-        horizontal_count  = sum(1 for e in recent if e.direction == "LEFT_RIGHT")
-        no_face_count     = sum(1 for e in recent if e.state == "NO_FACE")
-
-        down_write_ratio  = down_write_count / total
-        down_lap_ratio    = down_lap_count / total
-        horizontal_ratio  = horizontal_count / total
-        no_face_ratio     = no_face_count / total
-
-        transitions = sum(
-            1 for i in range(1, len(recent))
-            if (recent[i - 1].state == "ON_SCREEN") != (recent[i].state == "ON_SCREEN")
+            self._attention_state, probability, direction,
+            timestamp=current_time,
+            face_present=True,
+            h_ratio=round(h_ratio, 4),
+            avg_x=round(avg_x, 4),
+            pitch_deg=round(pitch_deg, 2),
+            h_deviation=round(h_deviation, 4),
+            tolerance_x=round(tolerance_x, 4),
+            looking_down=looking_down,
+            direction=direction,
+            baseline_center_x=round(self._baseline_center_x, 4),
+            baseline_std_x=round(self._baseline_std_x, 4),
+            baseline_pitch=round(self._baseline_pitch, 2),
+            active_threshold=round(active_threshold, 2),
         )
-
-        raw_score = (
-            horizontal_ratio * 0.40
-            + down_lap_ratio * 0.35
-            + down_write_ratio * 0.10
-            + no_face_ratio * 0.15
-        )
-
-        down_total = down_write_count + down_lap_count
-        detail = "gaze appears normal"
-
-        if (down_total / total) > 0.10 and down_total > 0:
-            down_episodes = sum(
-                1 for i in range(len(recent))
-                if recent[i].direction in ("DOWN", "DOWN_LAP")
-                and (i == 0 or recent[i - 1].direction not in ("DOWN", "DOWN_LAP"))
-            )
-            if down_episodes > 0:
-                avg_ep_sec = (down_total / down_episodes) / 30.0
-                if avg_ep_sec < WRITING_PATTERN_AVG_EPISODE_MAX_SECONDS:
-                    raw_score *= 0.70
-                    detail = f"writing pattern — avg down episode {avg_ep_sec:.1f}s"
-                else:
-                    detail = f"sustained down gaze — avg down episode {avg_ep_sec:.1f}s"
-            else:
-                detail = "sustained down gaze detected"
-        elif horizontal_ratio > 0.25:
-            detail = "frequent horizontal gaze detected"
-        elif no_face_ratio > NO_FACE_SUSPICIOUS_RATIO:
-            detail = "frequent face absence detected"
-
-        session_elapsed = max(1.0, current_time - self._session_start_time)
-
-        ongoing_down = 0.0
-        if self._continuous_down_start is not None:
-            o = current_time - self._continuous_down_start
-            if o >= SUSTAINED_DOWN_MIN_SECONDS:
-                ongoing_down = o
-
-        ongoing_horizontal = 0.0
-        if self._continuous_horizontal_start is not None:
-            o = current_time - self._continuous_horizontal_start
-            if o >= SUSTAINED_HORIZONTAL_MIN_SECONDS:
-                ongoing_horizontal = o
-
-        if (self._total_sustained_horizontal_seconds + ongoing_horizontal) / session_elapsed > SUSTAINED_HORIZONTAL_SUSPICIOUS_RATIO:
-            raw_score = min(1.0, raw_score + 0.20)
-            detail += " | high sustained horizontal in session"
-
-        if (self._total_sustained_down_seconds + ongoing_down) / session_elapsed > SUSTAINED_DOWN_SUSPICIOUS_RATIO:
-            raw_score = min(1.0, raw_score + 0.10)
-            detail += " | high sustained down in session"
-
-        raw_score = float(np.clip(raw_score, 0.0, 1.0))
-        level = (
-            SuspicionLevel.HIGH   if raw_score >= 0.60
-            else SuspicionLevel.MEDIUM if raw_score >= 0.30
-            else SuspicionLevel.LOW
-        )
-
-        return {
-            "level": level, "score": round(raw_score, 4),
-            "down_ratio": round(down_write_ratio, 4),
-            "down_lap_ratio": round(down_lap_ratio, 4),
-            "horizontal_ratio": round(horizontal_ratio, 4),
-            "no_face_ratio": round(no_face_ratio, 4),
-            "transitions": transitions, "detail": detail,
-        }
 
     # ── event builder ─────────────────────────────────────────────────
     def _build_event(
@@ -633,24 +338,67 @@ class GazeSession:
         state: str,
         probability: float,
         evidence: str,
+        *,
         timestamp: float | None = None,
-        suspicion: dict | None = None,
+        face_present: bool = False,
+        h_ratio: float = 0.0,
+        avg_x: float = 0.0,
+        pitch_deg: float = 0.0,
+        h_deviation: float = 0.0,
+        tolerance_x: float = 0.0,
+        looking_down: bool = False,
+        direction: str = "UNKNOWN",
+        baseline_center_x: float | None = None,
+        baseline_std_x: float | None = None,
+        baseline_pitch: float | None = None,
+        active_threshold: float | None = None,
     ) -> dict:
-        self.model_id += 1
+        """Build a self-contained event dict with all gaze diagnostics embedded.
+
+        Parameters
+        ----------
+        state            : Attention state (``"ON_SCREEN"``, ``"AWAY_SHORT"``,
+                           ``"AWAY_LONG"``, ``"NO_FACE"``, ``"INITIALIZING"``).
+        probability      : Suspicion probability in [0, 1].
+        evidence         : Human-readable direction / condition label.
+        timestamp        : Unix epoch float; defaults to now.
+        face_present     : Whether a face was detected in this frame.
+        h_ratio          : Raw horizontal iris ratio from GazeDetector.
+        avg_x            : Smoothed horizontal ratio after the moving average.
+        pitch_deg        : Head pitch in degrees from FaceLandmarker.
+        h_deviation      : ``avg_x - baseline_center_x``.
+        tolerance_x      : Horizontal tolerance band (dynamic).
+        looking_down     : True when pitch exceeds the active threshold.
+        direction        : ``"CENTER"`` | ``"LEFT"`` | ``"RIGHT"`` | ``"DOWN"``
+                           | ``"BOTH"`` | ``"NO_FACE"`` | ``"CALIBRATING"``.
+        baseline_center_x: Calibrated horizontal neutral position.
+        baseline_std_x   : Standard deviation of calibration samples.
+        baseline_pitch   : Calibrated neutral head-pitch (degrees).
+        active_threshold : ``baseline_pitch + PITCH_DOWN_THRESHOLD``.
+        """
+        self._event_id += 1
         ts = (
             datetime.fromtimestamp(timestamp).isoformat()
-            if timestamp else datetime.now().isoformat()
+            if timestamp is not None else datetime.now().isoformat()
         )
         return {
-            "id": self.model_id,
-            "timestamp": ts,
-            "flag": state,
-            "probability": round(probability, 4),
-            "evidence": evidence,
-            "suspicion": suspicion or {
-                "level": SuspicionLevel.LOW, "score": 0.0,
-                "down_ratio": 0.0, "down_lap_ratio": 0.0,
-                "horizontal_ratio": 0.0, "no_face_ratio": 0.0,
-                "transitions": 0, "detail": "no data",
+            "id":               self._event_id,
+            "timestamp":        ts,
+            "attention_state":  state,
+            "probability":      round(probability, 4),
+            "evidence":         evidence,
+            "gaze_diagnostics": {
+                "face_present":       face_present,
+                "direction":          direction,
+                "h_ratio":            h_ratio,
+                "avg_x":              avg_x,
+                "h_deviation":        h_deviation,
+                "tolerance_x":        tolerance_x,
+                "pitch_deg":          pitch_deg,
+                "looking_down":       looking_down,
+                "baseline_center_x":  baseline_center_x,
+                "baseline_std_x":     baseline_std_x,
+                "baseline_pitch":     baseline_pitch,
+                "active_threshold":   active_threshold,
             },
         }

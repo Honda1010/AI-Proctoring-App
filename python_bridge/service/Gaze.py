@@ -79,7 +79,7 @@ def _calculate_eye_ratio(landmarks, eye_points):
     h_ratio = (p_iris[0] - p_left[0]) / eye_w
     v_ratio = 1.0 - (p_bottom[1] - p_iris[1]) / eye_h
 
-    return _amplify_nonlinear(h_ratio, 2.0), _amplify_nonlinear(v_ratio, 4.5)
+    return _amplify_nonlinear(h_ratio, 2.5), _amplify_nonlinear(v_ratio, 2.5)
 
 
 class GazeDetector:
@@ -153,7 +153,7 @@ class GazeDetector:
         if result.face_landmarks:
             face1 = result.face_landmarks[0]
             mp_points = np.array(
-                [[p.x * w, p.y * h] for p in face1],
+                [[int(p.x * w), int(p.y * h)] for p in face1],
                 dtype=np.float64,
             )
             self._last_landmarks = mp_points
@@ -191,7 +191,11 @@ class GazeDetector:
         avg_h = (h_l + h_r) / 2
         avg_v = (v_l + v_r) / 2
 
-        avg_h += (yaw_deg / 90.0) * 0.15
+        # Yaw compensation: head turning shifts iris geometrically.
+        # Subtract the yaw-induced shift so only true eye movement triggers.
+        # Factor 0.30 ≈ correction per 90° of head turn — tune up if
+        # head movement still triggers, tune down if real gaze is suppressed.
+        avg_h -= (yaw_deg / 90.0) * 0.30
         avg_v -= (pitch_deg / 60.0) * 0.50
 
         avg_h = float(np.clip(avg_h, 0.0, 1.0))

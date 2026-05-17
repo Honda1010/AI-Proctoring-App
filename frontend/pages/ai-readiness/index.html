@@ -37,7 +37,7 @@
       <div class="checks">
         <div class="check-row">
           <span>Eye Gaze</span>
-          <span id="eyeStatus" class="pill pending">Calibrating</span>
+          <span id="eyeStatus" class="pill pending">Waiting</span>
         </div>
         <div class="check-row">
           <span>Speech Detection</span>
@@ -45,10 +45,14 @@
         </div>
       </div>
 
-      <p id="hintText" class="hint">Please look at the screen and keep your face visible.</p>
+      <p id="hintText" class="hint">Press <strong>Start Calibration</strong> when you are ready, then look at the screen and keep your face visible.</p>
 
       <div class="actions">
-        <button id="continueBtn" class="btn-primary" disabled>Continue to Exam</button>
+        <!-- Start Calibration: shown before calibration; hidden once started -->
+        <button id="startCalibBtn" class="btn-secondary">Start Calibration</button>
+        <!-- Recalibrate: hidden until at least one calibration cycle has run -->
+        <button id="recalibrateBtn" class="btn-secondary hidden">Recalibrate</button>
+        <button id="continueBtn"   class="btn-primary" disabled>Continue to Exam</button>
       </div>
     </section>
   </main>

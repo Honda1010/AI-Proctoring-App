@@ -140,10 +140,9 @@ class LocalEyeGazeService(AIService):
                 return self.create_detection_event(0.0, {"status": "initializing"})
 
             verdict = results[-1] if results else {}
-            raw_flag = str(verdict.get("flag", "INITIALIZING"))
+            raw_flag = str(verdict.get("attention_state", verdict.get("flag", "INITIALIZING")))
             probability = float(verdict.get("probability", 0.0))
             evidence = str(verdict.get("evidence", raw_flag))
-            suspicion = verdict.get("suspicion", {})
             diag = verdict.get("gaze_diagnostics", {})
 
             status_map = {
@@ -157,13 +156,12 @@ class LocalEyeGazeService(AIService):
             self._last_status = status
 
             return self.create_detection_event(1.0 - min(max(probability, 0.0), 1.0), {
-                "gaze_x": diag.get("gaze_h", 0.5),
-                "gaze_y": diag.get("gaze_v", 0.5),
+                "gaze_x": diag.get("h_ratio", diag.get("gaze_h", 0.5)),
+                "gaze_y": diag.get("avg_x",  diag.get("gaze_v", 0.5)),
                 "status": status,
                 "raw_flag": raw_flag,
                 "probability": probability,
                 "evidence": evidence,
-                "suspicion": suspicion,
                 "gaze_diagnostics": diag,
             })
 
@@ -176,6 +174,18 @@ class LocalEyeGazeService(AIService):
             "gaze_y": 0.5,
             "status": "on-screen"
         })
+
+    def recalibrate(self) -> None:
+        """Reset the GazeSession calibration so the next frames re-run it."""
+        try:
+            from service.localMain import manager  # type: ignore
+            if manager.session is not None:
+                manager.session.recalibrate()
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).warning(
+                f"[LocalEyeGazeService] recalibrate failed: {exc}"
+            )
 
     def _run_loop(self):
         """Background thread loop."""

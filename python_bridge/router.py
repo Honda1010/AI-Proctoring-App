@@ -173,6 +173,8 @@ class AIRouter:
             self.handle_query_status(request_id, params)
         elif method == "predict":
             await self.handle_predict(request_id, params)
+        elif method == "recalibrateGaze":
+            self.handle_recalibrate_gaze(request_id)
         elif method == "mockDetection": # Helper for testing/wiring
             await self.handle_mock_detection(request_id, params)
         elif method == "enrollReference":
@@ -183,6 +185,16 @@ class AIRouter:
             await self.handle_upload_clip(request_id, params)
         else:
             self.send_error(request_id, -32601, "Method not found")
+
+    def handle_recalibrate_gaze(self, request_id):
+        """Reset eye-gaze calibration so the next frames re-run it from scratch."""
+        service = self.services.get("eye-gaze")
+        if service is None:
+            self.send_error(request_id, -32602, "Eye-gaze service not running")
+            return
+        if hasattr(service, "recalibrate"):
+            service.recalibrate()
+        self.send_result(request_id, {"ok": True})
 
     async def handle_predict(self, request_id: Any, params: Dict[str, Any]):
         service_name = params.get("service")
