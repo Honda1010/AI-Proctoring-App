@@ -116,6 +116,10 @@ document.addEventListener('DOMContentLoaded', async () => {
               answerMap[Number(qId)] = Number(cId);
             }
           }
+          // Restore flagged questions
+          if (resume.flagged && Array.isArray(resume.flagged)) {
+            resume.flagged.forEach(qId => flagSet.add(Number(qId)));
+          }
           // Restore question position
           const idx = Math.max(0, Math.min(
             resume.currentQuestionIndex ?? 0,
@@ -249,6 +253,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           currentQuestionIndex: currentIndex,
           answers:              answerMap,
           frozenTimerSeconds:   remainingSeconds,
+          flagged:              Array.from(flagSet),
         };
         window.bridge.sendSnapshotData(snapshotData);
         // Store resume data and offline page init payload for the offline page
@@ -266,6 +271,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentQuestionIndex: currentIndex,
         answers:              answerMap,
         frozenTimerSeconds:   remainingSeconds,
+        flagged:              Array.from(flagSet),
       });
     });
   } catch (err) {
@@ -442,6 +448,7 @@ function renderQuestion(index) {
           currentQuestionIndex: currentIndex,
           answers:              answerMap,
           frozenTimerSeconds:   remainingSeconds,
+          flagged:              Array.from(flagSet),
         });
       }
     });
@@ -470,6 +477,16 @@ function renderQuestion(index) {
       flagBtn.classList.add('is-flagged');
     }
     updatePillStates();
+
+    // spec 014 — persist snapshot on flag change
+    if (window.bridge?.sendSnapshotData) {
+      window.bridge.sendSnapshotData({
+        currentQuestionIndex: currentIndex,
+        answers:              answerMap,
+        frozenTimerSeconds:   remainingSeconds,
+        flagged:              Array.from(flagSet),
+      });
+    }
   };
 
   updatePillStates();

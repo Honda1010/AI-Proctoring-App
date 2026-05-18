@@ -45,6 +45,22 @@ class ModalClient:
             await self._http_client.aclose()
         self._http_client = None
 
+    async def warmup(self) -> None:
+        """
+        Send a lightweight GET request to the Modal app's health or root endpoint to wake it up.
+        This triggers container cold start without running heavy ML inference.
+        """
+        try:
+            base_url = "/".join(self.endpoint_url.split("/")[:3])
+            health_url = f"{base_url}/health"
+            client = self._get_client()
+            response = await client.get(health_url)
+            if response.status_code == 404:
+                # Fallback to root if /health is not defined
+                await client.get(base_url)
+        except Exception:
+            pass  # Fire-and-forget
+
 
     async def predict(self, service_name: str, session_id: str, frame: str) -> Dict[str, Any]:
         """
@@ -171,6 +187,7 @@ class ModalClient:
         live_frame: str,
         reference_image_bytes: bytes,
         reference_mime: str = "image/jpeg",
+        timeout: float = None,
     ) -> Dict[str, Any]:
         """
         Compare a live webcam frame against an official reference image via
@@ -197,7 +214,8 @@ class ModalClient:
           error : dict | None   (code + message when ok is False)
         """
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
+            req_timeout = timeout if timeout is not None else self.timeout
+            async with httpx.AsyncClient(timeout=req_timeout) as client:
                 live_bytes, live_mime = self._decode_frame_to_image(live_frame)
                 data = {"session_id": session_id}
                 files = {
@@ -269,14 +287,15 @@ class ModalClient:
         except Exception as e:
             return {"ok": False, "error": {"code": "UNKNOWN_ERROR", "message": str(e)}}
 
-    async def enroll(self, session_id: str, frame: str) -> Dict[str, Any]:
+    async def enroll(self, session_id: str, frame: str, timeout: float = None) -> Dict[str, Any]:
         """
         Enroll a reference image via /analysis/enroll-file.
         'frame' is a base64 data URL or raw base64 JPEG.
         Returns the raw Modal JSON response.
         """
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
+            req_timeout = timeout if timeout is not None else self.timeout
+            async with httpx.AsyncClient(timeout=req_timeout) as client:
                 image_bytes, mime = self._decode_frame_to_image(frame)
                 data = {"session_id": session_id}
                 files = {"references": ("reference.jpg", image_bytes, mime)}

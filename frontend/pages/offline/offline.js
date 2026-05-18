@@ -134,6 +134,7 @@ function handleStateChange(payload) {
           currentQuestionIndex: lastSnapshotData.currentQuestionIndex,
           answers:              lastSnapshotData.answers,
           frozenTimerSeconds:   lastSnapshotData.frozenTimerSeconds,
+          flagged:              lastSnapshotData.flagged,
         }));
         sessionStorage.setItem('offlineResume', '1');
       } catch (_e) { /* best-effort */ }
