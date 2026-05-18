@@ -24,8 +24,6 @@ class ObjectDetectionService(AIService):
             raise ValueError("Object Detection endpoint_url not configured")
         self.client = ModalClient(self.endpoint_url, self.token, timeout=self.timeout)
         self.is_running = True
-        # Pre-warm Modal
-        await self.client.predict(self.service_name, self.session_id, "WARMUP")
 
     async def stop(self):
         self.is_running = False

@@ -44,6 +44,7 @@ class FaceRecognitionService(AIService):
             service_config.get("enrollment_similarity_threshold", 0.5)
         )
         self.timeout: float = float(service_config.get("timeout_seconds", 15.0))
+        self.enroll_timeout: float = float(service_config.get("enroll_timeout_seconds", 60.0))
         modal_config = config.get("modal", {})
         self.token = modal_config.get("token_id", "test-token")
         self.client = None
@@ -69,6 +70,10 @@ class FaceRecognitionService(AIService):
             face_frame_url=self.face_frame_endpoint_url,
         )
         self.is_running = True
+
+        # Pre-warm Modal container in the background so it doesn't block startup
+        import asyncio
+        asyncio.create_task(self.client.warmup())
 
     async def stop(self):
         self.is_running = False
@@ -109,7 +114,7 @@ class FaceRecognitionService(AIService):
             ref_bytes: bytes | None = None
             ref_mime = "image/jpeg"
             try:
-                async with httpx.AsyncClient(timeout=self.timeout) as http:
+                async with httpx.AsyncClient(timeout=self.enroll_timeout) as http:
                     ref_response = await http.get(profile_picture_url)
                     if ref_response.status_code == 200:
                         ref_bytes = ref_response.content
@@ -139,6 +144,7 @@ class FaceRecognitionService(AIService):
                 live_frame=frame,
                 reference_image_bytes=ref_bytes,
                 reference_mime=ref_mime,
+                timeout=self.enroll_timeout,
             )
 
             if not compare_result.get("ok"):
@@ -181,7 +187,7 @@ class FaceRecognitionService(AIService):
         # ------------------------------------------------------------------
         # Step 2 — Persist the embedding via /analysis/enroll-file
         # ------------------------------------------------------------------
-        enroll_result = await self.client.enroll(self.session_id, frame)
+        enroll_result = await self.client.enroll(self.session_id, frame, timeout=self.enroll_timeout)
         # Network/HTTP-level failure (non-200 status code).
         if enroll_result.get("ok") is False:
             return {"ok": False, "error": enroll_result.get("error",
