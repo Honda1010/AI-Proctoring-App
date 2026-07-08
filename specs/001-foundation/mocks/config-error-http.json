@@ -1,1 +1,0 @@
-{"type":"config-error","code":"INSECURE_PROTOCOL","message":"baseUrl must use HTTPS (https://). HTTP URLs are not permitted."}

@@ -1,8 +1,0 @@
-{
-  "vm_detected": false,
-  "vm_reason": null,
-  "rdp_detected": false,
-  "rdp_reason": null,
-  "screen_capture_detected": true,
-  "screen_capture_reason": "OBS64.exe running"
-}

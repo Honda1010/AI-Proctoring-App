@@ -31,9 +31,6 @@ build/
 # Logs
 *.log
 
-# Spec-kit internal memory (local reasoning files, not source)
-.specify/memory/
-
 # OS artifacts
 .DS_Store
 Thumbs.db

@@ -1,8 +1,0 @@
-{
-  "vm_detected": true,
-  "vm_reason": "VirtualBox detected via registry SCSI key",
-  "rdp_detected": false,
-  "rdp_reason": null,
-  "screen_capture_detected": false,
-  "screen_capture_reason": null
-}
